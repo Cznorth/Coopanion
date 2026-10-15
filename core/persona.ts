@@ -73,19 +73,25 @@ export function coopanionPersona(Base: typeof Cormini) {
     /**
      * Brings the repository in line with this Persona: `blobs/` ignored and untracked, then whatever is
      * not committed yet committed and tagged `start-<version>` the first time `version` runs. Run once
-     * at start, before Coo writes anything; does nothing without Git.
+     * at start, before Coo writes anything; does nothing without Git. A Git failure is logged and the app
+     * starts without this start's snapshot.
      */
     snapshot(version: string): void {
       const git = this.git;
       git.ensureRepo();
       if (!git.status().repo) return;
-      const ignore = join(this.memoryDir, '.gitignore');
-      const lines = existsSync(ignore) ? readFileSync(ignore, 'utf8').split(/\r?\n/) : [];
-      if (!lines.includes(IGNORED)) appendFileSync(ignore, `${lines.length && lines.at(-1) !== '' ? '\n' : ''}${IGNORED}\n`, 'utf8');
-      untrack(this.memoryDir, IGNORED);
-      const tag = SNAPSHOT_TAG(version);
-      if (git.listTags().some((t) => t.name === tag)) git.commitAll('Changes from before this start', AUTHOR_APP);
-      else git.tag(tag, `The workspace as version ${version} found it`, AUTHOR_APP);
+      try {
+        const ignore = join(this.memoryDir, '.gitignore');
+        const lines = existsSync(ignore) ? readFileSync(ignore, 'utf8').split(/\r?\n/) : [];
+        if (!lines.includes(IGNORED)) appendFileSync(ignore, `${lines.length && lines.at(-1) !== '' ? '\n' : ''}${IGNORED}\n`, 'utf8');
+        untrack(this.memoryDir, IGNORED);
+        const tag = SNAPSHOT_TAG(version);
+        if (git.listTags().some((t) => t.name === tag)) git.commitAll('Changes from before this start', AUTHOR_APP);
+        else git.tag(tag, `The workspace as version ${version} found it`, AUTHOR_APP);
+      } catch (err) {
+        // runs at build time, before the Core exists; Cormini's Git warnings fall back to the console the same way
+        console.warn('[workspaceGit] snapshot failed', err);
+      }
     }
 
     protected override tools(): ToolDef[] {

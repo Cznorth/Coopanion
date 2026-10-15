@@ -8,7 +8,7 @@ module.exports = {
   trayRestart: '重新啟動',
   trayQuit: '結束',
 
-  coreFailed: (times, code, logFile) => `Core 在 5 分鐘內結束了 ${times} 次（結束代碼 ${code}），已停止重試。記錄檔：${logFile}`,
+  coreFailed: (times, code, logFile) => `Core 在 5 分鐘內結束了 ${times} 次（結束代碼 ${code}），已停止重試。如果剛剛更新過，請從系統匣選單選擇「結束」，再重新開啟 Coopanion。記錄檔：${logFile}`,
   coreRestarting: (code) => `Core 意外結束（結束代碼 ${code}），3 秒後重新啟動`,
   coreLocked: (pid, file) => `另一個程序${pid ? `（PID ${pid}）` : ''}正在使用 Coopanion 的資料，Core 沒有啟動。等它結束或手動結束它，再從系統匣選單選「重新啟動」。鎖定檔：${file}`,
 

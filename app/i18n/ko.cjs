@@ -8,7 +8,7 @@ module.exports = {
   trayRestart: '다시 시작',
   trayQuit: '종료',
 
-  coreFailed: (times, code, logFile) => `Core가 5분 안에 ${times}번 종료되어(종료 코드 ${code}) 더 이상 다시 시작하지 않습니다. 로그: ${logFile}`,
+  coreFailed: (times, code, logFile) => `Core가 5분 안에 ${times}번 종료되어(종료 코드 ${code}) 더 이상 다시 시작하지 않습니다. 방금 업데이트했다면 트레이 메뉴에서 '종료'를 선택한 뒤 Coopanion을 다시 여세요. 로그: ${logFile}`,
   coreRestarting: (code) => `Core가 예기치 않게 종료되었습니다(종료 코드 ${code}). 3초 뒤 다시 시작합니다`,
   coreLocked: (pid, file) => `다른 프로세스${pid ? `(PID ${pid})` : ''}가 Coopanion 데이터를 사용 중이라 Core가 시작되지 않았습니다. 그 프로세스가 끝나기를 기다리거나 직접 종료한 뒤 트레이 메뉴에서 '다시 시작'을 선택하세요. 잠금 파일: ${file}`,
 

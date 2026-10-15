@@ -8,7 +8,7 @@ module.exports = {
   trayRestart: '再起動',
   trayQuit: '終了',
 
-  coreFailed: (times, code, logFile) => `Core が 5 分以内に ${times} 回終了したため（終了コード ${code}）、再起動を停止しました。ログ：${logFile}`,
+  coreFailed: (times, code, logFile) => `Core が 5 分以内に ${times} 回終了したため（終了コード ${code}）、再起動を停止しました。更新した直後の場合は、トレイメニューの「終了」を選んでから Coopanion をもう一度開いてください。ログ：${logFile}`,
   coreRestarting: (code) => `Core が予期せず終了しました（終了コード ${code}）。3 秒後に再起動します`,
   coreLocked: (pid, file) => `別のプロセス${pid ? `（PID ${pid}）` : ''}が Coopanion のデータを使用中のため、Core は起動しませんでした。そのプロセスが終わるのを待つか手動で終了してから、トレイメニューの「再起動」を選んでください。ロックファイル：${file}`,
 

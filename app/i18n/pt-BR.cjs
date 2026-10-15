@@ -8,7 +8,7 @@ module.exports = {
   trayRestart: 'Reiniciar',
   trayQuit: 'Sair',
 
-  coreFailed: (times, code, logFile) => `O Core fechou ${times} vezes em 5 minutos (código de saída ${code}) e não será mais reiniciado. Log: ${logFile}`,
+  coreFailed: (times, code, logFile) => `O Core fechou ${times} vezes em 5 minutos (código de saída ${code}) e não será mais reiniciado. Se o app acabou de ser atualizado, escolha "Sair" no menu da bandeja e abra o Coopanion de novo. Log: ${logFile}`,
   coreRestarting: (code) => `O Core fechou inesperadamente (código de saída ${code}); reiniciando em 3 segundos`,
   coreLocked: (pid, file) => `Outro processo${pid ? ` (PID ${pid})` : ''} está usando os dados do Coopanion, então o Core não foi iniciado. Espere ele terminar ou encerre-o e depois escolha "Reiniciar" no menu da bandeja. Arquivo de bloqueio: ${file}`,
 

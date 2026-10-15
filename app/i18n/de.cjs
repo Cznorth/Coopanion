@@ -8,7 +8,7 @@ module.exports = {
   trayRestart: 'Neu starten',
   trayQuit: 'Beenden',
 
-  coreFailed: (times, code, logFile) => `Der Core hat sich innerhalb von 5 Minuten ${times}-mal beendet (Exit-Code ${code}) und wird nicht mehr neu gestartet. Protokoll: ${logFile}`,
+  coreFailed: (times, code, logFile) => `Der Core hat sich innerhalb von 5 Minuten ${times}-mal beendet (Exit-Code ${code}) und wird nicht mehr neu gestartet. Wenn die App gerade aktualisiert wurde, wähle „Beenden“ im Tray-Menü und öffne Coopanion erneut. Protokoll: ${logFile}`,
   coreRestarting: (code) => `Der Core hat sich unerwartet beendet (Exit-Code ${code}); Neustart in 3 Sekunden`,
   coreLocked: (pid, file) => `Ein anderer Prozess${pid ? ` (PID ${pid})` : ''} verwendet die Daten von Coopanion, daher wurde der Core nicht gestartet. Warte, bis er endet, oder beende ihn, und wähle dann „Neu starten“ im Tray-Menü. Sperrdatei: ${file}`,
 

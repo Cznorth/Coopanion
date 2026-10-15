@@ -5,7 +5,10 @@
  * It reports `companion:ready` with the console port. It exits on purpose after asking for a
  * restart (`cortico:restart`, or `<dataDir>/.restart-request` written by the console), and is
  * started again; an unexpected exit is restarted after 3 s, at most 5 times in 5 minutes, except one that
- * said another process holds the data directory's lock (`companion:locked`), which is not restarted. The next
+ * said another process holds the data directory's lock (`companion:locked`), which is not restarted, and one
+ * before `companion:ready` with ERR_MODULE_NOT_FOUND on stderr, which waits longer each time (MISSING_MODULE_DELAYS_MS).
+ * A child that exits unasked before it is ready leaves the app's arguments, its parent PID and whether the entry
+ * and tsx are on disk in the log. A start after the host gave up (`failed`) begins with a full budget. The next
  * child started after an unexpected exit gets its exit code or signal in `COOPANION_CORE_EXIT`, for
  * the usage statistics. Every start looks up the system proxy again (systemProxyEnvironment) and hands
  * it to the child as proxy variables unless the environment already has its own.
@@ -23,7 +26,24 @@ const { join } = require('node:path');
 
 const CRASH_WINDOW_MS = 5 * 60_000;
 const MAX_CRASHES = 5;
+/**
+ * The waits before starting again after a child that exited before it was ready with ERR_MODULE_NOT_FOUND, which is
+ * what a start meets while the runtime's files are still being written. These exits do not count toward MAX_CRASHES;
+ * after the last wait the next one is `failed`. Together they wait 223 s, so the exits stay within the 5 minutes
+ * coreFailed reports.
+ */
+const MISSING_MODULE_DELAYS_MS = [3_000, 10_000, 30_000, 30_000, 30_000, 30_000, 30_000, 30_000, 30_000];
+/** The file `--import tsx` loads: tsx's `exports['.']`. */
+const TSX_ENTRY = ['node_modules', 'tsx', 'dist', 'loader.mjs'];
 const LOG_ROTATE_BYTES = 5 * 1024 * 1024;
+
+/** The app process's arguments and parent PID, and whether the Core's entry and tsx exist, as a line for core.log. */
+function startDiagnostics(appRoot) {
+  const entry = join(appRoot, 'core', 'boot.ts');
+  const tsx = join(appRoot, ...TSX_ENTRY);
+  const on = (file) => `${file} ${existsSync(file) ? 'exists' : 'missing'}`;
+  return `exited before ready; app argv ${JSON.stringify(process.argv.slice(1))}, ppid ${process.ppid}; ${on(entry)}; ${on(tsx)}\n`;
+}
 
 class CoreHost extends EventEmitter {
   /** @param {{ appRoot: string, env: NodeJS.ProcessEnv, logDir: string, resolveProxy: (url: string) => Promise<string> }} opts */
@@ -39,6 +59,8 @@ class CoreHost extends EventEmitter {
     /** The system proxy lookup before a start is running. */
     this.launching = false;
     this.crashes = [];
+    /** ERR_MODULE_NOT_FOUND exits before ready since the last ready child: the index into MISSING_MODULE_DELAYS_MS. */
+    this.missingModuleExits = 0;
     /** The child said another process holds the data directory's lock (`companion:locked`): its PID and the lock file. */
     this.locked = null;
     /** Exit code or signal of the last child that exited unasked, not yet handed to a new one. */
@@ -52,6 +74,7 @@ class CoreHost extends EventEmitter {
     const proxy = await systemProxyEnvironment(this.opts.env, this.opts.resolveProxy);
     this.launching = false;
     if (this.stopping) return;
+    if (this.state === 'failed') { this.crashes = []; this.missingModuleExits = 0; }
     mkdirSync(this.opts.logDir, { recursive: true });
     const logFile = join(this.opts.logDir, 'core.log');
     if (existsSync(logFile) && statSync(logFile).size > LOG_ROTATE_BYTES) renameSync(logFile, join(this.opts.logDir, 'core.old.log'));
@@ -66,6 +89,13 @@ class CoreHost extends EventEmitter {
     this.unexpectedExit = null;
     child.stdout.pipe(log, { end: false });
     child.stderr.pipe(log, { end: false });
+    let missingModule = false;
+    let tail = '';
+    child.stderr.on('data', (chunk) => {
+      const text = tail + chunk;
+      if (text.includes('ERR_MODULE_NOT_FOUND')) missingModule = true;
+      tail = text.slice(-32);
+    });
     this.child = child;
     this.state = 'starting';
     this.restartAsked = false;
@@ -76,6 +106,7 @@ class CoreHost extends EventEmitter {
         this.dataDir = msg.dataDir;
         this.keyMissing = !!msg.keyMissing;
         this.state = 'running';
+        this.missingModuleExits = 0;
         this.emit('ready', { port: msg.port, keyMissing: this.keyMissing, language: msg.language });
         this.emit('state', this.state);
       } else if (msg?.type === 'companion:language') {
@@ -100,7 +131,8 @@ class CoreHost extends EventEmitter {
         this.emit('browse', msg.url);
       }
     });
-    child.on('exit', (code, signal) => {
+    const exited = (code, signal, startFailed) => {
+      if (startFailed) log.write(startDiagnostics(this.opts.appRoot));
       log.end(`===== exit ${code} =====\n`);
       if (this.child !== child) return;
       this.child = null;
@@ -122,6 +154,18 @@ class CoreHost extends EventEmitter {
         return;
       }
       this.unexpectedExit = code ?? signal;
+      if (startFailed && missingModule) {
+        if (this.missingModuleExits < MISSING_MODULE_DELAYS_MS.length) {
+          const delay = MISSING_MODULE_DELAYS_MS[this.missingModuleExits++];
+          this.state = 'restarting';
+          this.emit('state', this.state);
+          setTimeout(() => { if (!this.stopping) void this.start(); }, delay);
+          return;
+        }
+        this.state = 'failed';
+        this.emit('state', this.state, { kind: 'failed', times: this.missingModuleExits + 1, code, logFile });
+        return;
+      }
       const now = Date.now();
       this.crashes = this.crashes.filter((t) => now - t < CRASH_WINDOW_MS);
       this.crashes.push(now);
@@ -133,6 +177,15 @@ class CoreHost extends EventEmitter {
       this.state = 'restarting';
       this.emit('state', this.state, { kind: 'restarting', code });
       setTimeout(() => { if (!this.stopping) void this.start(); }, 3000);
+    };
+    child.on('exit', (code, signal) => {
+      const startFailed = this.child === child && this.state === 'starting' && !this.stopping && !this.restartAsked;
+      if (!startFailed || child.stderr.readableEnded) { exited(code, signal, startFailed); return; }
+      // the last stderr lines can be read after the exit, and a failed start is judged on all of them
+      let settled = false;
+      const settle = () => { if (!settled) { settled = true; exited(code, signal, startFailed); } };
+      child.stderr.once('end', settle);
+      setTimeout(settle, 1000);
     });
   }
 

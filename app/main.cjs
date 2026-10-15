@@ -5,7 +5,8 @@
  * - the app: tray icon, the settings window (Coopanion's own front end, `build/console`, served under
  *   `/coopanion/` on the Core child's console origin in a session of its own, see serveWindow), and
  *   the Core child process (`core-host.cjs`). A start shows the pet and the tray icon only; the settings window opens from the tray, the pet's menu, or when the pet asks for
- *   a missing model key (`core/companion.ts`). Starting it again while it runs brings the pet back;
+ *   a missing model key (`core/companion.ts`). Starting it again while it runs brings the pet back, or starts the
+ *   Core again when it stopped retrying (`failed`);
  * - `--pet-host --pet-url=… --parent-pid=…`: the desktop pet's transparent window, started by
  *   the desktop-pet World through `CORTICO_DESKTOP_PET_HOST`. It uses its own profile directory.
  *
@@ -427,7 +428,10 @@ core.on('hide', () => {
   if (MAC) app.dock?.hide();
 });
 core.on('quit', () => app.quit());
-const bringBack = () => { if (core.state === 'running') ensurePet().catch(() => { /* Core went away meanwhile */ }); };
+const bringBack = () => {
+  if (core.state === 'failed') void core.start();
+  else if (core.state === 'running') ensurePet().catch(() => { /* Core went away meanwhile */ });
+};
 app.on('second-instance', bringBack);
 // macOS: opening the app again while it runs
 app.on('activate', bringBack);

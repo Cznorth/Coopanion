@@ -32,8 +32,8 @@ const en: PetText = {
     /** The talk key switches listening on and off; `label` is the full key name with its presses ("Double-press Left Alt"). */
     toggleTaps: (label: string, taps: number) => `${label} to start listening, ${taps === 2 ? 'double' : 'triple'}-press again to stop`,
     toggle: (key: string) => `Press ${key} to start listening, press it again to stop`,
-    holdTaps: (key: string, taps: number) => `Tap ${key} ${taps === 2 ? 'once' : 'twice'}, then hold it and talk; let go to send`,
-    hold: (key: string) => `Hold ${key} and talk; let go to send`,
+    holdTaps: (key: string, taps: number) => `Tap ${key} ${taps === 2 ? 'once' : 'twice'}, then hold it and talk; let go to send, or press Esc while holding to cancel`,
+    hold: (key: string) => `Hold ${key} and talk; let go to send, or press Esc while holding to cancel`,
     /** A line in the Voice input page's results for a sentence that was not recognized. */
     failedLine: (error: string) => `[failed] ${error}`,
   },
@@ -270,7 +270,7 @@ const en: PetText = {
 
     voice: 'Voice input',
     enable: 'Turn on voice input',
-    enabledHint: 'The microphone stays open; speech goes to Coo by the listening mode',
+    enabledHint: 'With "While the talk key is held", the microphone opens only while the key is down; the other listening modes keep it open',
     disabledHint: 'Off: the microphone stays closed, and the settings below wait',
     engine: 'Recognition engine',
     funasr: 'FunASR (on this computer)',

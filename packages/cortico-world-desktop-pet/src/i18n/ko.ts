@@ -20,8 +20,8 @@ const ko: Translation<PetText> = {
     always: '항상 듣는 중: 그냥 말하세요',
     toggleTaps: (label: string, taps: number) => `${label} 눌러 듣기 시작, 다시 ${taps === 2 ? '두' : '세'} 번 누르면 멈춥니다`,
     toggle: (key: string) => `${key}을(를) 누르면 듣기 시작, 다시 누르면 멈춥니다`,
-    holdTaps: (key: string, taps: number) => `${key}을(를) ${taps === 2 ? '한' : '두'} 번 짧게 누른 뒤 바로 누른 채로 말하세요. 떼면 보냅니다`,
-    hold: (key: string) => `${key}을(를) 누른 채로 말하세요. 떼면 보냅니다`,
+    holdTaps: (key: string, taps: number) => `${key}을(를) ${taps === 2 ? '한' : '두'} 번 짧게 누른 뒤 바로 누른 채로 말하세요. 떼면 보내고, 누른 채 Esc를 누르면 취소합니다`,
+    hold: (key: string) => `${key}을(를) 누른 채로 말하세요. 떼면 보내고, 누른 채 Esc를 누르면 취소합니다`,
     failedLine: (error: string) => `[실패] ${error}`,
   },
 
@@ -243,7 +243,7 @@ const ko: Translation<PetText> = {
 
     voice: '음성 입력',
     enable: '음성 입력 켜기',
-    enabledHint: '마이크가 계속 열려 있고, 말한 내용은 듣는 방식에 따라 Coo에게 전달됩니다',
+    enabledHint: '"말하기 키를 누르고 있는 동안"은 키를 누르는 동안만 마이크를 열고, 다른 듣는 방식은 마이크를 계속 열어 둡니다',
     disabledHint: '꺼짐: 마이크는 닫혀 있고 아래 설정은 대기합니다',
     engine: '인식 엔진',
     funasr: 'FunASR(이 컴퓨터에서 인식)',

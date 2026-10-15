@@ -20,8 +20,8 @@ const ja: Translation<PetText> = {
     always: '常に聞き取り中：そのまま話してください',
     toggleTaps: (label: string, taps: number) => `${label}と聞き取り開始、もう一度 ${taps === 2 ? 2 : 3} 回押すと停止`,
     toggle: (key: string) => `${key} を押すと聞き取り開始、もう一度押すと停止`,
-    holdTaps: (key: string, taps: number) => `${key} を ${taps === 2 ? 1 : 2} 回押してから押したまま話し、離すと送信`,
-    hold: (key: string) => `${key} を押したまま話し、離すと送信`,
+    holdTaps: (key: string, taps: number) => `${key} を ${taps === 2 ? 1 : 2} 回押してから押したまま話し、離すと送信。押している間に Esc でキャンセル`,
+    hold: (key: string) => `${key} を押したまま話し、離すと送信。押している間に Esc でキャンセル`,
     failedLine: (error: string) => `[失敗] ${error}`,
   },
 
@@ -243,7 +243,7 @@ const ja: Translation<PetText> = {
 
     voice: '音声入力',
     enable: '音声入力をオンにする',
-    enabledHint: 'マイクは開いたままで、話した内容は聞き取り方の設定どおり Coo に届きます',
+    enabledHint: '「発話キーを押しているあいだ」ではキーを押している間だけマイクを開き、ほかの聞き取り方ではマイクを開いたままにします',
     disabledHint: 'オフ：マイクは閉じたままで、下の設定は使われません',
     engine: '認識エンジン',
     funasr: 'FunASR（このコンピューター上）',

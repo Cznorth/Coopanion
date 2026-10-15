@@ -90,12 +90,13 @@ afterEach(async () => {
 
 /** A talk key the test presses; `problem` makes it unreadable. */
 function scriptedKey(problem?: string) {
-  const key = { press: (_down: boolean) => {}, tap: () => {}, hotkey: null as Hotkey | null };
-  const watch = async (hotkey: Hotkey, onChange: (down: boolean) => void, _pollMs: number, onTap?: (count: number) => void) => {
+  const key = { press: (_down: boolean) => {}, tap: () => {}, escape: () => {}, hotkey: null as Hotkey | null };
+  const watch = async (hotkey: Hotkey, onChange: (down: boolean) => void, _pollMs: number, onTap?: (count: number) => void, _t?: unknown, onEscape?: () => void) => {
     if (problem) return problem;
     key.hotkey = hotkey;
     key.press = onChange;
     key.tap = () => onTap?.(1);
+    key.escape = () => onEscape?.();
     return { stop: () => {} };
   };
   return { key, watch };
@@ -154,6 +155,8 @@ describe('voice input', () => {
     key.tap();
     await page.next((m) => m.t === 'listen' && m.phase === 'ready');
     key.press(true);
+    // listening starts with the first frame from the microphone the press opened
+    page.audio(tone(20, .01)[0]!);
     await page.next((m) => m.t === 'listen' && m.phase === 'start');
     // quiet speech still counts while the key is held, pauses included
     for (const fr of [...tone(500, .01), ...tone(800, 0), ...tone(300, .01)]) page.audio(fr);
@@ -162,6 +165,31 @@ describe('voice input', () => {
     key.press(false);
     await expect.poll(() => host.events.length, { timeout: 5000 }).toBe(1);
     expect(host.events[0].text).toBe('[语音] 伙伴:帮我看看这个');
+  });
+
+  it('hold: the page opens the microphone only from the press until shortly after the release', async () => {
+    const { key, watch } = scriptedKey();
+    const { page } = await setup('帮我看看这个', 'hold', watch);
+    expect(page.init.mic).toBe(false);
+    key.press(true);
+    await page.next((m) => m.t === 'prefs' && m.mic === true);
+    key.press(false);
+    await page.next((m) => m.t === 'prefs' && m.mic === false);
+  });
+
+  it('hold: Esc while the key is held drops what was heard, sends nothing and closes the bubble', async () => {
+    const { key, watch } = scriptedKey();
+    const { host, page } = await setup('说错了', 'hold', watch);
+    key.press(true);
+    for (const fr of tone(600, .3)) page.audio(fr);
+    await page.next((m) => m.t === 'listen' && m.phase === 'start');
+    key.escape();
+    await page.next((m) => m.t === 'listen' && m.phase === 'none');
+    // the key comes up after the cancel: nothing is left to send
+    key.press(false);
+    await page.next((m) => m.t === 'prefs' && m.mic === false);
+    expect(host.events).toHaveLength(0);
+    expect(page.messages.some((m) => m.t === 'listen' && m.phase === 'heard')).toBe(false);
   });
 
   it('a talk key that cannot be read keeps the gate closed', async () => {
@@ -270,8 +298,8 @@ describe('voice input', () => {
     const { key, watch } = scriptedKey();
     const { asr, host, page } = await setup('Повтори', 'hold', watch, 'ru');
     key.press(true);
-    await page.next((m) => m.t === 'listen' && m.phase === 'start');
     for (const fr of tone(800, 0)) page.audio(fr);
+    await page.next((m) => m.t === 'listen' && m.phase === 'start');
     await new Promise((r) => setTimeout(r, 200));
     key.press(false);
     await page.next((m) => m.t === 'listen' && m.phase === 'none');

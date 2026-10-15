@@ -20,8 +20,8 @@ const it: Translation<PetText> = {
     always: 'Ascolto sempre: parla e basta',
     toggleTaps: (label: string, taps: number) => `${label} per iniziare ad ascoltare, di nuovo ${taps === 2 ? 'doppia' : 'tripla'} pressione per smettere`,
     toggle: (key: string) => `Premi ${key} per iniziare ad ascoltare, premilo di nuovo per smettere`,
-    holdTaps: (key: string, taps: number) => `Premi ${key} ${taps === 2 ? 'una volta' : 'due volte'}, poi tienilo premuto e parla; rilascia per inviare`,
-    hold: (key: string) => `Tieni premuto ${key} e parla; rilascia per inviare`,
+    holdTaps: (key: string, taps: number) => `Premi ${key} ${taps === 2 ? 'una volta' : 'due volte'}, poi tienilo premuto e parla; rilascia per inviare o premi Esc mentre lo tieni premuto per annullare`,
+    hold: (key: string) => `Tieni premuto ${key} e parla; rilascia per inviare o premi Esc mentre lo tieni premuto per annullare`,
     failedLine: (error: string) => `[non riuscito] ${error}`,
   },
 
@@ -243,7 +243,7 @@ const it: Translation<PetText> = {
 
     voice: 'Input vocale',
     enable: "Attiva l'input vocale",
-    enabledHint: 'Il microfono resta aperto; ciò che dici arriva a Coo secondo la modalità di ascolto',
+    enabledHint: 'Con «Mentre il tasto per parlare è premuto» il microfono si apre solo mentre il tasto è premuto; le altre modalità di ascolto lo lasciano aperto',
     disabledHint: 'Disattivato: il microfono resta chiuso e le impostazioni qui sotto restano in attesa',
     engine: 'Motore di riconoscimento',
     funasr: 'FunASR (su questo computer)',

@@ -842,11 +842,11 @@ function stepStatus() {
   }
 }
 
-/* ---------- microphone ---------- */
+/* ---------- microphone: open while `prefs.mic`, which the World turns on and off with a held talk key in hold mode ---------- */
 let mic = null;
 async function startMic() {
   if (mic) return;
-  mic = { starting: true };
+  const opening = mic = { starting: true };
   // 拿到一半就失败时也要停麦关声卡,否则录音指示灯常亮到页面刷新
   let stream = null, ctx = null;
   try {
@@ -859,14 +859,15 @@ async function startMic() {
     const node = new AudioWorkletNode(ctx, 'pet-mic');
     node.port.onmessage = (e) => { if (ws && ws.readyState === 1) ws.send(e.data); };
     src.connect(node);
-    if (!prefs.mic || !mic) { stream.getTracks().forEach((t) => t.stop()); ctx.close(); mic = null; return; }
+    // closed, or closed and opened again, while this one was opening
+    if (!prefs.mic || mic !== opening) { stream.getTracks().forEach((t) => t.stop()); ctx.close(); if (mic === opening) mic = null; return; }
     mic = { stream, ctx, node };
     send({ t: 'mic', state: 'on', detail: stream.getAudioTracks()[0]?.label || null });
     void reportDevices();
   } catch (err) {
     if (stream) stream.getTracks().forEach((t) => t.stop());
     if (ctx) ctx.close();
-    mic = null;
+    if (mic === opening) mic = null;
     send({ t: 'mic', state: err && err.name === 'NotAllowedError' ? 'denied' : 'error', detail: String(err && err.message || err) });
   }
 }

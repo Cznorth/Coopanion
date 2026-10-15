@@ -20,8 +20,8 @@ const es419: Translation<PetText> = {
     always: 'Siempre escuchando: solo habla',
     toggleTaps: (label: string, taps: number) => `Presiona ${label} para empezar a escuchar y de nuevo ${taps === 2 ? 'dos' : 'tres'} veces para parar`,
     toggle: (key: string) => `Presiona ${key} para empezar a escuchar y otra vez para parar`,
-    holdTaps: (key: string, taps: number) => `Presiona ${key} ${taps === 2 ? 'una vez' : 'dos veces'}, luego mantén presionada la tecla y habla; suéltala para enviar`,
-    hold: (key: string) => `Mantén presionada la tecla ${key} y habla; suéltala para enviar`,
+    holdTaps: (key: string, taps: number) => `Presiona ${key} ${taps === 2 ? 'una vez' : 'dos veces'}, luego mantén presionada la tecla y habla; suéltala para enviar o presiona Esc mientras la mantienes para cancelar`,
+    hold: (key: string) => `Mantén presionada la tecla ${key} y habla; suéltala para enviar o presiona Esc mientras la mantienes para cancelar`,
     failedLine: (error: string) => `[falló] ${error}`,
   },
 
@@ -243,7 +243,7 @@ const es419: Translation<PetText> = {
 
     voice: 'Entrada de voz',
     enable: 'Activar la entrada de voz',
-    enabledHint: 'El micrófono queda abierto; lo que dices llega a Coo según el modo de escucha',
+    enabledHint: 'Con “Mientras se mantiene la tecla para hablar”, el micrófono se abre solo mientras la tecla está presionada; los demás modos de escucha lo dejan abierto',
     disabledHint: 'Desactivada: el micrófono queda cerrado y la configuración de abajo espera',
     engine: 'Motor de reconocimiento',
     funasr: 'FunASR (en esta computadora)',

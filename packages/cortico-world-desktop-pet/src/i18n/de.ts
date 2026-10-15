@@ -20,8 +20,8 @@ const de: Translation<PetText> = {
     always: 'Ich höre immer zu: Sprich einfach',
     toggleTaps: (label: string, taps: number) => `${label}, um zuzuhören; zum Beenden wieder ${taps === 2 ? 'zweimal' : 'dreimal'} drücken`,
     toggle: (key: string) => `Drück ${key}, um zuzuhören, und noch einmal, um aufzuhören`,
-    holdTaps: (key: string, taps: number) => `Drück ${key} ${taps === 2 ? 'einmal' : 'zweimal'} kurz, dann halte die Taste gedrückt und sprich; loslassen zum Senden`,
-    hold: (key: string) => `Halte ${key} gedrückt und sprich; loslassen zum Senden`,
+    holdTaps: (key: string, taps: number) => `Drück ${key} ${taps === 2 ? 'einmal' : 'zweimal'} kurz, dann halte die Taste gedrückt und sprich; loslassen zum Senden, Esc beim Halten bricht ab`,
+    hold: (key: string) => `Halte ${key} gedrückt und sprich; loslassen zum Senden, Esc beim Halten bricht ab`,
     failedLine: (error: string) => `[fehlgeschlagen] ${error}`,
   },
 
@@ -243,7 +243,7 @@ const de: Translation<PetText> = {
 
     voice: 'Spracheingabe',
     enable: 'Spracheingabe einschalten',
-    enabledHint: 'Das Mikrofon bleibt offen; was du sagst, geht je nach Zuhörmodus an Coo',
+    enabledHint: 'Bei „Solange die Sprechtaste gehalten wird“ ist das Mikrofon nur offen, während die Taste gedrückt ist; die anderen Zuhörmodi lassen es offen',
     disabledHint: 'Aus: Das Mikrofon bleibt geschlossen, und die Einstellungen unten warten',
     engine: 'Erkennungs-Engine',
     funasr: 'FunASR (auf diesem Computer)',

@@ -20,8 +20,8 @@ const fr: Translation<PetText> = {
     always: 'Écoute continue : parlez, tout simplement',
     toggleTaps: (label: string, taps: number) => `${label} pour commencer l'écoute, encore un ${taps === 2 ? 'double' : 'triple'} appui pour arrêter`,
     toggle: (key: string) => `Appuyez sur ${key} pour commencer l'écoute, appuyez à nouveau pour arrêter`,
-    holdTaps: (key: string, taps: number) => `Appuyez ${taps === 2 ? 'une fois' : 'deux fois'} sur ${key}, puis maintenez-la et parlez ; relâchez pour envoyer`,
-    hold: (key: string) => `Maintenez ${key} et parlez ; relâchez pour envoyer`,
+    holdTaps: (key: string, taps: number) => `Appuyez ${taps === 2 ? 'une fois' : 'deux fois'} sur ${key}, puis maintenez-la et parlez ; relâchez pour envoyer, ou appuyez sur Échap pendant l'appui pour annuler`,
+    hold: (key: string) => `Maintenez ${key} et parlez ; relâchez pour envoyer, ou appuyez sur Échap pendant l'appui pour annuler`,
     failedLine: (error: string) => `[échec] ${error}`,
   },
 
@@ -243,7 +243,7 @@ const fr: Translation<PetText> = {
 
     voice: 'Saisie vocale',
     enable: 'Activer la saisie vocale',
-    enabledHint: "Le micro reste ouvert ; ce que vous dites va à Coo selon le mode d'écoute",
+    enabledHint: "Avec « Tant que la touche de parole est maintenue », le micro n'est ouvert que pendant l'appui ; les autres modes d'écoute le laissent ouvert",
     disabledHint: 'Désactivée : le micro reste fermé, et les réglages ci-dessous attendent',
     engine: 'Moteur de reconnaissance',
     funasr: 'FunASR (sur cet ordinateur)',

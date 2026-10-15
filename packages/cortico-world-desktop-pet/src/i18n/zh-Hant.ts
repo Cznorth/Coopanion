@@ -20,8 +20,8 @@ const zhHant: Translation<PetText> = {
     always: '持續收音，直接說話即可',
     toggleTaps: (label: string, taps: number) => `${label} 開始收音，再按${taps === 2 ? '兩' : '三'}下停止`,
     toggle: (key: string) => `按一下 ${key} 開始收音，再按一下停止`,
-    holdTaps: (key: string, taps: number) => `快速按${taps === 2 ? '一' : '兩'}下 ${key}，緊接著按住說話，放開即送出`,
-    hold: (key: string) => `按住 ${key} 說話，放開即送出`,
+    holdTaps: (key: string, taps: number) => `快速按${taps === 2 ? '一' : '兩'}下 ${key}，緊接著按住說話，放開即送出，按住時按 Esc 取消`,
+    hold: (key: string) => `按住 ${key} 說話，放開即送出，按住時按 Esc 取消`,
     failedLine: (error: string) => `[失敗] ${error}`,
   },
 
@@ -243,7 +243,7 @@ const zhHant: Translation<PetText> = {
 
     voice: '語音輸入',
     enable: '開啟語音輸入',
-    enabledHint: '麥克風保持開啟，依收音方式傳送給 Coo',
+    enabledHint: '「按住說話鍵時收音」只在按住時開啟麥克風，其他收音方式麥克風保持開啟',
     disabledHint: '已關閉：不開啟麥克風，下面的設定暫不生效',
     engine: '辨識引擎',
     funasr: 'FunASR（本機辨識）',

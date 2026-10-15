@@ -20,8 +20,8 @@ const ptBR: Translation<PetText> = {
     always: 'Sempre ouvindo: é só falar',
     toggleTaps: (label: string, taps: number) => `Pressione ${label} para começar a ouvir e de novo ${taps === 2 ? 'duas' : 'três'} vezes para parar`,
     toggle: (key: string) => `Pressione ${key} para começar a ouvir e de novo para parar`,
-    holdTaps: (key: string, taps: number) => `Pressione ${key} ${taps === 2 ? 'uma vez' : 'duas vezes'}, depois segure a tecla e fale; solte para enviar`,
-    hold: (key: string) => `Segure ${key} e fale; solte para enviar`,
+    holdTaps: (key: string, taps: number) => `Pressione ${key} ${taps === 2 ? 'uma vez' : 'duas vezes'}, depois segure a tecla e fale; solte para enviar ou pressione Esc enquanto segura para cancelar`,
+    hold: (key: string) => `Segure ${key} e fale; solte para enviar ou pressione Esc enquanto segura para cancelar`,
     failedLine: (error: string) => `[falhou] ${error}`,
   },
 
@@ -243,7 +243,7 @@ const ptBR: Translation<PetText> = {
 
     voice: 'Entrada de voz',
     enable: 'Ligar a entrada de voz',
-    enabledHint: 'O microfone fica aberto; a fala vai para Coo conforme o modo de escuta',
+    enabledHint: 'Em “Enquanto a tecla para falar está pressionada”, o microfone abre só enquanto a tecla está pressionada; os outros modos de escuta o deixam aberto',
     disabledHint: 'Desligada: o microfone fica fechado e as configurações abaixo aguardam',
     engine: 'Motor de reconhecimento',
     funasr: 'FunASR (neste computador)',

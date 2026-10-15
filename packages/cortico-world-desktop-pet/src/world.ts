@@ -95,6 +95,12 @@ const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif
 const PREFS_SYNC_MS = 150;
 /** Talk-key polling interval: well under the shortest key tap. */
 const HOTKEY_POLL_MS = 30;
+/**
+ * Hold mode closes the microphone this long after the talk key goes up, so a press right after a
+ * release finds it open. The end of speech does not wait on it: the segmenter is flushed when the
+ * key goes up, and frames that arrive later are not used.
+ */
+const MIC_RELEASE_MS = 500;
 
 /**
  * Run controls an embedding app lends the pet's menu. Each button shows only when its control is
@@ -334,6 +340,11 @@ export class DesktopPetWorld implements World {
   private readonly dialogs = new Map<string, (a: PetDialogAnswer) => void>();
   /** The talk key is down (hold) or was switched on (toggle). */
   private talking = false;
+  /** Hold mode: the page keeps the microphone open, from the key's press until MIC_RELEASE_MS after its release. */
+  private micHeld = false;
+  private micReleaseTimer: NodeJS.Timeout | null = null;
+  /** Counts cancelled captures; a transcription begun before a cancel is dropped when it lands. */
+  private cancels = 0;
   private keyWatcher: KeyWatcher | null = null;
   /** Why the talk key cannot be read; the gate then stays closed. */
   private hotkeyProblem: string | null = null;
@@ -601,6 +612,8 @@ export class DesktopPetWorld implements World {
     this.touchWoke = false;
     this.keyWatcher?.stop();
     this.keyWatcher = null;
+    if (this.micReleaseTimer) clearTimeout(this.micReleaseTimer);
+    this.micReleaseTimer = null;
     for (const c of this.confirms.values()) { clearTimeout(c.timer); c.resolve('unavailable'); }
     this.confirms.clear();
     for (const d of this.dialogs.values()) d({ unavailable: true });
@@ -794,7 +807,7 @@ export class DesktopPetWorld implements World {
       hideWhenFullscreen: this.cfg.window.hideWhenFullscreen,
       language: this.appLanguage,
       user: this.userName,
-      mic: this.micWanted(),
+      mic: this.micOpen(),
       voice: this.voiceBrief(),
       micDevice: this.cfg.asr.mic.deviceId,
       status: this.status.status,
@@ -824,6 +837,8 @@ export class DesktopPetWorld implements World {
   private prefsSignature(): string {
     const s = this.snapshot();
     delete s.status;
+    // the talk key opens and closes the microphone by its own message; `voice` changes when voice input turns on or off
+    delete s.mic;
     return JSON.stringify(s);
   }
 
@@ -850,6 +865,24 @@ export class DesktopPetWorld implements World {
   private micWanted(): boolean {
     const phase = this.backendState()?.phase;
     return this.cfg.asr.enabled && (phase === 'running');
+  }
+
+  /** The pet page keeps the microphone open: in hold mode only around a held talk key, otherwise whenever voice input can hear. */
+  private micOpen(): boolean {
+    return this.micWanted() && (this.cfg.asr.mic.mode !== 'hold' || this.micHeld);
+  }
+
+  private setMicHeld(on: boolean): void {
+    if (this.micReleaseTimer) clearTimeout(this.micReleaseTimer);
+    this.micReleaseTimer = null;
+    if (this.micHeld === on) return;
+    this.micHeld = on;
+    this.server.sendPet({ t: 'prefs', mic: this.micOpen() });
+  }
+
+  private releaseMicSoon(): void {
+    if (!this.micHeld || this.micReleaseTimer) return;
+    this.micReleaseTimer = setTimeout(() => this.setMicHeld(false), MIC_RELEASE_MS);
   }
 
   /** What the pet's microphone button shows: switched on, able to hear, and why not. */
@@ -951,6 +984,11 @@ export class DesktopPetWorld implements World {
       case 'touch': return this.onTouch(msg);
       case 'mic': {
         this.micState = { state: String(msg.state), detail: typeof msg.detail === 'string' ? msg.detail : null };
+        // a closed microphone sends no more frames: the meter drops to silence
+        if (this.micState.state !== 'on') {
+          this.level = -100;
+          this.voiceFrame({ type: 'level', level: this.level, speaking: false, open: this.gateOpen() });
+        }
         return;
       }
       case 'prefs': return this.savePrefs(msg);
@@ -1254,7 +1292,7 @@ export class DesktopPetWorld implements World {
     if (!key) return;
     const parsed = parseHotkey(hotkey);
     const watch = this.opts.watchHotkey ?? watchHotkey;
-    const watcher = parsed ? await watch(parsed, (down) => this.onTalkKey(down), HOTKEY_POLL_MS, () => this.onTalkTap(), this.ui.hotkey) : this.ui.voice.badKey(hotkey);
+    const watcher = parsed ? await watch(parsed, (down) => this.onTalkKey(down), HOTKEY_POLL_MS, () => this.onTalkTap(), this.ui.hotkey, () => this.cancelSpeech()) : this.ui.voice.badKey(hotkey);
     if (key !== this.hotkeyKey) { if (typeof watcher !== 'string') watcher.stop(); return; }
     if (typeof watcher === 'string') {
       this.hotkeyProblem = watcher;
@@ -1289,16 +1327,42 @@ export class DesktopPetWorld implements World {
     if (this.talking === on) return;
     this.talking = on;
     this.voiceFrame({ type: 'gate', open: on });
+    if (!on) this.releaseMicSoon();
     if (!this.cfg.asr.enabled || !this.micWanted()) return;
     if (on) {
       this.listenOpen = true;
-      this.server.sendPet({ t: 'listen', phase: 'start' });
+      // hold mode opens the microphone only now: the first frame that reaches the World starts the listening (onAudio)
+      if (this.cfg.asr.mic.mode === 'hold') this.setMicHeld(true);
+      else this.server.sendPet({ t: 'listen', phase: 'start' });
       return;
     }
     const tail = this.segmenter.flush();
     if (tail) this.enqueue(tail);
     this.wasSpeaking = false;
     this.schedulePack();
+  }
+
+  /**
+   * Esc while the talk key is held (hold mode): what the listening bubble shows is dropped, nothing
+   * goes to the bot, and the bubble closes. The key's release that follows finds nothing to send.
+   */
+  private cancelSpeech(): void {
+    if (this.cfg.asr.mic.mode !== 'hold' || !this.talking) return;
+    this.talking = false;
+    this.voiceFrame({ type: 'gate', open: false });
+    this.releaseMicSoon();
+    this.segmenter.flush();
+    this.queue.length = 0;
+    this.cancels++;
+    this.packer.take();
+    this.committing = false;
+    this.partial = '';
+    this.wasSpeaking = false;
+    if (this.listenOpen) {
+      this.listenOpen = false;
+      this.server.sendPet({ t: 'listen', phase: 'none' });
+    }
+    this.log?.info('按住说话键时按了 Esc,这次收音已取消');
   }
 
   /**
@@ -1347,12 +1411,14 @@ export class DesktopPetWorld implements World {
     try {
       while (this.queue.length) {
         const u = this.queue.shift()!;
+        const cancels = this.cancels;
         const recognizer = this.recognizer();
         const res = u.result
           ? await u.result
           : recognizer
             ? await recognizer.transcribe(u.pcm)
             : { text: '', ms: 0, error: this.ui.voice.notRunning };
+        if (cancels !== this.cancels) continue;
         let text = res.text;
         if (this.simplifies) text = toSimplified(text);
         if (res.error || looksHallucinated(text)) {

@@ -17,10 +17,12 @@
  * steamworks.js for the Workshop (app/steam.cjs) and without the whale pack, which goes out through the Workshop.
  * The channel and app id go into the app's package.json as `coopanion` (app/main.cjs).
  */
-import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { createHash } from 'node:crypto';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { unzipSync } from 'fflate';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const OUT = join(ROOT, 'build', 'app');
@@ -53,6 +55,39 @@ const DEPS: Record<string, string> = {
 for (const name of WORKSPACE) {
   const pkg = JSON.parse(readFileSync(join(ROOT, 'packages', name, 'package.json'), 'utf8')) as { dependencies?: Record<string, string> };
   Object.assign(DEPS, pkg.dependencies ?? {});
+}
+
+/**
+ * Git for Windows' MinGit, which the Windows build carries for the history of Coo's workspace (core/persona.ts;
+ * app/main.cjs puts its cmd\ first on the Core's PATH). Pinned by version and SHA-256; the download is kept in
+ * build/cache/.
+ */
+const MINGIT = {
+  url: 'https://github.com/git-for-windows/git/releases/download/v2.56.0.windows.1/MinGit-2.56.0-64-bit.zip',
+  sha256: '064b440ff870ed5198527e8f3a92cdf5bd2fd0fedf5e718af95e3fdaddeff718',
+};
+
+async function addMinGit(dir: string): Promise<void> {
+  const cached = join(ROOT, 'build', 'cache', MINGIT.url.split('/').pop()!);
+  if (!existsSync(cached)) {
+    const res = await fetch(MINGIT.url);
+    if (!res.ok) throw new Error(`MinGit 下载失败:HTTP ${res.status} ${MINGIT.url}`);
+    mkdirSync(dirname(cached), { recursive: true });
+    writeFileSync(cached, Buffer.from(await res.arrayBuffer()));
+  }
+  const zip = readFileSync(cached);
+  const sum = createHash('sha256').update(zip).digest('hex');
+  if (sum !== MINGIT.sha256) {
+    rmSync(cached);
+    throw new Error(`MinGit 校验不符:得到 ${sum},应为 ${MINGIT.sha256}`);
+  }
+  for (const [name, data] of Object.entries(unzipSync(zip))) {
+    if (name.endsWith('/')) continue;
+    const file = join(dir, name);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, data);
+  }
+  console.log(`MinGit ${relative(ROOT, dir)}`);
 }
 
 const skip = (base: string) => (src: string) => {
@@ -94,6 +129,7 @@ for (const name of WORKSPACE) {
   manifest.dependencies[name] = (JSON.parse(readFileSync(join(from, 'package.json'), 'utf8')) as { version: string }).version;
 }
 writeFileSync(join(OUT, 'package.json'), JSON.stringify(manifest, null, 2));
+if (process.platform === 'win32') await addMinGit(join(OUT, 'mingit'));
 console.log(`app directory ready: ${relative(ROOT, OUT)}`);
 
 const target = process.platform === 'darwin' ? '--mac' : process.platform === 'linux' ? '--linux' : '--win';

@@ -152,6 +152,8 @@ const { RELEASES_URL, startUpdater } = require('./updater.cjs');
 
 const userData = app.getPath('userData');
 const shimDir = join(__dirname, 'shims');
+/** MinGit's command directory in the Windows build (scripts/pack.ts). */
+const MINGIT = join(APP_ROOT, 'mingit', 'cmd');
 const petHost = app.isPackaged ? [process.execPath, '--pet-host'] : [process.execPath, APP_ROOT, '--pet-host'];
 
 const core = new CoreHost({
@@ -170,12 +172,15 @@ const core = new CoreHost({
     pnpm_config_store_dir: join(DATA, 'pnpm', 'store'),
     pnpm_config_cache_dir: join(DATA, 'pnpm', 'cache'),
     pnpm_config_state_dir: join(DATA, 'pnpm', 'state'),
-    // extension installs call `corepack pnpm`; the shim (corepack.cmd, or corepack on macOS) runs the bundled pnpm on this runtime
-    PATH: `${shimDir}${delimiter}${process.env.PATH ?? ''}`,
+    // extension installs call `corepack pnpm`; the shim (corepack.cmd, or corepack on macOS) runs the bundled pnpm on this runtime.
+    // The Windows build carries MinGit (scripts/pack.ts), ahead of any other git, for the history of Coo's workspace
+    PATH: [shimDir, ...existsSync(MINGIT) ? [MINGIT] : [], process.env.PATH ?? ''].join(delimiter),
     CORTICO_NODE_EXE: process.execPath,
     CORTICO_PNPM_CJS: join(APP_ROOT, 'node_modules', 'pnpm', 'bin', 'pnpm.cjs'),
     // reported with the usage statistics (core/telemetry.ts)
     COOPANION_VERSION: app.getVersion(),
+    // the introduction offers the whale's persona outside Steam (core/guide.ts)
+    COOPANION_CHANNEL: STEAM ? 'steam' : 'github',
   },
 });
 

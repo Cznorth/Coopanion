@@ -17,4 +17,6 @@ module.exports = {
     + `Revenir en arrière renomme les données actuelles en data-replaced-<heure> et les conserve dans ${parent} ; rien n'est supprimé. Après « Garder les actuels », la question ne sera plus posée.`,
   strandedRestore: "Reprendre les paramètres d'avant",
   strandedKeep: 'Garder les actuels',
+
+  dataNotWritable: (dir, suggested) => `Coopanion ne peut pas écrire dans son dossier de données et n'a pas démarré :\n${dir}\n\nRelancez le programme d'installation et installez Coopanion dans un dossier où votre compte peut écrire, par exemple :\n${suggested}`,
 };

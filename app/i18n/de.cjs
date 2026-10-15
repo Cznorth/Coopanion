@@ -17,4 +17,6 @@ module.exports = {
     + `Beim Zurückwechseln werden die aktuellen Daten in data-replaced-<Zeit> umbenannt und in ${parent} aufbewahrt; nichts wird gelöscht. Nach „Aktuelle behalten“ wirst du nicht mehr gefragt.`,
   strandedRestore: 'Einstellungen von vorher verwenden',
   strandedKeep: 'Aktuelle behalten',
+
+  dataNotWritable: (dir, suggested) => `Coopanion kann nicht in seinen Datenordner schreiben und wurde nicht gestartet:\n${dir}\n\nFühre das Installationsprogramm erneut aus und installiere in einen Ordner, in den dein Benutzerkonto schreiben darf, zum Beispiel:\n${suggested}`,
 };

@@ -17,4 +17,6 @@ module.exports = {
     + `Voltar para elas renomeia os dados atuais para data-replaced-<horário> e os mantém em ${parent}; nada é excluído. Depois de “Manter as atuais”, isso não será perguntado de novo.`,
   strandedRestore: 'Usar as configurações de antes',
   strandedKeep: 'Manter as atuais',
+
+  dataNotWritable: (dir, suggested) => `O Coopanion não consegue gravar na pasta de dados e não foi iniciado:\n${dir}\n\nExecute o instalador de novo e instale em uma pasta em que sua conta possa gravar, por exemplo:\n${suggested}`,
 };

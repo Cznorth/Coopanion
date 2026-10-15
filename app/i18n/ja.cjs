@@ -17,4 +17,6 @@ module.exports = {
     + `元に戻すと、現在のデータは data-replaced-<時刻> に名前が変わり、${parent} に残ります。削除されるものはありません。「今の設定を使い続ける」を選ぶと、今後は確認しません。`,
   strandedRestore: '更新前の設定に戻す',
   strandedKeep: '今の設定を使い続ける',
+
+  dataNotWritable: (dir, suggested) => `Coopanion はデータフォルダーに書き込めないため、起動しませんでした：\n${dir}\n\nインストーラーをもう一度実行し、現在のユーザーが書き込めるフォルダーにインストールしてください。例：\n${suggested}`,
 };

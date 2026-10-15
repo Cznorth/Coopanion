@@ -17,4 +17,6 @@ module.exports = {
     + `Tornando indietro, i dati attuali vengono rinominati in data-replaced-<ora> e conservati in ${parent}; non viene eliminato nulla. Dopo «Tieni quelle attuali» la domanda non verrà più posta.`,
   strandedRestore: 'Usa le impostazioni di prima',
   strandedKeep: 'Tieni quelle attuali',
+
+  dataNotWritable: (dir, suggested) => `Coopanion non può scrivere nella sua cartella dei dati e non è partito:\n${dir}\n\nAvvia di nuovo il programma di installazione e installa in una cartella in cui il tuo account può scrivere, per esempio:\n${suggested}`,
 };

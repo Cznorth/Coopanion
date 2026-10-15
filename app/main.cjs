@@ -56,9 +56,37 @@ const DATA = process.env.CORTICO_COMPANION_DATA
     : MAC || LINUX || STEAM ? join(app.getPath('appData'), 'Coopanion') : join(dirname(process.execPath), 'data'));
 
 /**
- * An install made through the installer's pages sits in %LOCALAPPDATA%\Programs\Coopanion: the "only for me"
- * page sets that after installer/nsis.nsh's customInit ran. From 0.1.14 to 0.1.16 an update, which installs
- * silently and so keeps customInit's choice, moved the program to %USERPROFILE%\Coopanion and left data\ behind
+ * data\ beside the program cannot be written when the program sits in a directory that needs administrator
+ * rights, such as Program Files. The app then shows why and quits before anything is created under DATA; the
+ * probe goes into DATA, or into the install directory while DATA does not exist yet.
+ */
+function dataWritable() {
+  const probe = join(existsSync(DATA) ? DATA : dirname(DATA), `.write-test-${process.pid}`);
+  try {
+    writeFileSync(probe, '');
+    rmSync(probe);
+    return true;
+  } catch {
+    return false;
+  }
+}
+if (app.isPackaged && process.platform === 'win32' && !STEAM && !process.env.CORTICO_COMPANION_DATA && !dataWritable()) {
+  // Chromium's own files for this one dialog go to the temp directory
+  app.setPath('userData', join(app.getPath('temp'), 'Coopanion'));
+  app.whenReady().then(() => {
+    const { configuredLanguage, systemLanguage, textOf } = require('./i18n/index.cjs');
+    const t = textOf(configuredLanguage(join(DATA, 'home')) ?? systemLanguage(app));
+    const suggested = join(process.env.LOCALAPPDATA ?? app.getPath('home'), 'Programs', 'Coopanion');
+    dialog.showErrorBox('Coopanion', t.dataNotWritable(DATA, suggested));
+    app.exit(1);
+  });
+  return;
+}
+
+/**
+ * An install made through the installer's pages sits in %LOCALAPPDATA%\Programs\Coopanion: the per-user
+ * install mode (installer/nsis.nsh's customInstallMode) sets that after its customInit ran. From 0.1.14 to
+ * 0.1.16 an update, which installs silently and so keeps customInit's choice, moved the program to %USERPROFILE%\Coopanion and left data\ behind
  * (#84). The first start in the new place takes that data\ back. When the app has run here since, this data\ may
  * be the one in use, so a dialog asks first (askRestoreStranded); taking the old one back then happens on the
  * next start, before anything here is open, and keeps this one beside it as data-replaced-<time>.

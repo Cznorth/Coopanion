@@ -17,4 +17,6 @@ module.exports = {
     + `되돌리면 현재 데이터는 data-replaced-<시간>으로 이름이 바뀌어 ${parent}에 보관되며, 아무것도 삭제되지 않습니다. "현재 설정 유지"를 선택하면 다시 묻지 않습니다.`,
   strandedRestore: '업데이트 전 설정 사용',
   strandedKeep: '현재 설정 유지',
+
+  dataNotWritable: (dir, suggested) => `Coopanion이 데이터 폴더에 쓸 수 없어 시작하지 않았습니다:\n${dir}\n\n설치 프로그램을 다시 실행해 현재 사용자가 쓸 수 있는 폴더에 설치하세요. 예:\n${suggested}`,
 };

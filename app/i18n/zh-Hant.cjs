@@ -17,4 +17,6 @@ module.exports = {
     + `換回後，現在這份會改名為 data-replaced-<時間>，留在 ${parent} 裡，不會刪除。選「繼續使用目前設定」之後不再詢問。`,
   strandedRestore: '換回更新前的設定',
   strandedKeep: '繼續使用目前設定',
+
+  dataNotWritable: (dir, suggested) => `Coopanion 無法寫入資料目錄，沒有啟動：\n${dir}\n\n請重新執行安裝程式，安裝到目前使用者有權寫入的目錄，例如：\n${suggested}`,
 };

@@ -66,7 +66,11 @@ import { noticeDefinition, type NoticeWorld } from './notice.ts';
 import { coreText } from './i18n/index.ts';
 import { petToolDescriber } from './pet-status.ts';
 import { appLanguage, modelLanguage, replyLanguage } from './language.ts';
-import { CONSOLE_PORT, DEPLOYMENT, DISPLAY_NAME, followLanguage as followPersonaLanguage, isSeededConstitution, seed } from './seed.ts';
+import { CONSOLE_PORT, DEPLOYMENT, DISPLAY_NAME, followLanguage as followPersonaLanguage, personaOf, seed } from './seed.ts';
+import { coopanionPersona, type CoopanionPersona } from './persona.ts';
+import type { Cormini } from '../vendor/cortico/bots/cormini/persona/persona.ts';
+import type { contextStageConfigGroup } from '../vendor/cortico/bots/cormini/persona/config.ts';
+import type { CorminiConfig } from '../vendor/cortico/bots/cormini/index.ts';
 import { crashFields, describeEndpoint, publicExtensionName, Telemetry, type Counter } from './telemetry.ts';
 
 /** The active endpoint's key is set in the process environment or the endpoint's `.env`; a ChatGPT plan's endpoint is signed in. */
@@ -78,6 +82,8 @@ function hasKey(config: CoreConfig): boolean {
   return secretReader(join(providersRoot(), config.activeProvider, '.env'))(entry.secret) !== '';
 }
 
+/** The app's version, as the Electron main process passes it; `dev` in a development run. */
+const APP_VERSION = process.env.COOPANION_VERSION ?? 'dev';
 /** The program directory; crash reports name files relative to it. */
 const APP_ROOT = fileURLToPath(new URL('../', import.meta.url));
 /** How long the pet page gets to show up on a first start before the settings window opens instead. */
@@ -307,7 +313,7 @@ function countFiles(dir: string, cap = 10_000): number {
 }
 
 /** The settings and state sent with each day's statistics (docs/TELEMETRY.md, the day record). */
-function snapshotOf(config: CoreConfig, workspace: string): Record<string, unknown> {
+function snapshotOf(config: CoreConfig, workspace: string, git: () => boolean): Record<string, unknown> {
   const at = (path: string) => getByPath(config as unknown as Record<string, unknown>, path) ?? null;
   const active = config.providers[config.activeProvider];
   const endpoint = describeEndpoint(active, active?.spec?.model ?? '', endpointVendor(active));
@@ -336,7 +342,9 @@ function snapshotOf(config: CoreConfig, workspace: string): Record<string, unkno
     userNamed: !['', '伙伴', '主人'].includes(String(at('worlds.desktop-pet.user') ?? '')),
     cuaEnabled: at('worlds.desktop-pet.cua.enabled'),
     cuaLevel: at('worlds.desktop-pet.cua.permission'),
-    personaChanged: !isSeededConstitution(workspace),
+    persona: personaOf(workspace) ?? 'custom',
+    personaChanged: personaOf(workspace) === null,
+    gitAvailable: git(),
     memoryFiles: countFiles(workspace),
   };
 }
@@ -375,9 +383,15 @@ async function introduce(deps: GuideDeps, run: (deps: GuideDeps) => Promise<void
   await askForKey(deps, keySet, talked, first ? ASK_AFTER_GUIDE_MS : 0);
 }
 
-async function corminiDefinition(): Promise<BotDefinition<CoreConfig>> {
-  const file = join(repoRoot(), 'bots', 'cormini', 'index.ts');
-  return (await import(pathToFileURL(file).href) as { default: BotDefinition<CoreConfig> }).default;
+/** Cormini's bot definition, its Persona class and its context config group, from the staged Cortico. */
+async function cormini() {
+  const load = <T>(...path: string[]) => import(pathToFileURL(join(repoRoot(), 'bots', 'cormini', ...path)).href) as Promise<T>;
+  const [definition, persona, config] = await Promise.all([
+    load<{ default: BotDefinition<CorminiConfig> }>('index.ts'),
+    load<{ Cormini: typeof Cormini }>('persona', 'persona.ts'),
+    load<{ contextStageConfigGroup: typeof contextStageConfigGroup }>('persona', 'config.ts'),
+  ]);
+  return { definition: definition.default, Persona: coopanionPersona(persona.Cormini), contextGroup: config.contextStageConfigGroup('cormini') };
 }
 
 export async function main(): Promise<void> {
@@ -435,7 +449,7 @@ export async function main(): Promise<void> {
   seed(home, isLanguage(system) ? system : 'zh');
   const deployDir = join(home, DEPLOYMENT);
   const NOTICE = noticeDefinition({
-    version: process.env.COOPANION_VERSION ?? 'dev',
+    version: APP_VERSION,
     notesDir: join(APP_ROOT, 'docs', 'releases'),
     stateFile: join(deployDir, NOTICE_FILE),
     alarmsFile: join(deployDir, 'alarms.json'),
@@ -448,12 +462,14 @@ export async function main(): Promise<void> {
   });
   /** Coopanion's config group; the console reads this object, retitled in place when the app language changes. */
   const settingsGroup = companionGroup('zh');
-  const cormini = await corminiDefinition();
-  const base: BotDefinition<CoreConfig> = {
-    ...cormini,
+  const base = await cormini();
+  /** Coo's Persona, once the bot is built. */
+  let coo: CoopanionPersona | null = null;
+  const definitionBase: BotDefinition<CorminiConfig> = {
+    ...base.definition,
     declares: [TERMINAL.id, DESKTOP_PET.id, NOTICE.id],
     defaults: () => ({
-      ...cormini.defaults(),
+      ...base.definition.defaults(),
       displayName: DISPLAY_NAME,
       web: { port: CONSOLE_PORT, theme: 'mint' },
       // Cormini's 6/12 end a computer-use task partway through; 20/40 are the caps the desktop-pet
@@ -461,16 +477,28 @@ export async function main(): Promise<void> {
       rounds: { soft: 20, hard: 40 },
       companion: { telemetry: true },
     }),
+    // Cormini's own build with Coo's Persona class; the workspace is snapshotted before Coo can write to it
     build: (loaded, worlds) => {
-      const parts = cormini.build(loaded, worlds);
+      const cfg = loaded.config;
+      const persona = new base.Persona({
+        memoryDir: loaded.memoryDir,
+        context: () => cfg.context,
+        rounds: { ...cfg.rounds },
+        worlds,
+        orientationOverrideFile: join(loaded.rootDir, 'prompts', 'ORIENTATION.md'),
+        firstTurnDir: join(loaded.rootDir, 'prompts'),
+        tickDelayMs: () => (cfg.tick.intervalMinutes === null ? null : cfg.tick.intervalMinutes * 60_000),
+      });
+      persona.snapshot(APP_VERSION);
+      coo = persona;
       return {
-        ...parts,
+        persona,
+        onStart: () => persona.startRhythm(),
+        onStop: () => persona.stopRhythm(),
         console: {
-          ...parts.console,
-          configGroups: [...parts.console?.configGroups ?? [], settingsGroup],
-          configOptions: (kind, consoleLanguage) => (kind === LANGUAGE_OPTIONS
-            ? LANGUAGES.map((value) => ({ value, label: LANGUAGE_NAMES[value] }))
-            : parts.console?.configOptions?.(kind, consoleLanguage) ?? []),
+          configGroups: [base.contextGroup, settingsGroup],
+          status: () => ({ context: { maxTokens: cfg.context.maxTokens, softRatio: cfg.context.softRatio } }),
+          configOptions: (kind) => (kind === LANGUAGE_OPTIONS ? LANGUAGES.map((value) => ({ value, label: LANGUAGE_NAMES[value] })) : []),
         },
       };
     },
@@ -486,14 +514,14 @@ export async function main(): Promise<void> {
   extensions.consoleAssets.push(...bundledConsoleAssets([
     { id: DESKTOP_PET.id, packageName: 'cortico-world-desktop-pet' },
   ]));
-  const definition = withWorlds(base, [...bundled, ...extensions.worlds]);
+  const definition = withWorlds(definitionBase, [...bundled, ...extensions.worlds]);
 
   const loaded = loadDeployment(definition, deployDir, repoRoot(), join(repoRoot(), 'bots', 'cormini'), providersRoot());
   config = loaded.config;
   Object.assign(settingsGroup, companionGroup(language()));
   watchLanguage(loaded.config, (next) => {
     Object.assign(settingsGroup, companionGroup(next));
-    followPersonaLanguage(loaded.memoryDir, modelLanguage(next));
+    followPersonaLanguage(loaded.memoryDir, next);
     process.send?.({ type: 'companion:language', language: next });
     (pet as DesktopPetWorld | null)?.refresh();
     followPetLook(deployDir, getByPath(loaded.config as unknown as Record<string, unknown>, 'worlds.desktop-pet.skin') as { figure?: string; scheme?: string } | undefined,
@@ -508,11 +536,11 @@ export async function main(): Promise<void> {
   bus = bot.core.bus;
   const stats = new Telemetry({
     dir: deployDir,
-    version: process.env.COOPANION_VERSION ?? 'dev',
+    version: APP_VERSION,
     // development runs point it at a local telemetry-server
     url: process.env.COOPANION_TELEMETRY_URL || undefined,
     enabled: () => getByPath(loaded.config as unknown as Record<string, unknown>, TELEMETRY_KEY) !== false,
-    snapshot: () => snapshotOf(loaded.config, loaded.memoryDir),
+    snapshot: () => snapshotOf(loaded.config, loaded.memoryDir, () => coo?.gitAvailable() ?? false),
     extensions: () => reportedExtensions(extensions),
   });
   telemetry = stats;

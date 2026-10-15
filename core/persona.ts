@@ -1,0 +1,169 @@
+/**
+ * Coo's Persona: Cortico's Cormini with three changes for the desktop pet.
+ *
+ * - `PARTNER.md` in the workspace, once Coo writes it, goes into the system prefix whole (Cormini's
+ *   partner segment) and cannot be deleted with `delete_file`, as `CONSTITUTION.md` cannot.
+ * - Every write Coo makes to its workspace is committed to the workspace's Git repository, one commit
+ *   per tool call, so the workspace has a history to look back on and go back to. `blobs/` is left out
+ *   of the repository. Without Git (`gitInstalled`) the files are written all the same.
+ * - The lines the Persona itself puts into the context (a session opening, new events, a World
+ *   switched, context pressure, the handoff, the round cap, stalls) and its workspace listing are in
+ *   English whatever the app language; Coo is told which language to talk in by the desktop-pet World.
+ *
+ * Cortico is staged at build time and the bots are not part of its module paths, so the base class is
+ * passed in: the app loads it from the staged Cortico (`companion.ts`), the tests from vendor/cortico.
+ */
+import { execFileSync } from 'node:child_process';
+import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import type { EventEnvelope, SessionOpeningReason, ToolDef, WorldLifecycleEvent } from 'cortico/core/types.ts';
+import type { Cormini } from '../vendor/cortico/bots/cormini/persona/persona.ts';
+import type { GitAuthor, WorkspaceGit } from '../vendor/cortico/bots/cormini/persona/workspaceGit.ts';
+
+/** The workspace file that goes into the prefix as Coo's notes on the person. */
+export const PARTNER_FILE = 'PARTNER.md';
+/** Commits of Coo's own writes. */
+export const AUTHOR_COO: GitAuthor = { name: 'coo', email: 'coo@persona.local' };
+/** What the workspace's `.gitignore` holds besides Cormini's own line: the binaries Coo saves stay out of the history. */
+const IGNORED = 'blobs/';
+/** Tags made by `snapshot`: the workspace as each version of the app first found it. */
+export const SNAPSHOT_TAG = (version: string) => `start-${version}`;
+
+/** Write tools and the receipt each starts with when it succeeded (Cormini's workspaceTools.ts and blobs.ts). */
+const WRITES: Record<string, { ok: string; verb: string }> = {
+  write_file: { ok: '[written] ', verb: 'wrote' },
+  edit_file: { ok: '[edited] ', verb: 'edited' },
+  append_file: { ok: '[appended] ', verb: 'appended to' },
+  delete_file: { ok: '[deleted] ', verb: 'deleted' },
+  save_blob: { ok: '[saved] ', verb: 'saved' },
+};
+
+/**
+ * Takes `path` out of the repository at `dir` and leaves the files: a workspace may have committed `blobs/`
+ * before it was ignored. Git variables that would point the call at another repository are dropped, as
+ * WorkspaceGit drops them.
+ */
+function untrack(dir: string, path: string): void {
+  const env = Object.fromEntries(Object.entries(process.env)
+    .filter(([k]) => !/^GIT_(DIR|WORK_TREE|INDEX_FILE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|COMMON_DIR|PREFIX)$/i.test(k)));
+  execFileSync('git', ['-C', dir, '-c', 'safe.directory=*', 'rm', '-r', '--cached', '--quiet', '--ignore-unmatch', '--', path], { cwd: dir, env, stdio: 'ignore' });
+}
+
+/** Coo's Persona class on `Base`, Cormini as the staged Cortico has it. */
+export function coopanionPersona(Base: typeof Cormini) {
+  return class CoopanionPersona extends Base {
+    /** Commits wait for the one before: Git's index takes one writer, and a turn often writes several files. */
+    private commits: Promise<unknown> = Promise.resolve();
+
+    private get git(): WorkspaceGit {
+      return this.memory.git;
+    }
+
+    /** Whether Git runs here, so the workspace has a history. */
+    gitAvailable(): boolean {
+      return this.git.available();
+    }
+
+    protected override partnerDocFile(): string {
+      return join(this.memoryDir, PARTNER_FILE);
+    }
+
+    /**
+     * Brings the repository in line with this Persona: `blobs/` ignored and untracked, then whatever is
+     * not committed yet committed and tagged `start-<version>` the first time `version` runs. Run once
+     * at start, before Coo writes anything; does nothing without Git.
+     */
+    snapshot(version: string): void {
+      const git = this.git;
+      git.ensureRepo();
+      if (!git.status().repo) return;
+      const ignore = join(this.memoryDir, '.gitignore');
+      const lines = existsSync(ignore) ? readFileSync(ignore, 'utf8').split(/\r?\n/) : [];
+      if (!lines.includes(IGNORED)) appendFileSync(ignore, `${lines.length && lines.at(-1) !== '' ? '\n' : ''}${IGNORED}\n`, 'utf8');
+      untrack(this.memoryDir, IGNORED);
+      const tag = SNAPSHOT_TAG(version);
+      if (git.listTags().some((t) => t.name === tag)) git.commitAll('Changes from before this start', AUTHOR_COO);
+      else git.tag(tag, `The workspace as version ${version} found it`);
+    }
+
+    protected override tools(): ToolDef[] {
+      return super.tools().map((t) => (WRITES[t.name] ? this.committed(t, WRITES[t.name]!) : t));
+    }
+
+    /** The tool, committing the workspace after each call that succeeded. */
+    private committed(base: ToolDef, { ok, verb }: { ok: string; verb: string }): ToolDef {
+      return {
+        ...base,
+        handler: async (args, ctx) => {
+          // the repository exists before the first write, so its first commit (checkpoint0) holds the workspace as it was
+          this.git.ensureRepo();
+          const out = await base.handler(args, ctx);
+          if (typeof out === 'string' && out.startsWith(ok)) {
+            const message = `Coo ${verb} ${String(args.path ?? '')}`.trim();
+            const run = () => this.git.commitAllAsync(message, AUTHOR_COO);
+            this.commits = this.commits.then(run, run);
+            await this.commits;
+          }
+          return out;
+        },
+      };
+    }
+
+    override onOpening(ctx: { reason: SessionOpeningReason }): void {
+      this.core?.injectInternal(ctx.reason === 'restarted' ? '[system] The app restarted; the session carries on.' : '[system] The session has started.', 'opening');
+    }
+
+    override onWorldLifecycle(event: WorldLifecycleEvent): void {
+      const what = event.kind === 'visibility'
+        ? (event.visible ? 'is visible to you again' : 'is hidden from you; its events no longer reach you')
+        : event.kind === 'mounted' ? 'is on' : event.kind === 'unmounted' ? 'is off' : 'restarted';
+      this.core?.injectInternal(`[system] The World "${event.label}" ${what}.`, 'notice');
+    }
+
+    /** Cormini's delivery: the heartbeat's quiet time starts over, and one line counts the events. */
+    override onDelivery(ctx: { events: EventEnvelope[] }): void {
+      const n = ctx.events.filter((e) => e.origin === 'external').length;
+      if (n === 0) return;
+      // Cormini keeps its heartbeat private; the bracket access is TypeScript's way in for a subclass
+      this['heartbeat'].noteActivity();
+      this.core?.injectInternal(`[system] ${n} new event${n === 1 ? '' : 's'}.`, 'notice');
+    }
+
+    protected override pressureNote(): string {
+      return '[system] A handoff is coming. It clears everything above; the latest stretch is written into a handoff note for the new session. '
+        + 'Whatever from long before you are still following or still mean to do, write it into a file now; soon the context will be gone.';
+    }
+
+    override onStallsRecovered({ count, quietMs }: { count: number; quietMs: number }): string | null {
+      if (count < 2) return null;
+      const span = quietMs >= 60_000 ? `about ${Math.round(quietMs / 60_000)} min` : `about ${Math.round(quietMs / 1000)} s`;
+      return `[system] You got stuck ${count} times and could not speak for ${span}; it was not your choice. You can speak again now.`;
+    }
+
+    protected override handoffNoteLines(): string[] {
+      return [
+        '[system] The handoff is done. The context before it is cleared; the files in your workspace are all still there. ',
+        `The stretch before the clear is written up as a handoff note, delivered with this batch and saved in ${this.lastHandoffFile ?? 'handoffs/'}: `,
+        'it comes in parts by time, only parts with content are sent; "the latest stretch" leads into now, "the earlier stretch" is only for reference. ',
+        'Only the latest stretch keeps what your speaking tools were called with and their receipts. ',
+        'What a call was given is what you meant to say; whether the person saw it is in the receipt and the events after it. ',
+        'Carry on with the current topic or action naturally, with no need to remark on the pause, the clear or the handoff. Old lines and folded fragments are not models for wording or length. ',
+        'Never call a speaking tool with empty content; nothing would show. ',
+        'To say something, put it straight into the call. If you have nothing to say this turn, call end_turn.',
+      ];
+    }
+
+    protected override softCapHint(): string | null {
+      return '[system] You have taken many steps in a row this turn. Finish what is in hand, then call end_turn.';
+    }
+
+    protected override prefixFolds(): Array<{ prefix: string; line: (n: number) => string }> {
+      return [
+        { prefix: 'handoffs/', line: (n) => `handoffs/ (${n} handoff notes; list_files with dir handoffs lists them all)` },
+        { prefix: 'blobs/', line: (n) => `blobs/ (${n} binary files; list_files with dir blobs lists them all, read_file shows an image)` },
+      ];
+    }
+  };
+}
+
+export type CoopanionPersona = InstanceType<ReturnType<typeof coopanionPersona>>;

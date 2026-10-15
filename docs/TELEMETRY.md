@@ -56,7 +56,8 @@
 | `hoverButtons` / `doubleClickChat` / `rememberPosition` | 悬停按钮、双击打字是否打开、是否记住位置 |
 | `userNamed` | 「称呼」是否改过默认值，只报是或否，不报名字 |
 | `cuaEnabled` / `cuaLevel` | 电脑操作是否启用、询问档位 |
-| `personaChanged` | Coo 的人设（CONSTITUTION.md）是否和应用带的初始版本(中文版、英文版)都不同，只报是或否 |
+| `persona` / `personaChanged` | Coo 的人设（CONSTITUTION.md）和应用带的哪一份人设（任一语言）一字不差：`coo`、`grail`、`forge`、`heart`、`winter`、`whale`，改过就是 `custom`；`personaChanged` 是它是否为 `custom`。人设的内容不发送 |
+| `gitAvailable` | 这台电脑上能不能运行 git，也就是 Coo 的工作区有没有版本历史 |
 | `memoryFiles` | Coo 工作区（记忆）里的文件个数 |
 | `chatDays` | 安装以来和 Coo 说过话的天数 |
 | `extensions` | 装了的扩展：包名（本地或网址安装的报 `private`）、版本、类别 |

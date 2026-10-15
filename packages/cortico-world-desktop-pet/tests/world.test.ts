@@ -237,7 +237,7 @@ describe('with a pet page', () => {
     expect(receipt).toContain('| beep | 哔哔 | 哔一声 |');
     page.send({ t: 'figure', id: 'robot', ok: true, words: ['sit'] });
     await expect.poll(() => host.events.length).toBe(1);
-    expect(host.events[0].text).toMatch(/\[形象\] 词表变了。这些词用不了了:beep\(哔哔\)。$/);
+    expect(host.events[0].text).toMatch(/\[figure\] 词表变了。这些词用不了了:beep\(哔哔\)。$/);
     expect(await tool(world, 'pet_act').handler({ actions: ['哔哔'] }, ctx)).toMatchObject({ failed: true });
   });
 

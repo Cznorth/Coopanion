@@ -775,10 +775,21 @@ function onListen(m) {
     setBody({ listening: false });
   }
 }
-/** `text` is settled; `interim` is the sentence still being heard, greyed, and may still change. */
+/**
+ * `text` is settled; `interim` is the sentence still being heard, greyed, and may still change.
+ * The bubble is built once and then only updated, so a click on its cancel button is not lost to a redraw.
+ */
 function showHeard(text, live, hint, interim = '') {
   heardEl.hidden = false; trail.hidden = false;
-  heardEl.innerHTML = `<p class="b-text"><span class="fin"></span><span class="interim"></span>${live ? '<span class="caret" aria-hidden="true"></span>' : ''}</p><span class="b-hint"></span>`;
+  if (!heardEl.querySelector('.b-text')) {
+    heardEl.innerHTML = '<p class="b-text"><span class="fin"></span><span class="interim"></span><span class="caret" aria-hidden="true"></span></p><div class="b-foot"><span class="b-hint"></span><button class="b-cancel" type="button"></button></div>';
+    heardEl.querySelector('.b-cancel').addEventListener('click', () => { sfx.tick(); send({ t: 'cancel' }); });
+  }
+  heardEl.querySelector('.caret').hidden = !live;
+  // the World drops what this bubble shows and closes it; with the talk key off (always) there is no capture to cancel
+  const cancel = heardEl.querySelector('.b-cancel');
+  cancel.textContent = t('heard.cancel');
+  cancel.hidden = !live || prefs.voice.mode === 'always';
   heardEl.querySelector('.fin').textContent = text;
   // a space only before Latin text that follows Latin text or ASCII punctuation; Chinese sentences run on
   heardEl.querySelector('.interim').textContent = text && interim && /[A-Za-z0-9.,!?;:]$/.test(text) && /^[A-Za-z0-9]/.test(interim) ? ' ' + interim : interim;

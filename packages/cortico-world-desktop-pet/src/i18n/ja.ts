@@ -20,8 +20,8 @@ const ja: Translation<PetText> = {
     always: '常に聞き取り中：そのまま話してください',
     toggleTaps: (label: string, taps: number) => `${label}と聞き取り開始、もう一度 ${taps === 2 ? 2 : 3} 回押すと停止`,
     toggle: (key: string) => `${key} を押すと聞き取り開始、もう一度押すと停止`,
-    holdTaps: (key: string, taps: number) => `${key} を ${taps === 2 ? 1 : 2} 回押してから押したまま話し、離すと送信。押している間に Esc でキャンセル`,
-    hold: (key: string) => `${key} を押したまま話し、離すと送信。押している間に Esc でキャンセル`,
+    holdTaps: (key: string, taps: number) => `${key} を ${taps === 2 ? 1 : 2} 回押してから押したまま話し、離すと送信`,
+    hold: (key: string) => `${key} を押したまま話し、離すと送信`,
     failedLine: (error: string) => `[失敗] ${error}`,
   },
 
@@ -243,7 +243,8 @@ const ja: Translation<PetText> = {
 
     voice: '音声入力',
     enable: '音声入力をオンにする',
-    enabledHint: '「発話キーを押しているあいだ」ではキーを押している間だけマイクを開き、ほかの聞き取り方ではマイクを開いたままにします',
+    enabledHint: 'マイクは開いたままで、話した内容は聞き取り方の設定どおり Coo に届きます',
+    enabledHintOnPress: '発話キーを押している間だけマイクを開き、離すと閉じます',
     disabledHint: 'オフ：マイクは閉じたままで、下の設定は使われません',
     engine: '認識エンジン',
     funasr: 'FunASR（このコンピューター上）',
@@ -272,6 +273,10 @@ const ja: Translation<PetText> = {
     micN: (n: number) => `マイク ${n}`,
     mode: '聞き取り方',
     modes: { hold: '発話キーを押しているあいだ', toggle: '発話キーでオン／オフ', always: '常に' },
+    openOnPress: '押している間だけマイクを開く',
+    openOnPressHint: 'マイクを開くと通話モードに切り替わる Bluetooth イヤホンなど向けで、押してから少し待って話さないと最初の言葉が入らないことがあります',
+    switchOn: 'オン',
+    switchOff: 'オフ',
     presses: {
       2: { hold: '2 回押してから長押し', toggle: '2 回押して開始、もう一度 2 回押して停止' },
       1: { hold: 'そのまま長押し', toggle: '押して開始、もう一度押して停止' },

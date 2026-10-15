@@ -20,8 +20,8 @@ const ptBR: Translation<PetText> = {
     always: 'Sempre ouvindo: é só falar',
     toggleTaps: (label: string, taps: number) => `Pressione ${label} para começar a ouvir e de novo ${taps === 2 ? 'duas' : 'três'} vezes para parar`,
     toggle: (key: string) => `Pressione ${key} para começar a ouvir e de novo para parar`,
-    holdTaps: (key: string, taps: number) => `Pressione ${key} ${taps === 2 ? 'uma vez' : 'duas vezes'}, depois segure a tecla e fale; solte para enviar ou pressione Esc enquanto segura para cancelar`,
-    hold: (key: string) => `Segure ${key} e fale; solte para enviar ou pressione Esc enquanto segura para cancelar`,
+    holdTaps: (key: string, taps: number) => `Pressione ${key} ${taps === 2 ? 'uma vez' : 'duas vezes'}, depois segure a tecla e fale; solte para enviar`,
+    hold: (key: string) => `Segure ${key} e fale; solte para enviar`,
     failedLine: (error: string) => `[falhou] ${error}`,
   },
 
@@ -243,7 +243,8 @@ const ptBR: Translation<PetText> = {
 
     voice: 'Entrada de voz',
     enable: 'Ligar a entrada de voz',
-    enabledHint: 'Em “Enquanto a tecla para falar está pressionada”, o microfone abre só enquanto a tecla está pressionada; os outros modos de escuta o deixam aberto',
+    enabledHint: 'O microfone fica aberto; a fala vai para Coo conforme o modo de escuta',
+    enabledHintOnPress: 'O microfone abre enquanto a tecla para falar está pressionada e fecha ao soltar',
     disabledHint: 'Desligada: o microfone fica fechado e as configurações abaixo aguardam',
     engine: 'Motor de reconhecimento',
     funasr: 'FunASR (neste computador)',
@@ -272,6 +273,10 @@ const ptBR: Translation<PetText> = {
     micN: (n: number) => `Microfone ${n}`,
     mode: 'Como ouve',
     modes: { hold: 'Enquanto a tecla para falar está pressionada', toggle: 'A tecla para falar liga e desliga', always: 'O tempo todo' },
+    openOnPress: 'Abrir o microfone só enquanto segura',
+    openOnPressHint: 'Para fones, como os Bluetooth, que mudam para o modo de chamada com o microfone aberto; depois de pressionar, espere um momento antes de falar, ou as primeiras palavras podem se perder',
+    switchOn: 'Ligado',
+    switchOff: 'Desligado',
     presses: {
       2: { hold: 'Pressionar duas vezes e segurar', toggle: 'Pressionar duas vezes para começar e de novo para parar' },
       1: { hold: 'Só segurar', toggle: 'Pressionar para começar e de novo para parar' },

@@ -12,10 +12,6 @@
  * Windows' (`Alt` is Option and `Win` is Command on a Mac); `parseHotkey` gives Windows
  * virtual-key codes, which the macOS reader maps to its own.
  *
- * While the hotkey's keys are down, a press of Esc is reported on its own (`onEscape`), so a
- * held talk key can be cancelled from any window. Esc still reaches the window that has the
- * keyboard: the watcher only reads key state.
- *
  * Key names shown to a person, and the reasons a key cannot be read, come from the text table passed in
  * (src/i18n), Chinese when none is.
  */
@@ -31,9 +27,6 @@ const NAMED: Record<string, number> = {
   Pause: 0x13, ScrollLock: 0x91,
   Mouse3: 0x04, Mouse4: 0x05, Mouse5: 0x06,
 };
-
-/** Esc's virtual-key code; read only while a hotkey is down. */
-const VK_ESCAPE = 0x1b;
 
 /** The talk key a new setup gets: a tap of left Alt (left Option on a Mac), then hold it. Every keyboard has one. */
 export const DEFAULT_HOTKEY = 'LeftAlt*2';
@@ -104,7 +97,7 @@ const MAC_KEYS: Record<number, number[]> = {
   0x12: [0x3a, 0x3d], 0xa4: [0x3a], 0xa5: [0x3d],
   0x10: [0x38, 0x3c], 0xa0: [0x38], 0xa1: [0x3c],
   0x5b: [0x37, 0x36], 0x5c: [0x36],
-  0x20: [0x31], 0x09: [0x30], 0x14: [0x39], 0xc0: [0x32], 0x0d: [0x24], 0x1b: [0x35],
+  0x20: [0x31], 0x09: [0x30], 0x14: [0x39], 0xc0: [0x32], 0x0d: [0x24],
   0x2d: [0x72], 0x2e: [0x75], 0x24: [0x73], 0x23: [0x77], 0x21: [0x74], 0x22: [0x79],
   // A–Z and 0–9 where the ANSI layout places them
   0x41: [0x00], 0x42: [0x0b], 0x43: [0x08], 0x44: [0x02], 0x45: [0x0e], 0x46: [0x03], 0x47: [0x05], 0x48: [0x04], 0x49: [0x22],
@@ -168,7 +161,7 @@ const LINUX_KEYS: Record<number, number[]> = {
   0x12: [0xffe9, 0xffea, 0xfe03], 0xa4: [0xffe9], 0xa5: [0xffea, 0xfe03],
   0x10: [0xffe1, 0xffe2], 0xa0: [0xffe1], 0xa1: [0xffe2],
   0x5b: [0xffeb, 0xffec], 0x5c: [0xffec],
-  0x20: [0x20], 0x09: [0xff09], 0x14: [0xffe5], 0xc0: [0x60], 0x0d: [0xff0d], 0x1b: [0xff1b],
+  0x20: [0x20], 0x09: [0xff09], 0x14: [0xffe5], 0xc0: [0x60], 0x0d: [0xff0d],
   0x2d: [0xff63], 0x2e: [0xffff], 0x24: [0xff50], 0x23: [0xff57], 0x21: [0xff55], 0x22: [0xff56],
   0x13: [0xff13], 0x91: [0xff14],
 };
@@ -193,7 +186,7 @@ async function linuxReader(keys: number[], t: PetText['hotkey']): Promise<KeyRea
     const toCode = x11.func('uint8_t XKeysymToKeycode(void *dpy, unsigned long keysym)') as (d: unknown, sym: number) => number;
     const root = (x11.func('unsigned long XDefaultRootWindow(void *dpy)') as (d: unknown) => number)(dpy);
     const pointer = x11.func('int XQueryPointer(void *dpy, unsigned long w, _Out_ unsigned long *root, _Out_ unsigned long *child, _Out_ int *rx, _Out_ int *ry, _Out_ int *wx, _Out_ int *wy, _Out_ unsigned int *mask)') as (...a: unknown[]) => number;
-    const codes = new Map([...keys, VK_ESCAPE].map((vk) => [vk, linuxKeysyms(vk).map((s) => toCode(dpy, s)).filter(Boolean)]));
+    const codes = new Map(keys.map((vk) => [vk, linuxKeysyms(vk).map((s) => toCode(dpy, s)).filter(Boolean)]));
     const bits = new Uint8Array(32);
     // XQueryKeymap is the X server's own key state: under Wayland, XWayland knows it only while an X window has the keyboard
     return (vk) => {
@@ -238,11 +231,10 @@ export function tapTracker(taps: number, onChange: (down: boolean) => void, onTa
 }
 
 /**
- * Calls `onChange` on every press and release of `hotkey`, `onTap` on each quick tap before its held press,
- * and `onEscape` when Esc goes down while the hotkey's keys are down; returns why the key cannot be read instead,
- * in the words of `t`.
+ * Calls `onChange` on every press and release of `hotkey`, and `onTap` on each quick tap before its held press;
+ * returns why the key cannot be read instead, in the words of `t`.
  */
-export async function watchHotkey(hotkey: Hotkey, onChange: (down: boolean) => void, pollMs: number, onTap?: (count: number) => void, t: PetText['hotkey'] = petText().hotkey, onEscape?: () => void): Promise<KeyWatcher | string> {
+export async function watchHotkey(hotkey: Hotkey, onChange: (down: boolean) => void, pollMs: number, onTap?: (count: number) => void, t: PetText['hotkey'] = petText().hotkey): Promise<KeyWatcher | string> {
   const { keys, taps } = hotkey;
   const reader = process.platform === 'win32' ? await windowsReader(t)
     : process.platform === 'darwin' ? await macReader(keys, t)
@@ -250,13 +242,12 @@ export async function watchHotkey(hotkey: Hotkey, onChange: (down: boolean) => v
     : t.unsupported;
   if (typeof reader === 'string') return reader;
   const step = tapTracker(taps, onChange, onTap);
-  let down = false, escape = false;
+  let down = false;
   const timer = setInterval(() => {
     const now = keys.every((vk) => reader(vk));
-    if (now !== down) { down = now; step(now, Date.now()); }
-    const esc = now && !!onEscape && reader(VK_ESCAPE);
-    if (esc && !escape) onEscape!();
-    escape = esc;
+    if (now === down) return;
+    down = now;
+    step(now, Date.now());
   }, pollMs);
   return { stop: () => clearInterval(timer) };
 }

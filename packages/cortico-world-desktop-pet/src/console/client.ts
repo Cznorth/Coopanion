@@ -31,6 +31,7 @@ interface VoiceState {
     mode: MicMode;
     hotkey: string;
     deviceId: string;
+    openOnPress: boolean;
     /** The keys alone; how they are pressed is the press choice beside them */
     keyLabel: string;
     hint: string;
@@ -205,6 +206,13 @@ const voicePanel: ConsolePanel = {
     modeSel.replaceChildren(...(Object.keys(t.modes) as MicMode[]).map((m) => { const o = ui.h('option', null, t.modes[m]); o.value = m; return o; }));
     const pressSel = ui.select();
     modeRow.acts.append(modeSel, pressSel);
+    // hold mode only: the microphone opens with the talk key
+    const onPressRow = statusRow(ctx, t.openOnPress);
+    const onPress = ui.h('input', 'pet-switch');
+    onPress.type = 'checkbox';
+    onPress.setAttribute('role', 'switch');
+    onPress.addEventListener('change', () => void call('setMic', [{ openOnPress: onPress.checked }])());
+    onPressRow.acts.append(onPress);
     // the talk key has a row of its own above how it listens: the key, and a button to set another
     const keyRow = statusRow(ctx, t.talkKeyName);
     const keyBtn = ui.button(t.changeKey, { size: 'sm' });
@@ -221,7 +229,7 @@ const voicePanel: ConsolePanel = {
     meterRow.append(meterDot, ui.h('span', 'mname', t.level), meter);
 
     const log = ui.log({ max: 100, empty: t.noResults });
-    settings.append(eng.row, srv.row, rt.row, micRow.row, keyRow.row, modeRow.row, meterRow, ui.section(t.results, t.resultsHint), log.el);
+    settings.append(eng.row, srv.row, rt.row, micRow.row, keyRow.row, modeRow.row, onPressRow.row, meterRow, ui.section(t.results, t.resultsHint), log.el);
     s.append(master, msg, settings);
 
     let st: VoiceState | null = null;
@@ -230,7 +238,8 @@ const voicePanel: ConsolePanel = {
       st = next;
       enabled.checked = next.enabled;
       master.classList.toggle('on', next.enabled);
-      masterHint.textContent = next.enabled ? t.enabledHint : t.disabledHint;
+      const onPressOn = next.input.mode === 'hold' && next.input.openOnPress;
+      masterHint.textContent = !next.enabled ? t.disabledHint : onPressOn ? t.enabledHintOnPress : t.enabledHint;
       settings.classList.toggle('off', !next.enabled);
       const engines: Partial<Record<Engine, string>> = { funasr: t.funasr, whisper: t.whisper };
       // Windows' own recognizer exists only there
@@ -287,6 +296,9 @@ const voicePanel: ConsolePanel = {
       pressSel.hidden = input.mode === 'always';
       keyRow.row.style.display = input.mode === 'always' ? 'none' : '';
       modeRow.set(input.open ? t.listening : t.waitingKey, input.open ? 'on' : 'off', input.hint);
+      onPressRow.row.style.display = input.mode === 'hold' ? '' : 'none';
+      onPress.checked = input.openOnPress;
+      onPressRow.set(input.openOnPress ? t.switchOn : t.switchOff, input.openOnPress ? 'on' : 'off', t.openOnPressHint);
       // the loudness threshold only decides where speech starts when the key is not held down
       mark.hidden = input.mode === 'hold';
       mark.style.left = `${meterPct(next.thresholdDb)}%`;

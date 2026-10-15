@@ -20,8 +20,8 @@ const it: Translation<PetText> = {
     always: 'Ascolto sempre: parla e basta',
     toggleTaps: (label: string, taps: number) => `${label} per iniziare ad ascoltare, di nuovo ${taps === 2 ? 'doppia' : 'tripla'} pressione per smettere`,
     toggle: (key: string) => `Premi ${key} per iniziare ad ascoltare, premilo di nuovo per smettere`,
-    holdTaps: (key: string, taps: number) => `Premi ${key} ${taps === 2 ? 'una volta' : 'due volte'}, poi tienilo premuto e parla; rilascia per inviare o premi Esc mentre lo tieni premuto per annullare`,
-    hold: (key: string) => `Tieni premuto ${key} e parla; rilascia per inviare o premi Esc mentre lo tieni premuto per annullare`,
+    holdTaps: (key: string, taps: number) => `Premi ${key} ${taps === 2 ? 'una volta' : 'due volte'}, poi tienilo premuto e parla; rilascia per inviare`,
+    hold: (key: string) => `Tieni premuto ${key} e parla; rilascia per inviare`,
     failedLine: (error: string) => `[non riuscito] ${error}`,
   },
 
@@ -243,7 +243,8 @@ const it: Translation<PetText> = {
 
     voice: 'Input vocale',
     enable: "Attiva l'input vocale",
-    enabledHint: 'Con «Mentre il tasto per parlare è premuto» il microfono si apre solo mentre il tasto è premuto; le altre modalità di ascolto lo lasciano aperto',
+    enabledHint: 'Il microfono resta aperto; ciò che dici arriva a Coo secondo la modalità di ascolto',
+    enabledHintOnPress: 'Il microfono si apre mentre tieni premuto il tasto per parlare e si chiude quando lo rilasci',
     disabledHint: 'Disattivato: il microfono resta chiuso e le impostazioni qui sotto restano in attesa',
     engine: 'Motore di riconoscimento',
     funasr: 'FunASR (su questo computer)',
@@ -272,6 +273,10 @@ const it: Translation<PetText> = {
     micN: (n: number) => `Microfono ${n}`,
     mode: 'Come ascolta',
     modes: { hold: 'Mentre il tasto per parlare è premuto', toggle: 'Il tasto per parlare lo accende e lo spegne', always: 'Sempre' },
+    openOnPress: 'Apri il microfono solo tenendo premuto',
+    openOnPressHint: 'Per le cuffie, come quelle Bluetooth, che passano alla modalità chiamata con il microfono aperto; dopo aver premuto, aspetta un attimo prima di parlare, altrimenti le prime parole possono andare perse',
+    switchOn: 'Attivo',
+    switchOff: 'Disattivo',
     presses: {
       2: { hold: 'Doppia pressione e tieni premuto', toggle: 'Doppia pressione per iniziare, di nuovo per smettere' },
       1: { hold: 'Tieni premuto', toggle: 'Premi per iniziare, premi di nuovo per smettere' },

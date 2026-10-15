@@ -29,8 +29,8 @@ export default {
     /** 用说话键开关收音;label 是含连击的完整按键名(「双击 左 Alt」) */
     toggleTaps: (label: string, taps: number) => `${label} 开始收音，再${taps === 2 ? '双击' : '三击'}停止`,
     toggle: (key: string) => `按一下 ${key} 开始收音，再按一下停止`,
-    holdTaps: (key: string, taps: number) => `快速按${taps === 2 ? '一' : '两'}下 ${key}，紧接着按住说话，松开即发送，按住时按 Esc 取消`,
-    hold: (key: string) => `按住 ${key} 说话，松开即发送，按住时按 Esc 取消`,
+    holdTaps: (key: string, taps: number) => `快速按${taps === 2 ? '一' : '两'}下 ${key}，紧接着按住说话，松开即发送`,
+    hold: (key: string) => `按住 ${key} 说话，松开即发送`,
     /** 「语音输入」页识别结果里,没识别出来的那一行 */
     failedLine: (error: string) => `[失败] ${error}`,
   },
@@ -267,7 +267,8 @@ export default {
 
     voice: '语音输入',
     enable: '开启语音输入',
-    enabledHint: '「按住说话键时收音」只在按住时打开麦克风，其他收音方式麦克风保持开启',
+    enabledHint: '麦克风保持开启，按收音方式发送给 Coo',
+    enabledHintOnPress: '按住说话键时打开麦克风，松开后关闭',
     disabledHint: '已关闭：不打开麦克风，下面的设置暂不生效',
     engine: '识别引擎',
     funasr: 'FunASR（本机识别）',
@@ -296,6 +297,10 @@ export default {
     micN: (n: number) => `麦克风 ${n}`,
     mode: '收音方式',
     modes: { hold: '按住说话键时收音', toggle: '用说话键切换收音', always: '持续收音' } as Record<'hold' | 'toggle' | 'always', string>,
+    openOnPress: '按住时才打开麦克风',
+    openOnPressHint: '用蓝牙耳机等一打开麦克风就切到通话模式的耳机时开启；按下后稍等再说话，否则开头的字可能听不到',
+    switchOn: '已开启',
+    switchOff: '已关闭',
     /** 说话键怎么按:按住说话、开关收音两种模式下的说法,按连按次数 */
     presses: {
       2: { hold: '双击再按住', toggle: '双击开始，再双击停止' },

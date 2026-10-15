@@ -90,24 +90,24 @@ afterEach(async () => {
 
 /** A talk key the test presses; `problem` makes it unreadable. */
 function scriptedKey(problem?: string) {
-  const key = { press: (_down: boolean) => {}, tap: () => {}, escape: () => {}, hotkey: null as Hotkey | null };
-  const watch = async (hotkey: Hotkey, onChange: (down: boolean) => void, _pollMs: number, onTap?: (count: number) => void, _t?: unknown, onEscape?: () => void) => {
+  const key = { press: (_down: boolean) => {}, tap: () => {}, hotkey: null as Hotkey | null };
+  const watch = async (hotkey: Hotkey, onChange: (down: boolean) => void, _pollMs: number, onTap?: (count: number) => void) => {
     if (problem) return problem;
     key.hotkey = hotkey;
     key.press = onChange;
     key.tap = () => onTap?.(1);
-    key.escape = () => onEscape?.();
     return { stop: () => {} };
   };
   return { key, watch };
 }
 
-async function setup(text: string | ((samples: number) => string), mode: MicMode = 'always', watch?: ReturnType<typeof scriptedKey>['watch'], language: Language = 'zh') {
+async function setup(text: string | ((samples: number) => string), mode: MicMode = 'always', watch?: ReturnType<typeof scriptedKey>['watch'], language: Language = 'zh', openOnPress = false) {
   const asr = fakeFunAsr(text);
   const cfg = structuredClone(DESKTOP_PET_DEFAULTS);
   Object.assign(cfg, { enabled: true, port: 0 });
   cfg.window.enabled = false;
   cfg.asr.mic.mode = mode;
+  cfg.asr.mic.openOnPress = openOnPress;
   const dir = mkdtempSync(join(tmpdir(), 'pet-voice-'));
   placeModel(join(dir, 'm'));
   const world = new DesktopPetWorld({
@@ -155,8 +155,6 @@ describe('voice input', () => {
     key.tap();
     await page.next((m) => m.t === 'listen' && m.phase === 'ready');
     key.press(true);
-    // listening starts with the first frame from the microphone the press opened
-    page.audio(tone(20, .01)[0]!);
     await page.next((m) => m.t === 'listen' && m.phase === 'start');
     // quiet speech still counts while the key is held, pauses included
     for (const fr of [...tone(500, .01), ...tone(800, 0), ...tone(300, .01)]) page.audio(fr);
@@ -167,27 +165,40 @@ describe('voice input', () => {
     expect(host.events[0].text).toBe('[语音] 伙伴:帮我看看这个');
   });
 
-  it('hold: the page opens the microphone only from the press until shortly after the release', async () => {
+  it('hold: the microphone stays open across a press and release unless it is set to open on press', async () => {
     const { key, watch } = scriptedKey();
     const { page } = await setup('帮我看看这个', 'hold', watch);
+    expect(page.init.mic).toBe(true);
+    key.press(true);
+    key.press(false);
+    await new Promise((r) => setTimeout(r, 800));
+    expect(page.messages.some((m) => m.t === 'prefs' && m.mic === false)).toBe(false);
+  });
+
+  it('hold, open on press: the page opens the microphone from the press until shortly after the release', async () => {
+    const { key, watch } = scriptedKey();
+    const { page } = await setup('帮我看看这个', 'hold', watch, 'zh', true);
     expect(page.init.mic).toBe(false);
     key.press(true);
     await page.next((m) => m.t === 'prefs' && m.mic === true);
+    // listening starts with the first frame from the microphone the press opened
+    page.audio(tone(20, .01)[0]!);
+    await page.next((m) => m.t === 'listen' && m.phase === 'start');
     key.press(false);
     await page.next((m) => m.t === 'prefs' && m.mic === false);
   });
 
-  it('hold: Esc while the key is held drops what was heard, sends nothing and closes the bubble', async () => {
+  it("the listening bubble's cancel drops what was heard, sends nothing and closes the bubble", async () => {
     const { key, watch } = scriptedKey();
     const { host, page } = await setup('说错了', 'hold', watch);
     key.press(true);
     for (const fr of tone(600, .3)) page.audio(fr);
     await page.next((m) => m.t === 'listen' && m.phase === 'start');
-    key.escape();
+    page.send({ t: 'cancel' });
     await page.next((m) => m.t === 'listen' && m.phase === 'none');
     // the key comes up after the cancel: nothing is left to send
     key.press(false);
-    await page.next((m) => m.t === 'prefs' && m.mic === false);
+    await new Promise((r) => setTimeout(r, 500));
     expect(host.events).toHaveLength(0);
     expect(page.messages.some((m) => m.t === 'listen' && m.phase === 'heard')).toBe(false);
   });
@@ -298,8 +309,8 @@ describe('voice input', () => {
     const { key, watch } = scriptedKey();
     const { asr, host, page } = await setup('Повтори', 'hold', watch, 'ru');
     key.press(true);
-    for (const fr of tone(800, 0)) page.audio(fr);
     await page.next((m) => m.t === 'listen' && m.phase === 'start');
+    for (const fr of tone(800, 0)) page.audio(fr);
     await new Promise((r) => setTimeout(r, 200));
     key.press(false);
     await page.next((m) => m.t === 'listen' && m.phase === 'none');

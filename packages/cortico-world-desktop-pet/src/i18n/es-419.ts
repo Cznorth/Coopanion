@@ -20,8 +20,8 @@ const es419: Translation<PetText> = {
     always: 'Siempre escuchando: solo habla',
     toggleTaps: (label: string, taps: number) => `Presiona ${label} para empezar a escuchar y de nuevo ${taps === 2 ? 'dos' : 'tres'} veces para parar`,
     toggle: (key: string) => `Presiona ${key} para empezar a escuchar y otra vez para parar`,
-    holdTaps: (key: string, taps: number) => `Presiona ${key} ${taps === 2 ? 'una vez' : 'dos veces'}, luego mantén presionada la tecla y habla; suéltala para enviar o presiona Esc mientras la mantienes para cancelar`,
-    hold: (key: string) => `Mantén presionada la tecla ${key} y habla; suéltala para enviar o presiona Esc mientras la mantienes para cancelar`,
+    holdTaps: (key: string, taps: number) => `Presiona ${key} ${taps === 2 ? 'una vez' : 'dos veces'}, luego mantén presionada la tecla y habla; suéltala para enviar`,
+    hold: (key: string) => `Mantén presionada la tecla ${key} y habla; suéltala para enviar`,
     failedLine: (error: string) => `[falló] ${error}`,
   },
 
@@ -243,7 +243,8 @@ const es419: Translation<PetText> = {
 
     voice: 'Entrada de voz',
     enable: 'Activar la entrada de voz',
-    enabledHint: 'Con “Mientras se mantiene la tecla para hablar”, el micrófono se abre solo mientras la tecla está presionada; los demás modos de escucha lo dejan abierto',
+    enabledHint: 'El micrófono queda abierto; lo que dices llega a Coo según el modo de escucha',
+    enabledHintOnPress: 'El micrófono se abre mientras mantienes la tecla para hablar y se cierra al soltarla',
     disabledHint: 'Desactivada: el micrófono queda cerrado y la configuración de abajo espera',
     engine: 'Motor de reconocimiento',
     funasr: 'FunASR (en esta computadora)',
@@ -272,6 +273,10 @@ const es419: Translation<PetText> = {
     micN: (n: number) => `Micrófono ${n}`,
     mode: 'Cómo escucha',
     modes: { hold: 'Mientras se mantiene la tecla para hablar', toggle: 'La tecla para hablar lo activa y desactiva', always: 'Todo el tiempo' },
+    openOnPress: 'Abrir el micrófono solo al mantener la tecla',
+    openOnPressHint: 'Para auriculares, como los Bluetooth, que pasan al modo llamada con el micrófono abierto; después de presionar, espera un momento antes de hablar o se pueden perder las primeras palabras',
+    switchOn: 'Activado',
+    switchOff: 'Desactivado',
     presses: {
       2: { hold: 'Presionar dos veces y mantener', toggle: 'Presionar dos veces para empezar y otra vez para parar' },
       1: { hold: 'Solo mantener', toggle: 'Presionar para empezar y otra vez para parar' },

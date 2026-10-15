@@ -38,8 +38,7 @@ export const S: Partial<typeof en> = {
   // index.ts
   title: 'Prompt de sistema',
   introDesc: "Ctrl+S salva os modelos; “Aplicar agora” atualiza o prompt da conversa atual. Seções geradas são somente leitura.",
-  showFull: "Mostrar o prompt completo",
-  hideFull: "Ocultar o prompt completo",
+  fullPreview: "Prévia do prompt completo",
   sourceMissing: (key: string) => `Fonte “${key}” não encontrada`,
   leaveUnsaved: 'As alterações não salvas serão perdidas. Sair?',
   saving: 'Salvando…',

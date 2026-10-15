@@ -75,8 +75,9 @@ export async function mountPrompts(ctx: FeatureContext): Promise<void> {
   const dividers = ui.h('div', 'prefix-dividers');
   stage.append(flags, gripL, host, gripR, rail, dividers);
   const full = ui.h('pre', 'mono prefix-full');
-  full.hidden = true;
-  root.append(pageIntro(ui, S.title, S.introDesc), toolbar, full, stage);
+  const preview = ui.foldSheet('full-prompt', { title: S.fullPreview });
+  preview.body.append(full);
+  root.append(pageIntro(ui, S.title, S.introDesc), toolbar, stage, preview.el);
 
   function say(text: string, bad = false): void {
     status.className = bad ? 'msgline bad prompt-status' : 'msgline prompt-status';
@@ -86,7 +87,6 @@ export async function mountPrompts(ctx: FeatureContext): Promise<void> {
     for (const button of actions.querySelectorAll<HTMLButtonElement>('button')) button.disabled = changingSession;
     save.disabled = restore.disabled = changingSession || dirty.size === 0 || !!savePromise;
     undoStep.disabled = changingSession || !editor.canUndo();
-    showFull.disabled = changingSession || !segments.length;
   }
   function state(): void {
     controls();
@@ -112,10 +112,6 @@ export async function mountPrompts(ctx: FeatureContext): Promise<void> {
       target.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' });
     }
   }
-  const showFull = ui.button(S.showFull, { size: 'sm', onClick: () => {
-    full.hidden = !full.hidden;
-    showFull.textContent = full.hidden ? S.showFull : S.hideFull;
-  } });
   const expand = ui.button(S.expandAll, { size: 'sm', onClick: () => {
     const expanded = sections.some((s) => s.collapsed);
     for (const section of sections) open(section, expanded);
@@ -131,7 +127,7 @@ export async function mountPrompts(ctx: FeatureContext): Promise<void> {
   restore.disabled = true;
   const save = ui.button(S.saveToFile, { size: 'sm', onClick: () => { void saveAll(); } });
   save.title = 'Ctrl / ⌘ + S';
-  actions.append(showFull, expand, undoStep, restore, save);
+  actions.append(expand, undoStep, restore, save);
   toolbar.append(status, actions);
 
   /**
@@ -262,6 +258,7 @@ export async function mountPrompts(ctx: FeatureContext): Promise<void> {
       try { sessionStorage.setItem(FOLDS_KEY, JSON.stringify([...folds])); } catch { /* Kept in memory. */ }
       section.toggle.setAttribute('aria-expanded', String(!collapsed));
       section.cell.hidden = collapsed;
+      if (section.origin) section.origin.hidden = collapsed;
       closePopup();
       expand.textContent = sections.every((s) => !s.collapsed) ? S.collapseAll : S.expandAll;
       queueMicrotask(() => { if (!signal.aborted) animateSection(section, index); });
@@ -284,7 +281,9 @@ export async function mountPrompts(ctx: FeatureContext): Promise<void> {
       section.cell.style.height = `${g.height}px`;
       section.divider.style.top = top;
       section.divider.style.left = `${flags.offsetWidth}px`;
-      const minHeight = Math.ceil(Math.max(50, section.note.offsetHeight + 12));
+      const flagHeight = section.toggle.offsetHeight;
+      section.label.style.setProperty('--prompt-flag-height', `${flagHeight}px`);
+      const minHeight = Math.ceil(Math.max(50, section.note.offsetHeight + 12, section.origin && !g.collapsed ? flagHeight / 2 + section.origin.offsetHeight + 32 : 0));
       return { minHeight, padding: g.collapsed ? 0 : Math.max(0, Math.ceil(minHeight - (g.height - g.padding))) };
     });
     flags.style.height = rail.style.height = `${host.offsetHeight}px`;
@@ -373,12 +372,13 @@ export async function mountPrompts(ctx: FeatureContext): Promise<void> {
     const divider = ui.h('div', `prefix-divider tone-${tone}`);
     observer.observe(note);
     const section: Section = { segment, doc, tone, label, toggle, cell, note, badge, divider, collapsed, updateVariables() {} };
-    if (!doc) {
-      if (segment.sourceKey) note.append(ui.h('p', 'prompt-help', S.sourceMissing(segment.sourceKey)));
-      return section;
+    if (doc || segment.sourceKey) {
+      section.origin = ui.h('p', 'prompt-help prefix-origin', doc ? originText(doc) : S.sourceMissing(segment.sourceKey!));
+      section.origin.hidden = collapsed;
+      label.append(section.origin);
+      observer.observe(section.origin);
     }
-    section.origin = ui.h('p', 'prompt-help');
-    note.append(section.origin);
+    if (!doc) return section;
     const chips = new Map<string, HTMLButtonElement>();
     const warning = ui.h('div', 'prompt-railwarn');
     if (doc.vars?.length) {
@@ -470,6 +470,7 @@ export async function mountPrompts(ctx: FeatureContext): Promise<void> {
     for (const gone of previous) {
       gone.label.remove(); gone.cell.remove(); gone.divider.remove();
       observer.unobserve(gone.note);
+      if (gone.origin) observer.unobserve(gone.origin);
     }
     for (const section of sections) {
       flags.append(section.label);
@@ -481,10 +482,6 @@ export async function mountPrompts(ctx: FeatureContext): Promise<void> {
       text: doc ? dirty.get(doc.key) ?? doc.content : segment.text, vars: doc?.vars, collapsed,
     })));
     full.textContent = segments.map((s) => s.text).join('');
-    if (!segments.length) {
-      full.hidden = true;
-      showFull.textContent = S.showFull;
-    }
     expand.textContent = sections.every((s) => !s.collapsed) ? S.collapseAll : S.expandAll;
     for (const section of sections) section.updateVariables();
     if (created.length) void addSettings(created);

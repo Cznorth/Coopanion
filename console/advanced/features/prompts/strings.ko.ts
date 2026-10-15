@@ -38,8 +38,7 @@ export const S: Partial<typeof en> = {
   // index.ts
   title: '시스템 프롬프트',
   introDesc: 'Ctrl+S로 템플릿을 저장하고, "지금 적용"을 누르면 현재 대화의 프롬프트가 업데이트됩니다. 자동 생성된 섹션은 읽기 전용입니다.',
-  showFull: "전체 프롬프트 보기",
-  hideFull: "전체 프롬프트 접기",
+  fullPreview: "전체 프롬프트 미리보기",
   sourceMissing: (key: string) => `소스 "${key}"을(를) 찾을 수 없습니다`,
   leaveUnsaved: '저장하지 않은 변경 사항은 사라집니다. 나가시겠습니까?',
   saving: '저장 중…',

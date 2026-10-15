@@ -38,8 +38,7 @@ export const S: Partial<typeof en> = {
   // index.ts
   title: 'Prompt del sistema',
   introDesc: "Ctrl+S guarda las plantillas; “Aplicar ahora” actualiza el prompt de la conversación actual. Las secciones generadas son de solo lectura.",
-  showFull: "Mostrar el prompt completo",
-  hideFull: "Ocultar el prompt completo",
+  fullPreview: "Vista previa del prompt completo",
   sourceMissing: (key: string) => `No se encontró la fuente “${key}”`,
   leaveUnsaved: 'Los cambios sin guardar se perderán. ¿Salir?',
   saving: 'Guardando…',

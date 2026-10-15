@@ -47,8 +47,7 @@ const zh = {
   // index.ts
   title: '系统提示词',
   introDesc: "Ctrl+S 保存模板，「立即应用」后当前对话改用新的提示词。自动生成的段只读。",
-  showFull: "查看完整提示词",
-  hideFull: "收起完整提示词",
+  fullPreview: "完整提示词预览",
   sourceMissing: (key: string) => `源「${key}」找不到`,
   leaveUnsaved: "未保存的修改将丢失。离开？",
   saving: '保存中…',
@@ -135,8 +134,7 @@ export const en: typeof zh = {
   // index.ts
   title: 'System prompt',
   introDesc: "Ctrl+S saves templates; Apply now updates the prompt of the current conversation. Generated sections are read-only.",
-  showFull: "Show full prompt",
-  hideFull: "Hide full prompt",
+  fullPreview: "Full prompt preview",
   sourceMissing: (key: string) => `Source "${key}" not found`,
   leaveUnsaved: "Unsaved changes will be lost. Leave?",
   saving: 'Saving…',

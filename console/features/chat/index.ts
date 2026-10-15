@@ -1,6 +1,6 @@
 /**
  * 「对话」: the desktop-pet World's chat panel as a page. The person types and sends images as
- * themselves (`[打字]` events, delivered with `preempt`); the pet's lines show as the bubbles the pet
+ * themselves (`[typed]` events, delivered with `preempt`); the pet's lines show as the bubbles the pet
  * itself draws, its questions can be answered here, and the tool steps between two lines fold into
  * one row. Messages the bot has not taken in yet wait above the composer, where they can be sent at
  * once (`interrupt`) or taken back.

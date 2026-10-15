@@ -567,6 +567,8 @@ export async function main(): Promise<void> {
     pet: () => pet,
     console: `http://127.0.0.1:${port}`,
     doneFile: join(deployDir, GUIDE_FILE),
+    workspace: loaded.memoryDir,
+    whale: process.env.COOPANION_CHANNEL !== 'steam',
     openDress: () => process.send?.({ type: 'companion:open', path: '#/dress' }),
     onEnd: (end) => (notice as NoticeWorld | null)?.guideEnded(end),
     track: (type, fields) => stats.event(type, fields),

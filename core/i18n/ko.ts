@@ -53,6 +53,16 @@ const ko: Translation<CoreText> = {
     gotName: (name: string) => `${name}, 기억하겠습니다!`,
     askSource: '저를 어디서 알게 되셨나요?',
     sourceThanks: '아, 그렇군요. Coo...',
+    askPersona: '제가 어떤 모습이면 좋을까요...',
+    personas: {
+      coo: { label: '작고 호기심 많은', line: '이게 뭐죠? 가까이 가서 한번 보겠습니다. Coo...' },
+      grail: { label: '껌딱지에 욕심쟁이', line: '뭐 드세요? 저도 한 입만 주세요. Coo...' },
+      forge: { label: '믿음직하고 야무진', line: '무엇을 할까요? 맡겨 주세요, 금방 끝납니다. Coo.' },
+      heart: { label: '활발하고 늘 곁에', line: '저 왔습니다! 오늘도 계속 곁에 있겠습니다. Coo!' },
+      winter: { label: '조용하고 말 없는', line: '……네. Coo.' },
+      whale: { label: 'DeepSeek 쨩', line: '어서 오세요! 이게 뭐죠? 제가 한번 보겠습니다. Coo...' },
+    },
+    dressHint: { text: '배색은 꾸미기 페이지에서 바꿀 수 있습니다', dress: '꾸미기' },
     askRoam: '평소에 조용히 있을까요, 활발하게 움직일까요? 하나를 클릭하면 제가 어떻게 하는지 보여 드립니다.',
     roam: {
       off: { label: '제자리', level: '낮음', line: '그럼 가만히 서 있다가 부르시면 움직이겠습니다.' },

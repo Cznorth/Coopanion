@@ -53,6 +53,16 @@ const ja: Translation<CoreText> = {
     gotName: (name: string) => `${name}、覚えました！`,
     askSource: 'Coo のことはどこで知りましたか？',
     sourceThanks: 'なるほど、そうなんですね。クー…',
+    askPersona: '私、どんな子だったらいいと思いますか…',
+    personas: {
+      coo: { label: '小さくて好奇心旺盛', line: 'これは何ですか？ちょっとのぞいてみますね。クー…' },
+      grail: { label: '甘えんぼうで欲ばり', line: '何を食べているんですか？私にもひと口ください。クー…' },
+      forge: { label: '頼もしくて手際がいい', line: '何をしますか？任せてください、すぐ終わります。クー。' },
+      heart: { label: '元気でいつもそばに', line: '来ました！今日もずっとそばにいますね。クー！' },
+      winter: { label: '静かで無口', line: '……はい。クー。' },
+      whale: { label: 'DeepSeekちゃん', line: 'おかえりなさい！これは何ですか？見せてください。クー…' },
+    },
+    dressHint: { text: '配色は 着せ替え で変更できます', dress: '着せ替え' },
     askRoam: 'ふだんは静かにしているのと、元気に動き回るの、どちらがいいですか？クリックすると、どうするか見せますね。',
     roam: {
       off: { label: 'じっとする', level: '低', line: 'じゃあ、じっと立っていて、呼ばれたら動きますね。' },

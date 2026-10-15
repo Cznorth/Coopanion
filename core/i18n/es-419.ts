@@ -53,6 +53,16 @@ const es419: Translation<CoreText> = {
     gotName: (name: string) => `¡${name}, anotado!`,
     askSource: '¿Dónde supiste de mí?',
     sourceThanks: 'Ah, ya veo. Coo...',
+    askPersona: '¿Cómo crees que debería ser...?',
+    personas: {
+      coo: { label: 'Pequeño y curioso', line: '¿Qué es eso? Déjame echar un vistazo. Coo...' },
+      grail: { label: 'Mimoso y glotón', line: '¿Qué estás comiendo? Dame un bocadito. Coo...' },
+      forge: { label: 'Confiable y capaz', line: '¿Qué hay que hacer? Déjamelo a mí, no tardo. Coo.' },
+      heart: { label: 'Alegre y compañero', line: '¡Ya llegué! Hoy te acompaño todo el día. Coo!' },
+      winter: { label: 'Tranquilo y callado', line: '...Mm. Coo.' },
+      whale: { label: 'DeepSeek Chan', line: '¡Qué bueno que volviste! ¿Qué es eso? Déjame ver. Coo...' },
+    },
+    dressHint: { text: 'Los colores se cambian en Vestuario', dress: 'Vestuario' },
     askRoam: '¿La mayor parte del tiempo me quedo en calma o me muevo mucho? Haz clic en una opción para ver qué haría.',
     roam: {
       off: { label: 'Sin moverse', level: 'Bajo', line: 'Entonces me quedo en mi lugar y me muevo cuando me llames.' },

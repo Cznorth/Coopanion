@@ -53,6 +53,16 @@ const it: Translation<CoreText> = {
     gotName: (name: string) => `${name}, me lo ricordo!`,
     askSource: 'Dove hai sentito parlare di me?',
     sourceThanks: 'Ah, capisco. Coo...',
+    askPersona: 'Secondo te, come dovrei essere...',
+    personas: {
+      coo: { label: 'Piccolo e curioso', line: "Cos'è questo? Vado a dare un'occhiata. Coo..." },
+      grail: { label: 'Appiccicoso e goloso', line: 'Cosa stai mangiando? Dammene un morso. Coo...' },
+      forge: { label: 'Affidabile e capace', line: "Cosa c'è da fare? Lascia fare a me, ci metto poco. Coo." },
+      heart: { label: 'Vivace, sempre con te', line: 'Eccomi! Ti faccio compagnia tutto il giorno. Coo!' },
+      winter: { label: 'Quieto e taciturno', line: '...Mm. Coo.' },
+      whale: { label: 'DeepSeek Chan', line: "Eccoti di nuovo! Cos'è questo? Fammi vedere. Coo..." },
+    },
+    dressHint: { text: 'I colori si cambiano in Guardaroba', dress: 'Guardaroba' },
     askRoam: 'Di solito devo starmene in pace o muovermi tanto? Clicca una scheda per vedere cosa farei.',
     roam: {
       off: { label: 'Resta al suo posto', level: 'Basso', line: 'Allora resto al mio posto e mi muovo quando mi chiami.' },

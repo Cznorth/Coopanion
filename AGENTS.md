@@ -52,9 +52,11 @@ is unavoidable.
    handled in `packages/cortico-provider-coo`, keyed by its base URL, and never in Cortico.
 4. **Text for the model and text for people are separate.** What Coo reads lives in each
    package's `model-text.ts`, release notes under `docs/releases/` and the seed prompts; what
-   people read lives in the `strings*.ts` and `i18n/` files. UI text exists in all eleven
-   languages and changes in all of them in the same commit; model text exists in Chinese and
-   English.
+   people read lives in the `strings*.ts` and `i18n/` files. Text only Coo reads (tool
+   descriptions, event labels, the Persona's own lines) is written in English alone. Text
+   people also read exists in all eleven languages and changes in all of them in the same
+   commit: UI text, and the personas in `core/seed/persona/`. Environment prompts, events and
+   release notes exist in Chinese and English.
 5. **Third-party material is never committed**: character art, reference images, audio, model
    weights. A precedent is not a permission.
 

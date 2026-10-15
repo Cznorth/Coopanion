@@ -24,6 +24,8 @@ import type { GitAuthor, WorkspaceGit } from '../vendor/cortico/bots/cormini/per
 export const PARTNER_FILE = 'PARTNER.md';
 /** Commits of Coo's own writes. */
 export const AUTHOR_COO: GitAuthor = { name: 'coo', email: 'coo@persona.local' };
+/** Commits the app makes on its own: the snapshot at start. */
+export const AUTHOR_APP: GitAuthor = { name: 'coopanion', email: 'app@persona.local' };
 /** What the workspace's `.gitignore` holds besides Cormini's own line: the binaries Coo saves stay out of the history. */
 const IGNORED = 'blobs/';
 /** Tags made by `snapshot`: the workspace as each version of the app first found it. */
@@ -82,8 +84,8 @@ export function coopanionPersona(Base: typeof Cormini) {
       if (!lines.includes(IGNORED)) appendFileSync(ignore, `${lines.length && lines.at(-1) !== '' ? '\n' : ''}${IGNORED}\n`, 'utf8');
       untrack(this.memoryDir, IGNORED);
       const tag = SNAPSHOT_TAG(version);
-      if (git.listTags().some((t) => t.name === tag)) git.commitAll('Changes from before this start', AUTHOR_COO);
-      else git.tag(tag, `The workspace as version ${version} found it`);
+      if (git.listTags().some((t) => t.name === tag)) git.commitAll('Changes from before this start', AUTHOR_APP);
+      else git.tag(tag, `The workspace as version ${version} found it`, AUTHOR_APP);
     }
 
     protected override tools(): ToolDef[] {

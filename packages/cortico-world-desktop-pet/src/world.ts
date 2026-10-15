@@ -426,7 +426,7 @@ export class DesktopPetWorld implements World {
   private figureFailed: string | null = null;
   /** The words each pack's body said it knows when the page last loaded it; a body that did not say is taken at its manifest's word. */
   private readonly bodyWords = new Map<string, ReadonlySet<string>>();
-  /** The words the bot was last told it may use: its prompt's at start, then a `[形象]` event's or a `pet_set` receipt's. */
+  /** The words the bot was last told it may use: its prompt's at start, then a `[figure]` event's or a `pet_set` receipt's. */
   private toldVocab: readonly VocabWord[] = [];
   /** A look the bot put on itself: the pet page's report of it is not told back (the receipt said it). */
   private botLook: string | null = null;

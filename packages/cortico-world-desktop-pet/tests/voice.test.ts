@@ -129,7 +129,7 @@ describe('voice input', () => {
     for (const fr of [...tone(900, .3), ...tone(900, 0)]) page.audio(fr);
     await page.next((m) => m.t === 'listen' && m.phase === 'start');
     await expect.poll(() => host.events.length, { timeout: 5000 }).toBe(1);
-    expect(host.events[0]).toMatchObject({ type: 'desktop-pet.speech', senderKey: 'desktop-pet.voice', text: '[语音] 伙伴:今天天气怎么样' });
+    expect(host.events[0]).toMatchObject({ type: 'desktop-pet.speech', senderKey: 'desktop-pet.voice', text: '[voice] 伙伴:今天天气怎么样' });
     expect(host.pushOpts[0]).toEqual({ trigger: 'flush' });
     expect((await page.next((m) => m.t === 'listen' && m.phase === 'heard')).text).toBe('今天天气怎么样');
     // the last decode is the whole utterance: at least the 900 ms spoken
@@ -162,7 +162,7 @@ describe('voice input', () => {
     expect(host.events).toHaveLength(0);
     key.press(false);
     await expect.poll(() => host.events.length, { timeout: 5000 }).toBe(1);
-    expect(host.events[0].text).toBe('[语音] 伙伴:帮我看看这个');
+    expect(host.events[0].text).toBe('[voice] 伙伴:帮我看看这个');
   });
 
   it('hold: the microphone stays open across a press and release unless it is set to open on press', async () => {
@@ -224,7 +224,7 @@ describe('voice input', () => {
     expect(host.events).toHaveLength(0);
     page.send({ t: 'commit' });
     await expect.poll(() => host.events.length, { timeout: 5000 }).toBe(1);
-    expect(host.events[0].text).toBe('[语音] 伙伴:帮我开灯');
+    expect(host.events[0].text).toBe('[voice] 伙伴:帮我开灯');
     expect((await page.next((m) => m.t === 'listen' && m.phase === 'heard')).text).toBe('帮我开灯');
   });
 
@@ -274,7 +274,7 @@ describe('voice input', () => {
     expect(host.events).toHaveLength(0);
     for (const fr of tone(900, 0)) page.audio(fr);
     await expect.poll(() => host.events.length, { timeout: 5000 }).toBe(1);
-    expect(host.events[0].text).toBe('[语音] 伙伴:听清楚了');
+    expect(host.events[0].text).toBe('[voice] 伙伴:听清楚了');
     expect((await page.next((m) => m.t === 'listen' && m.phase === 'heard')).text).toBe('听清楚了');
     // one streamed sentence, not a second pass over the finished audio
     expect(spawned[0].lines.filter((l) => l.startsWith('B '))).toHaveLength(1);
@@ -289,7 +289,7 @@ describe('voice input', () => {
     expect(host.events).toHaveLength(0);
     for (const fr of tone(900, 0)) page.audio(fr);
     await expect.poll(() => host.events.length, { timeout: 5000 }).toBe(1);
-    expect(host.events[0].text.length).toBeGreaterThan('[语音] 伙伴:'.length + 13);
+    expect(host.events[0].text.length).toBeGreaterThan('[voice] 伙伴:'.length + 13);
   });
 
   it('whisper: an app language SenseVoice does not hear goes to Whisper in that language, decoded once when the sentence ends', async () => {

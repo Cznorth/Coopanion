@@ -40,11 +40,11 @@ Coopanion is a desktop pet. **Coo** lives on the bottom edge of your screen: it 
 
 - **Many model services**: OpenAI, Anthropic, Gemini, xAI, OpenRouter, DeepSeek, Kimi, Qwen, MiniMax, Zhipu GLM, Doubao, Baidu Qianfan and StepFun. Pick one and paste an API key, or sign in with a ChatGPT account to use its ChatGPT plan.
 - **Chat**: hold the talk key and speak, or type; Coo answers in a bubble. Speech is recognized on your machine with FunASR or Whisper, picked by the app language.
-- **Memory**: Coo remembers what you talked about, and knows when you poke it or pat its head.
+- **Memory**: Coo remembers what you talked about, and knows when you poke it or pat its head. What it knows about you goes in `PARTNER.md` in its workspace, which its prompt includes whole. Every change to the workspace is kept as a version; the Memory page in the advanced mode shows the history. The Windows build carries git; on macOS and Linux git has to be installed.
 - **Computer use**: clicking buttons, typing, switching windows. Coo asks before it acts.
 - **Activity bubbles**: see when Coo is thinking and what it is working on, with a different animated icon for reading, searching, writing and using the computer. File names appear; the bubble lets clicks through. On by default; turn it off in Habits.
-- **Figures**: Coo, or the **DeepSeek Whale**, a fully animated whale girl with eight vendor color schemes and two outfits (a maid dress and a winter outfit). Other figure packs are imported on the Dress up page from a zip or a folder; packs written for figure API 2 keep loading in later versions (see the [figure pack compatibility promise](packages/cortico-world-desktop-pet/README.md#形象包兼容承诺)).
-- **Dress up**: Coo's colors, hats, earrings, glasses and neckwear, plus its size and how often it walks.
+- **Figures**: Coo, or the **DeepSeek Chan**, a fully animated whale girl with eight vendor color schemes and two outfits (a maid dress and a winter outfit). Other figure packs are imported on the Dress up page from a zip or a folder; packs written for figure API 2 keep loading in later versions (see the [figure pack compatibility promise](packages/cortico-world-desktop-pet/README.md#形象包兼容承诺)).
+- **Dress up**: Coo's colors (five of them after Cultist Simulator's principles: Lantern, Grail, Forge, Heart, Winter), hats, earrings, glasses and neckwear, plus its size and how often it walks.
 - **Extensions**: install Worlds such as a QQ bot, a drawing room and small games from the Extensions page.
 
 What changed in each version is in [Releases](https://github.com/Pal-AI-Lab/Coopanion/releases).
@@ -109,14 +109,15 @@ Coopanion to your antivirus's allowed list first.
 1. **Start**: Coo drops to the bottom of the screen and an icon appears in the tray (menu bar on Mac, status bar on Linux). No window opens.
 2. **Guide**: on first start Coo walks you through setup in its bubbles; you pick or type the answers right there:
    1. what Coo should call you, and where you heard about Coopanion ("I'd rather not say" is one of the answers; the answer is sent with the anonymous usage statistics when they are on);
-   2. how much it walks around: stay put / now and then / often;
-   3. which model service to use (the first one listed if unsure), then paste the API key and test the connection;
-   4. download the speech model (FunASR, about 230 MB; Whisper, about 360 MB, when the app language is French, German, Spanish, Portuguese, Italian or Russian; from ModelScope), then how to talk to Coo;
-   5. where the buttons, menu and settings are, and that the persona is on the System prompt page of the settings window.
+   2. what Coo is like: small and curious / clingy and greedy / reliable and capable / lively and always there / quiet and wordless, and on the GitHub build DeepSeek Chan. Picking one dresses Coo in its colors and has it say a line in that voice; the one you keep becomes its persona, which Coo edits from then on, and the colors change on the Dress up page. Once the persona has been edited, running the guide again skips this step;
+   3. how much it walks around: stay put / now and then / often;
+   4. which model service to use (the first one listed if unsure), then paste the API key and test the connection;
+   5. download the speech model (FunASR, about 230 MB; Whisper, about 360 MB, when the app language is French, German, Spanish, Portuguese, Italian or Russian; from ModelScope), then how to talk to Coo;
+   6. where the buttons, menu and settings are, and that the persona is on the System prompt page of the settings window.
 
    After the guide you can talk Coo through its personality, way of speaking and what you call each other; it can write the persona into its prompt itself.
 
-   Coo's persona and prompts are written in Chinese when the app language is Simplified or Traditional Chinese and in English for every other language; for languages other than Simplified Chinese and English, Coo is also told to talk to you in the app language. Changing the language swaps the starting persona for the other version as long as you have not edited it; Coo reads it from its next session. An edited persona stays as it is.
+   Coo's persona follows the app language and exists in all eleven; its other prompts are in Chinese when the app language is Simplified or Traditional Chinese and in English for every other language, and for languages other than Simplified Chinese and English Coo is also told to talk to you in the app language. Changing the language swaps an unedited persona for the same persona in the new language; Coo reads it from its next session. An edited persona stays as it is.
 
    The × at the top right of the bubble ends the guide at any time. Run it again from **Guide** on the Start page. If you chose to enter the key later, Coo asks again after a while, and each time you talk to it before a model is connected it offers to connect one.
 3. **Say hello**: tap **Left Alt** (**Left Option** on Mac), then press and hold it, say "hello", and release to send. Allow microphone access when asked.

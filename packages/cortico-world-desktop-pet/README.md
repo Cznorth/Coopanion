@@ -414,7 +414,7 @@ corepack pnpm install
 corepack pnpm build        # 面板产物 dist/,不进版本库
 ```
 
-然后在 Cortico 控制台「扩展」页安装(填本目录的绝对路径),整进程重启。bot 的 `declares` 里加上 `desktop-pet`,或在「World 总览」启用它。
+然后在 Cortico WebUI「扩展」页安装(填本目录的绝对路径),整进程重启。bot 的 `declares` 里加上 `desktop-pet`,或在「World 总览」启用它。
 
 ## 开发
 

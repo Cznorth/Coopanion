@@ -202,11 +202,11 @@ const settingsUrl = (path = '') => consoleUrl(`coopanion/${path}`);
 /**
  * The settings window lives in a session of its own (SETTINGS_PARTITION), and serveWindow answers every
  * http request of that session. Its files (scripts/stage.ts builds them) are served for `/coopanion/…` on
- * the Core's console origin, so the page and the console API share one origin and Core's same-origin check
+ * the Core's WebUI origin, so the page and the WebUI API share one origin and Core's same-origin check
  * applies.
  *
  * Who runs what in that session: the settings page, and the extension panels it loads into its own
- * document, run with the Core's full rights, as in Cortico's own console. The pet's pages (its preview on
+ * document, run with the Core's full rights, as in Cortico's own WebUI. The pet's pages (its preview on
  * 开始, the 装扮 page) are frames from the desktop-pet World's own server, and a figure pack's code runs
  * inside them sandboxed: it is not trusted, and must neither read nor write the Core's API.
  *
@@ -360,9 +360,9 @@ function openSettings(path = '') {
   settings.loadURL(url ?? loadingPage(T().starting));
 }
 
-/** Calls a panel method of a World page through the console API. */
+/** Calls a panel method of a World page through the WebUI API. */
 async function panel(pageId, panelId, method) {
-  const url = consoleUrl(`api/console/providers/${encodeURIComponent(pageId)}/panels/${panelId}/${method}`);
+  const url = consoleUrl(`api/webui/providers/${encodeURIComponent(pageId)}/panels/${panelId}/${method}`);
   if (!url) return null;
   const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ args: [] }) });
   return res.ok ? res.json() : null;

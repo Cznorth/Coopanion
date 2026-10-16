@@ -39,8 +39,8 @@ beforeEach(() => {
     if (path === '/api/status') return json({ displayName: 'Fixture', loop: { paused: true } });
     if (path === '/api/capabilities') return json({ capabilities: { prompts: true, config: true, storage: true, sessionControl: true } });
     if (path === '/api/config') return json({ groups: [{ group: { id: 'worlds.fixture', owner: 'world:fixture', schema: { title: 'Fixture configuration', properties: { 'worlds.fixture.name': { type: 'string', title: 'Fixture name' } } } }, values: { 'worlds.fixture.name': 'Friend' } }] });
-    if (path === '/api/console/lamps') return json({ lamps: {} });
-    if (path === '/api/console/manifest') return json({ protocolVersion: CONSOLE_PROTOCOL_VERSION, framework: { capabilities: { config: configAvailable } }, providers: [
+    if (path === '/api/webui/lamps') return json({ lamps: {} });
+    if (path === '/api/webui/manifest') return json({ protocolVersion: CONSOLE_PROTOCOL_VERSION, framework: { capabilities: { config: configAvailable } }, providers: [
       { id: 'world:fixture', kind: 'world', label: 'Fixture World', availability: 'active', configGroups: ['worlds.fixture'], prompts: [{ key: worldKey }] },
     ] });
     if (path === '/api/prompts/prefix') return json({ segments: prefix() });

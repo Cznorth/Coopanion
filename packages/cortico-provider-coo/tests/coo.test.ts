@@ -14,7 +14,7 @@ import { RESERVED_FRAME_NAMES } from 'cortico/core/loop.ts';
 import { blobLine } from 'cortico/core/blobs.ts';
 import COO, { OFF_PEAK, VENDORS, VENDOR_ICONS, protocolOf, vendorEntry, vendorOf } from '../src/index.ts';
 import { PROTOCOLS, endpointName, locate, regionsOf, siteOf } from '../src/vendors.ts';
-import { connectVendor, type ConsoleCall } from '../src/connect.ts';
+import { connectVendor, type WebUiCall } from '../src/connect.ts';
 
 const entry = (patch: Partial<LLMProviderEntry> = {}): LLMProviderEntry => ({
   kind: 'coo', baseUrl: 'https://api.deepseek.com', secret: 'KEY',
@@ -303,7 +303,7 @@ describe('Coo Pet Provider', () => {
   });
 });
 
-describe('connecting a service through the console routes', () => {
+describe('connecting a service through the WebUI routes', () => {
   /** A console that knows the endpoints in `existing`, records every call, and tests with `testOk`. */
   function fakeConsole(existing: string[], testOk: boolean) {
     const calls: Array<[string, unknown]> = [];
@@ -313,7 +313,7 @@ describe('connecting a service through the console routes', () => {
       if (path.endsWith('/test')) return testOk ? { ok: true, elapsedMs: 42 } : { ok: false, hint: '密钥无效' };
       if (body === undefined) return { name: path.split('/').pop(), entry: { kind: 'coo', spec: { model: 'mine' } }, revision: 'r1' };
       return {};
-    }) as ConsoleCall;
+    }) as WebUiCall;
     return { call, calls };
   }
   const qwen = VENDORS.find((v) => v.id === 'qwen')!;

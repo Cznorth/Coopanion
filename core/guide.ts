@@ -16,7 +16,7 @@
  * 5. the model service (the services Coo Pet Provider offers, in the order for the app's language,
  *    each card with its logo; the services that take mainland China accounts only behind a "more"
  *    card outside Chinese), the model (the service's cheap default that reads images, or any name
- *    typed in) and the key, saved, tested and made active through the console's own endpoint routes,
+ *    typed in) and the key, saved, tested and made active through the WebUI endpoint routes,
  *    on the platform for the language (`defaultRegion`) unless the service is already connected on
  *    the other one; a ChatGPT plan is signed in in the system browser instead of the model and key;
  * 6. voice input: the speech model of the engine in force (FunASR or Whisper, by the app language)
@@ -36,7 +36,7 @@ import { LANGUAGES, LANGUAGE_NAMES, type Language } from 'cortico/core/language.
 import type { DesktopPetWorld, PetDialog, PetDialogAnswer, PetDialogHandle } from 'cortico-world-desktop-pet';
 import { USER_MAX, capFor, petText } from 'cortico-world-desktop-pet';
 import { CHATGPT, VENDOR_ICONS, defaultRegion, localized, siteOf, vendorName, vendorsFor, type Region, type Vendor } from 'cortico-provider-coo';
-import { connectChatGPT, connectVendor, currentConnection, type ConsoleCall } from 'cortico-provider-coo/src/connect.ts';
+import { connectChatGPT, connectVendor, currentConnection, type WebUiCall } from 'cortico-provider-coo/src/connect.ts';
 import { signInReason } from 'cortico-provider-coo/src/strings.ts';
 import { coreText } from './i18n/index.ts';
 import type { ModelLanguage } from './language.ts';
@@ -151,8 +151,8 @@ export function noteStep(d: PetDialog, a: PetDialogAnswer, language: ModelLangua
   return lines;
 }
 
-/** The console's routes, called as the console calls them; receipts and errors come back in `language`. */
-function api(origin: string, language: () => Language): ConsoleCall {
+/** The WebUI routes, called as the settings window calls them; receipts and errors come back in `language`. */
+function api(origin: string, language: () => Language): WebUiCall {
   const call = async <T>(path: string, body?: unknown): Promise<T> => {
     const res = await fetch(origin + path, {
       method: body === undefined ? 'GET' : 'POST',
@@ -218,7 +218,7 @@ async function pickVendor(show: (d: PetDialog, at: string) => Promise<PetDialogA
  * service cards; `show` gets each line with its name for the usage statistics (`guide_closed.at`).
  * The service in use stays on its platform; another one goes on the platform for `language`.
  */
-async function connectLoop(show: (d: PetDialog, at: string) => Promise<PetDialogAnswer>, call: ConsoleCall, pet: () => DesktopPetWorld | null,
+async function connectLoop(show: (d: PetDialog, at: string) => Promise<PetDialogAnswer>, call: WebUiCall, pet: () => DesktopPetWorld | null,
   ask: Omit<PetDialog, 'input'>, later: string, language: Language): Promise<Vendor | null> {
   const S = lines(language);
   const current = await currentConnection(call);
@@ -256,7 +256,7 @@ async function connectLoop(show: (d: PetDialog, at: string) => Promise<PetDialog
  * process), and a bar waits in the bubble until the browser comes back; closing the bar stops the
  * wait. True once the plan is connected, false when put off.
  */
-async function signIn(show: (d: PetDialog, at: string) => Promise<PetDialogAnswer>, call: ConsoleCall, pet: () => DesktopPetWorld | null,
+async function signIn(show: (d: PetDialog, at: string) => Promise<PetDialogAnswer>, call: WebUiCall, pet: () => DesktopPetWorld | null,
   ask: Omit<PetDialog, 'input'>, later: string, language: Language): Promise<boolean> {
   const S = lines(language);
   const name = vendorName(CHATGPT, language);

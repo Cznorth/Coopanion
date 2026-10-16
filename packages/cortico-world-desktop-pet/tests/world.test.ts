@@ -51,7 +51,7 @@ async function mounted(patch?: (c: DesktopPetConfigSection) => void, extra?: Par
 
 describe('definition', () => {
   it('passes the extension dry mount', async () => {
-    const report = await dryMountWorld(DESKTOP_PET as never, { scratchDir: mkdtempSync(join(tmpdir(), 'pet-dry-')), packageDir: fileURLToPath(new URL('../', import.meta.url)), hasConsoleClient: true });
+    const report = await dryMountWorld(DESKTOP_PET as never, { scratchDir: mkdtempSync(join(tmpdir(), 'pet-dry-')), packageDir: fileURLToPath(new URL('../', import.meta.url)), hasWebUiClient: true });
     expect(report.failures).toEqual([]);
     expect(report.warnings).toEqual([]);
   });
@@ -62,7 +62,7 @@ describe('English model text', () => {
 
   it('gives the bot no Chinese of its own: environment prompt, tool declarations, events', async () => {
     const { world, host } = await mounted((c) => { c.user = 'Sam'; }, { modelLanguage: () => 'en', replyLanguage: () => 'Japanese', controls: { openChat: () => {} } });
-    const doc = world.console().promptDocs![0]!;
+    const doc = world.webUi().promptDocs![0]!;
     const prompt = renderTemplate(readFileSync(doc.path, 'utf8'), await world.envPromptVars());
     expect(prompt).not.toMatch(HAN);
     // every placeholder of the English template is one the World fills
@@ -452,10 +452,10 @@ describe('with a pet page', () => {
   it('the pet panel runs the app\'s introduction when the app lends one', async () => {
     let runs = 0;
     const { world } = await mounted(undefined, { controls: { guide: () => { runs++; } } });
-    await world.console().invoke!('pet', 'guide', []);
+    await world.webUi().invoke!('pet', 'guide', []);
     expect(runs).toBe(1);
     const bare = await mounted();
-    await expect(bare.world.console().invoke!('pet', 'guide', [])).rejects.toThrow('没有引导');
+    await expect(bare.world.webUi().invoke!('pet', 'guide', [])).rejects.toThrow('没有引导');
   });
 
   it('the menu header carries the bot and its run controls; clicks reach them', async () => {
@@ -528,7 +528,7 @@ function chatSocket(world: DesktopPetWorld) {
     onMessage: (cb: (text: string) => void) => { receive = cb; },
     onClose: () => {},
   };
-  world.console().stream!('chat', socket);
+  world.webUi().stream!('chat', socket);
   return { frames, send: (m: Record<string, unknown>) => receive(JSON.stringify(m)), last: (t: string) => frames.filter((f) => f.t === t).at(-1) };
 }
 

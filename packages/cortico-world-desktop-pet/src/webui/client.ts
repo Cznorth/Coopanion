@@ -4,7 +4,7 @@
  * through `ctx.invoke`, the level meter through `ctx.stream('voice')`. Text is the World's table
  * (src/i18n) for the console's language.
  */
-import type { ConsoleClientBundle, ConsolePanel, ConsolePanelContext } from 'cortico/web/shared/client-panel.ts';
+import type { WebUiClientBundle, WebUiPanel, WebUiPanelContext } from 'cortico/web/shared/client-panel.ts';
 import { petText } from '../i18n/index.ts';
 import './style.css';
 
@@ -71,7 +71,7 @@ const MB = (n: number) => `${Math.round(n / 1048576)} MB`;
 const progress = (a: Artifact) => (a.total ? `${Math.round((a.done / a.total) * 100)}%` : MB(a.done));
 const errText = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
-function statusRow(ctx: ConsolePanelContext, name: string) {
+function statusRow(ctx: WebUiPanelContext, name: string) {
   const { ui } = ctx;
   const row = ui.h('div', 'mountrow');
   const dot = ui.h('span', 'navdot');
@@ -91,7 +91,7 @@ function statusRow(ctx: ConsolePanelContext, name: string) {
   };
 }
 
-const petPanel: ConsolePanel = {
+const petPanel: WebUiPanel = {
   mount(ctx) {
     const { ui, root } = ctx;
     const t = petText(ctx.language).panel;
@@ -162,7 +162,7 @@ const ENGINE_NAMES: Partial<Record<Engine, string>> = { funasr: 'FunASR', whispe
 const FLOOR_DB = -60;
 const meterPct = (db: number) => Math.max(0, Math.min(100, ((db - FLOOR_DB) / -FLOOR_DB) * 100));
 
-const voicePanel: ConsolePanel = {
+const voicePanel: WebUiPanel = {
   mount(ctx) {
     const { ui, root } = ctx;
     const t = petText(ctx.language).panel;
@@ -377,5 +377,5 @@ const voicePanel: ConsolePanel = {
   },
 };
 
-const bundle: ConsoleClientBundle = { panels: { pet: petPanel, voice: voicePanel } };
+const bundle: WebUiClientBundle = { panels: { pet: petPanel, voice: voicePanel } };
 export default bundle;

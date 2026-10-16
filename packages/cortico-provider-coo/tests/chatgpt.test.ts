@@ -19,7 +19,7 @@ import { functionCall, functionResult, message } from 'cortico/protocol/open-res
 import { CHATGPT_PROVIDER, SIGN_IN_PANEL, chatgptModule, usageLimited, USAGE_LIMIT } from '../src/index.ts';
 import { CHATGPT_RESOURCE, CHATGPT_SCOPES, PLAN_SCOPE, accountAt, readStored, type ChatGPTService } from '../src/chatgpt/auth.ts';
 import { TOOL_NAMESPACE } from '../src/chatgpt/client.ts';
-import { connectChatGPT, type ConsoleCall } from '../src/connect.ts';
+import { connectChatGPT, type WebUiCall } from '../src/connect.ts';
 import { cooText } from '../src/strings.ts';
 
 const CLIENT = 'oaiapp_test';
@@ -106,7 +106,7 @@ function setup(service: ChatGPTService, baseUrl?: string, log: Logger = nullLogg
   const module = chatgptModule(service, () => root);
   const e = entry(baseUrl);
   const create = () => module.create('chatgpt', e, { stateDir: dir, secret: () => '', readBlob: () => null, keepThinking: () => true, log });
-  const console = module.console!({ language: 'en', entries: () => [{ name: 'chatgpt', entry: e }], instance: create, save: () => {} });
+  const console = module.webUi!({ language: 'en', entries: () => [{ name: 'chatgpt', entry: e }], instance: create, save: () => {} });
   const invoke = <T>(method: string) => console.invoke!(SIGN_IN_PANEL, method, ['chatgpt']) as Promise<T>;
   return { root, dir, module, create, console, invoke, entry: e };
 }
@@ -135,7 +135,7 @@ describe('Sign in with ChatGPT', () => {
   it('registers on the first sign-in, exchanges the code with its PKCE verifier, and signs in again under the issued client id', async () => {
     const auth = await authServer();
     const { dir, module, console, invoke } = setup(svc(auth.issuer));
-    // the console server answers only methods of a declared panel
+    // the WebUI server answers only methods of a declared panel
     expect(console.panels?.map((p) => p.id)).toContain(SIGN_IN_PANEL);
     writeFileSync(join(dir, '.env'), 'OTHER_KEY=kept\n');
     expect(module.availability!('chatgpt', entry(), 'en')).toEqual({ ready: false, reason: cooText('en').chatgpt.signedOut });
@@ -379,7 +379,7 @@ describe('requests billed to a ChatGPT plan', () => {
   });
 });
 
-describe('connecting a ChatGPT plan through the console routes', () => {
+describe('connecting a ChatGPT plan through the WebUI routes', () => {
   /** A console with no endpoints whose sign-in is done after `waiting` looks, with the plan listing `models`. */
   function fakeConsole(final: { phase: 'done' | 'failed'; reason?: string }, models: string[], waiting = 2) {
     const calls: Array<[string, unknown]> = [];
@@ -391,7 +391,7 @@ describe('connecting a ChatGPT plan through the console routes', () => {
       if (path.endsWith('/test')) return { ok: true, elapsedMs: 7 };
       if (body === undefined) return { name: 'chatgpt', entry: { kind: 'chatgpt', spec: { model: 'old-model' } }, revision: 'r1' };
       return {};
-    }) as ConsoleCall;
+    }) as WebUiCall;
     return { call, calls };
   }
 
@@ -401,7 +401,7 @@ describe('connecting a ChatGPT plan through the console routes', () => {
     const r = await connectChatGPT(call, (url) => opened.push(url), { pollMs: 1 });
     expect(r).toMatchObject({ ok: true, ms: 7 });
     expect(opened).toEqual(['https://auth.example/authorize?x=1']);
-    const route = `/api/console/providers/${encodeURIComponent('llm:chatgpt')}/panels/chatgpt`;
+    const route = `/api/webui/providers/${encodeURIComponent('llm:chatgpt')}/panels/chatgpt`;
     expect(calls.map(([path]) => path)).toEqual([
       '/api/providers', '/api/providers', `${route}/signIn`, `${route}/state`, `${route}/state`, `${route}/state`,
       '/api/providers/chatgpt', '/api/providers/chatgpt/save', '/api/providers/chatgpt/test', '/api/providers/chatgpt/activate', '/api/run/resume',

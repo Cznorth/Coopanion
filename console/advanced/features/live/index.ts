@@ -5,7 +5,7 @@ import type { ContextRecord } from 'cortico/protocol/open-responses/context.ts';
  */
 
 import type {
-  ConsoleStreamHandle,
+  WebUiStreamHandle,
   Disposable,
 } from 'cortico/web/shared/client-panel.ts';
 import { panelStreamRoute } from '../../lib/web/shared/console-protocol.ts';
@@ -258,7 +258,7 @@ function mountLive(ctx: FeatureContext, env: SocketEnv): Disposable | void {
   };
 
   const hello = JSON.stringify({ type: 'hello', name: '控制台' });
-  let chatStream: ConsoleStreamHandle | null = null;
+  let chatStream: WebUiStreamHandle | null = null;
 
   // ── fork 视图 ─────────────────────────────────────────────────────
   const fork = createForkView({
@@ -427,7 +427,7 @@ function mountLive(ctx: FeatureContext, env: SocketEnv): Disposable | void {
   }
 
   chatStream = ctx.lifecycle.own(openStream({
-    url: env.wsUrl(panelStreamRoute('world:terminal', 'chat')),
+    url: env.wsUrl(panelStreamRoute('world:console', 'chat')),
     signal: ctx.signal,
     createSocket: env.createSocket,
     setTimer: env.setTimer,

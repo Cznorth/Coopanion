@@ -35,9 +35,9 @@
   },
   "cortico": {
     "kind": "world",
-    "api": 5,
-    "consoleClient": "dist/console.js",
-    "consoleStyle": "dist/console.css"
+    "api": 6,
+    "webUiClient": "dist/webui.js",
+    "webUiStyle": "dist/webui.css"
   },
   "files": [
     "src",
@@ -49,7 +49,7 @@
     "THIRD_PARTY_NOTICES.md"
   ],
   "scripts": {
-    "build": "node scripts/build-console.mjs",
+    "build": "node scripts/build-webui.mjs",
     "test": "vitest run",
     "test:cua-e2e": "vitest run --config vitest.cua-e2e.config.ts",
     "typecheck": "tsc --noEmit"

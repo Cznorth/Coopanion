@@ -8,12 +8,12 @@
  * 圆点配色写在 `styles.css` 里,前端这边一个角色名都不写死。
  */
 
-import type { ConsoleUi } from 'cortico/web/shared/client-panel.ts';
+import type { WebUi } from 'cortico/web/shared/client-panel.ts';
 import type { SessionStat } from './protocol.ts';
 import { S } from './strings.ts';
 
 export interface SessionBandDeps {
-  ui: ConsoleUi;
+  ui: WebUi;
   /**
    * 本次挂载的 signal，统一管理卡片监听，unmount 后解除。
    */

@@ -1,5 +1,5 @@
 /**
- * The app's Core process: Cormini as the Persona, the terminal, desktop-pet and coopanion Worlds, Coo Pet
+ * The app's Core process: Cormini as the Persona, the console, desktop-pet and coopanion Worlds, Coo Pet
  * Provider (DeepSeek and the other model services Coo offers) and its `chatgpt` module (a ChatGPT plan,
  * signed in) next to Cortico's built-in providers, and Worlds or providers installed from npm through
  * the console's extension page.
@@ -14,7 +14,7 @@
  * what Coo reads: the bundled Worlds' events, receipts and environment prompts, and the seeded persona
  * file, which is swapped for the other language's while it is still exactly as seeded. Each read takes
  * the language as it is then; the prompt follows at the next prefix rebuild. A change, written on the
- * 「习惯」 page through the console's config API, goes out from `watchLanguage` the moment the live
+ * 「习惯」 page through the WebUI config API, goes out from `watchLanguage` the moment the live
  * config takes it: to the persona file, to Coopanion's config group titles, to the Electron main
  * process (tray menu, settings window), to the pet's pages, and to the settings window's colour scheme names.
  *
@@ -56,10 +56,10 @@ import { deploymentRoot, providersRoot, repoRoot } from 'cortico/paths.ts';
 import { providerModules, registerProviderModules } from 'cortico/providers/registry.ts';
 import { withWorlds, type WorldDefinition, type WorldSection } from 'cortico/world.ts';
 import { InstanceLockedError } from 'cortico/core/instance-lock.ts';
-import { TERMINAL } from 'cortico/worlds/terminal/definition.ts';
+import { CONSOLE } from 'cortico/worlds/console/definition.ts';
 import { desktopPetDefinition, figurePacks, type DesktopPetWorld } from 'cortico-world-desktop-pet';
 import COO, { CHATGPT, CHATGPT_PROVIDER, signedIn, usageLimited, vendorOf } from 'cortico-provider-coo';
-import { bundledConsoleAssets } from './bundled-panels.ts';
+import { bundledWebUiAssets } from './bundled-panels.ts';
 import { followPetLook } from './console-theme.ts';
 import { askForKey, guideDone, markDone, runGuide, type GuideDeps } from './guide.ts';
 import { noticeDefinition, type NoticeWorld } from './notice.ts';
@@ -141,7 +141,7 @@ function companionGroup(language: Language): ConfigGroup {
 
 /**
  * Makes `config.language` an accessor on the live config object, so `onChange` runs right after any write
- * that changes the app language: the console's config API and a World's persist both set it there.
+ * that changes the app language: the WebUI config API and a World's persist both set it there.
  * `config.json` is written by those paths from their own values, so the accessor only watches.
  */
 function watchLanguage(config: CoreConfig, onChange: (language: Language) => void): void {
@@ -467,7 +467,7 @@ export async function main(): Promise<void> {
   let coo: CoopanionPersona | null = null;
   const definitionBase: BotDefinition<CorminiConfig> = {
     ...base.definition,
-    declares: [TERMINAL.id, DESKTOP_PET.id, NOTICE.id],
+    declares: [CONSOLE.id, DESKTOP_PET.id, NOTICE.id],
     defaults: () => ({
       ...base.definition.defaults(),
       displayName: DISPLAY_NAME,
@@ -495,7 +495,7 @@ export async function main(): Promise<void> {
         persona,
         onStart: () => persona.startRhythm(),
         onStop: () => persona.stopRhythm(),
-        console: {
+        webUi: {
           configGroups: [base.contextGroup, settingsGroup],
           status: () => ({ context: { maxTokens: cfg.context.maxTokens, softRatio: cfg.context.softRatio } }),
           configOptions: (kind) => (kind === LANGUAGE_OPTIONS ? LANGUAGES.map((value) => ({ value, label: LANGUAGE_NAMES[value] })) : []),
@@ -503,7 +503,7 @@ export async function main(): Promise<void> {
       };
     },
   };
-  const bundled = [TERMINAL, DESKTOP_PET, NOTICE] as WorldDefinition<WorldSection>[];
+  const bundled = [CONSOLE, DESKTOP_PET, NOTICE] as WorldDefinition<WorldSection>[];
 
   // extension providers must be registered before endpoints are resolved
   const extensions = await loadExtensions(repoRoot(), {
@@ -511,7 +511,7 @@ export async function main(): Promise<void> {
     reservedProviders: [...providerModules.map((m) => m.id), COO.id, CHATGPT_PROVIDER.id],
   });
   registerProviderModules([COO, CHATGPT_PROVIDER, ...extensions.providers]);
-  extensions.consoleAssets.push(...bundledConsoleAssets([
+  extensions.webUiAssets.push(...bundledWebUiAssets([
     { id: DESKTOP_PET.id, packageName: 'cortico-world-desktop-pet' },
   ]));
   const definition = withWorlds(definitionBase, [...bundled, ...extensions.worlds]);

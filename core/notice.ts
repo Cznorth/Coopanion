@@ -26,7 +26,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
-import type { ToolDef, World, WorldConsoleDecl, WorldHost } from 'cortico/core/types.ts';
+import type { ToolDef, World, WorldWebUiDecl, WorldHost } from 'cortico/core/types.ts';
 import type { Language } from 'cortico/core/language.ts';
 import type { WorldDefinition, WorldSection } from 'cortico/world.ts';
 import { SELF_KEYS, selfAdjustMode } from 'cortico-world-desktop-pet';
@@ -364,7 +364,7 @@ export class NoticeWorld implements World {
   envPromptVars(): null { return null; }
 
   /** Its name in the console's rail in the language of each request, so it follows a language change without a restart. */
-  console(language: Language = 'zh'): WorldConsoleDecl {
+  webUi(language: Language = 'zh'): WorldWebUiDecl {
     return { label: coreText(language).noticeLabel };
   }
   tools(): ToolDef[] { return this.alarms.tools(); }

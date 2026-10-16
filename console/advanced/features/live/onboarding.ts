@@ -4,7 +4,7 @@
  * 是否显示由终端页判定，这里只画。
  */
 
-import type { ConsoleUi } from 'cortico/web/shared/client-panel.ts';
+import type { WebUi } from 'cortico/web/shared/client-panel.ts';
 import { get } from '../../../base/api.ts';
 import { brandMark, icon, type ConsoleIconName } from '../../../base/ui/icons.ts';
 import { S } from './strings.ts';
@@ -16,7 +16,7 @@ interface WorldRow {
 }
 
 export interface OnboardingDeps {
-  ui: ConsoleUi;
+  ui: WebUi;
   doc: Document;
   signal: AbortSignal;
   /** 跳到控制台的另一页。 */

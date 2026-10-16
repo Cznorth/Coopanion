@@ -23,7 +23,7 @@ or handed context. Two of its rules settle most design questions:
 |---|---|---|
 | Electron main process: tray, settings window, Core child process, updater | `app/` | `app` |
 | Core child process entry: assembly, seed files, the `coopanion` World, telemetry | `core/` | `core` |
-| Settings window: Coopanion's own front end over the console HTTP API | `console/` | `console` |
+| Settings window: Coopanion's own front end over the WebUI HTTP API | `console/` | `console` |
 | Desktop pet World, computer use included (`src/cua/`) | `packages/cortico-world-desktop-pet/` | `desktop-pet` |
 | Model provider | `packages/cortico-provider-coo/` | `provider-coo` |
 | Build, staging and packing | `scripts/`, `installer/`, `electron-builder.yml` | `scripts`, `installer` |
@@ -41,10 +41,10 @@ is unavoidable.
 1. **Cortico changes go to Cortico.** `vendor/cortico` is never patched in place. A change the
    settings window or a package needs from Cortico is a Cortico pull request; the submodule then
    moves to a Cortico commit on its main branch.
-2. **The settings window uses Core through the console HTTP API only.** It depends on nothing of
-   Cortico's own console (its pages, DOM, class names or `src/web/client/` modules) and takes types
+2. **The settings window uses Core through the WebUI HTTP API only.** It depends on nothing of
+   Cortico's own WebUI (its pages, DOM, class names or `src/web/client/` modules) and takes types
    only from Cortico (`tests/console-imports.test.ts`). The normal mode's pages use only the public
-   routes listed in Cortico's `docs/console.md` and the panel contract; when they need more, that is a
+   routes listed in Cortico's `docs/webui.md` and the panel contract; when they need more, that is a
    Cortico issue. `console/advanced/` is the one exception: its pages may call Cortico's internal
    routes. `tests/console-api.test.ts` locks the shape of every route the window calls, the internal
    ones apart, so a submodule bump that changes one fails the tests.

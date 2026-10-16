@@ -56,7 +56,7 @@ Coo Pet Provider:[Cortico](https://github.com/Pal-AI-Lab/Cortico) 的一个 prov
 - **语言**:控制台里的说明、思考档位与协议设置项在 `src/strings.ts`(`zh`、`en`)与 `src/strings.<语言>.ts`(只写译好的顶层键);
   `names` / `keyHint` 按语言给(`localized`);两处都是繁体中文回落简体,其余回落英文;`vendorsFor(language)` 给推荐顺序,
   非中文时豆包、百度千帆、阶跃星辰(只收中国大陆账号)放在 `more` 里;`defaultRegion`:中文用国内平台,其余用国际平台。
-- **接入流程**:`src/connect.ts` 的 `connectVendor` 经 Cortico 控制台的 provider 路由给某一家的某个平台建端点
+- **接入流程**:`src/connect.ts` 的 `connectVendor` 经 Cortico WebUI 的 provider 路由给某一家的某个平台建端点
   (密钥存在该端点 `.env` 的 `Vendor.secret` 下,模型按传入的名字,留空用默认)、测试,通过后设为当前端点并恢复运行;
   已有端点留空 Key 时沿用存着的。Coopanion 的桌面引导和「开始」页都用它。
 
@@ -80,7 +80,7 @@ ChatGPT 套餐。表里的 `CHATGPT`(`vendors.ts`)给界面列出它,模型、�
 - **用量上限**:`subscription_sharing_usage_limit_exceeded`(HTTP 429 或流里的 `response.failed`)留在客户端里处理:日志单独记一条,
   5 分钟不发请求，之后重发，上限持续多久就这样等多久;对 Core 来说只是一个慢请求，不算失败，不进连续失败的计数。新事件抢占时等待结束。
   已经流出输出的请求和诊断请求(控制台的测试连接)仍以这个 429 失败;Coopanion 的失败气泡不算它。
-- **控制台方法**:页 `llm:chatgpt` 的面板 `chatgpt`,参数是端点名:`signIn` 回授权 URL,由调用方送到系统浏览器;`state` 报登录进度,
+- **WebUI 面板方法**:页 `llm:chatgpt` 的面板 `chatgpt`,参数是端点名:`signIn` 回授权 URL,由调用方送到系统浏览器;`state` 报登录进度,
   登录完成后带上套餐的模型名;`signOut` 等进行中的刷新写完，删掉令牌并撤销 refresh token。回调每次登录只接受一次。`connect.ts` 的 `connectChatGPT` 建端点、登录、选模型、测试并设为当前端点。
 - **没用真实账号验证过**:以上都只对着本地假的授权服务器和 Responses 流测过。
 

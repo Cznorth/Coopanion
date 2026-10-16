@@ -56,7 +56,7 @@ export function chatgptModule(service: ChatGPTService = CHATGPT_SERVICE, stateRo
     accepts: (entry, _spec, mime) => entry.multimodal === true && mime.startsWith('image/'),
     prices: () => [],
     contextOverflow: isContextOverflow,
-    console: (host) => ({
+    webUi: (host) => ({
       panels: [{ id: SIGN_IN_PANEL, title: cooText(host.language).chatgpt.panel }],
       invoke: async (panel, method, args) => {
         const name = args[0];

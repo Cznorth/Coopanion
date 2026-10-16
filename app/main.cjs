@@ -218,8 +218,8 @@ const settingsUrl = (path = '') => consoleUrl(`coopanion/${path}`);
  * referrer: Chromium hands this handler neither the Origin
  * header nor cookies, so the Origin sent on is the referrer's and no cookie goes along (a console behind a
  * login password does not open here). The answer streams back as it arrives; a redirect comes back as it
- * is, unfollowed. WebSockets do not pass through here; keepRemoteOut keeps the session's other traffic and
- * its frames on this machine.
+ * is, unfollowed. WebSockets do not pass through here; keepRemoteOut keeps the session's other traffic on
+ * this machine, apart from the release check and the extension market's images, and its frames too.
  */
 const SETTINGS_PARTITION = 'persist:coopanion-settings';
 const WINDOW_DIR = join(APP_ROOT, 'build', 'console');
@@ -287,11 +287,14 @@ function forward(request, url, origin) {
 
 /** The only remote address the settings page asks: the latest Coopanion release, for the hint under the wordmark. */
 const RELEASE_CHECK = 'https://api.github.com/repos/Pal-AI-Lab/Coopanion/releases/latest';
+/** Images of the extension market: package icons and screenshots of the official index, and GitHub avatars. */
+const MARKET_IMAGES = ['https://raw.githubusercontent.com/Pal-AI-Lab/cortico-extensions/', 'https://avatars.githubusercontent.com/'];
 const isLocal = (url) => /^(https?|wss?):\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?\//.test(url);
-/** Requests of the settings session leave the machine only for the release check. */
+/** Requests of the settings session leave the machine only for the release check and the market's images. */
 function keepRemoteOut(ses) {
   ses.webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*', 'ws://*/*', 'wss://*/*'] }, (details, answer) => {
-    answer({ cancel: !(isLocal(details.url) || details.url === RELEASE_CHECK) });
+    const marketImage = details.resourceType === 'image' && MARKET_IMAGES.some((prefix) => details.url.startsWith(prefix));
+    answer({ cancel: !(isLocal(details.url) || details.url === RELEASE_CHECK || marketImage) });
   });
 }
 

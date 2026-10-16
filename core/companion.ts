@@ -468,6 +468,16 @@ export async function main(): Promise<void> {
   const definitionBase: BotDefinition<CorminiConfig> = {
     ...base.definition,
     declares: [CONSOLE.id, DESKTOP_PET.id, NOTICE.id],
+    // Cormini's tools under the same names; the memory differs by PARTNER.md and the version history
+    describe: {
+      tools: base.definition.describe?.tools ?? [],
+      memory: {
+        form: {
+          zh: '工作区目录里的文本文件,有 Git 时每次改动存为一个版本;CONSTITUTION.md、PARTNER.md 与文件清单进系统前缀,其余按需用文件工具读写。',
+          en: 'Text files in a workspace directory, each change kept as a version where Git is available; CONSTITUTION.md, PARTNER.md and the file listing are in the system prefix, the rest is read and written with the file tools.',
+        },
+      },
+    },
     defaults: () => ({
       ...base.definition.defaults(),
       displayName: DISPLAY_NAME,

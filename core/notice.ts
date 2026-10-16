@@ -28,9 +28,9 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import type { ToolDef, World, WorldWebUiDecl, WorldHost } from 'cortico/core/types.ts';
 import type { Language } from 'cortico/core/language.ts';
-import type { WorldDefinition, WorldSection } from 'cortico/world.ts';
+import { describeTools, type WorldDefinition, type WorldDescribe, type WorldSection } from 'cortico/world.ts';
 import { SELF_KEYS, selfAdjustMode } from 'cortico-world-desktop-pet';
-import { Alarms } from './alarms.ts';
+import { ALARM_TOOL_DECLS, Alarms } from './alarms.ts';
 import type { GuideEnd } from './guide.ts';
 import { coreText } from './i18n/index.ts';
 import { modelLanguage, type ModelLanguage } from './language.ts';
@@ -453,6 +453,20 @@ export class NoticeWorld implements World {
   }
 }
 
+const DESCRIBE: WorldDescribe = {
+  tools: describeTools(ALARM_TOOL_DECLS, {
+    alarm_set: { zh: '给自己定一个唤醒,到时带着备注叫醒自己;可每天重复。', en: 'Sets a wake-up for itself, due with its note; it can repeat daily.' },
+    alarm_list: { zh: '列出已定的唤醒。', en: 'Lists the wake-ups it has set.' },
+    alarm_cancel: { zh: '取消一个唤醒。', en: 'Cancels a wake-up.' },
+  }),
+  events: [
+    { type: 'coopanion.guide', description: { zh: '使用向导结束,附向导里发生的事。', en: 'The introduction ended, with what happened in it.' }, trigger: 'flush' },
+    { type: 'coopanion.alarm', description: { zh: '自己定的唤醒到时间了。', en: 'A wake-up it set is due.' }, trigger: 'flush' },
+    { type: 'coopanion.updated', description: { zh: '应用升级了,附新版本的更新说明。', en: 'The app was updated, with the release notes of the new version.' }, trigger: 'flush' },
+    { type: 'coopanion.settings-changed', description: { zh: '使用者改了桌宠的外观或习惯。', en: "The person changed the pet's looks or habits." }, trigger: 'debounce' },
+  ],
+};
+
 export function noticeDefinition(assembly: NoticeAssembly): WorldDefinition<WorldSection> {
   return {
     id: NOTICE_ID,
@@ -463,5 +477,6 @@ export function noticeDefinition(assembly: NoticeAssembly): WorldDefinition<Worl
       assembly.onCreate?.(world);
       return world;
     },
+    describe: DESCRIBE,
   };
 }

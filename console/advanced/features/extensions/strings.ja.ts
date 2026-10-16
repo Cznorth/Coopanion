@@ -52,7 +52,7 @@ export const S: Partial<typeof en> = {
   removeInUse: 'このボットで使用中です。無効にしてから削除してください。',
   removeBody: 'このパッケージを共有の拡張機能ディレクトリから削除します。プロセスの再起動後に反映されます。これを使っている他のボットにも影響します。Memory、保存済みの設定、ローカルの拡張機能ソースは削除されません。',
   builtin: '組み込み',
-  builtinNote: 'Cortico に同梱されているため、個別には削除できません。',
+  builtinNote: 'Coopanion に同梱されているため、個別には削除できません。',
 
   installedAction: 'インストール',
   updatedAction: '更新',

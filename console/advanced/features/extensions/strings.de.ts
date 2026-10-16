@@ -52,7 +52,7 @@ export const S: Partial<typeof en> = {
   removeInUse: 'Wird von diesem Bot verwendet. Deaktiviere sie vor dem Löschen.',
   removeBody: 'Entfernt dieses Paket aus dem gemeinsamen Erweiterungsverzeichnis; gilt nach dem Neustart des Prozesses. Andere Bots, die es nutzen, sind betroffen. Memory, gespeicherte Konfiguration und lokale Quellverzeichnisse bleiben erhalten.',
   builtin: 'Integriert',
-  builtinNote: 'Wird mit Cortico ausgeliefert; kann nicht einzeln gelöscht werden.',
+  builtinNote: 'Wird mit Coopanion ausgeliefert; kann nicht einzeln gelöscht werden.',
 
   installedAction: 'Installation',
   updatedAction: 'Aktualisierung',

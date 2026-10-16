@@ -62,7 +62,7 @@ const zh = {
   removeInUse: '正在本 Bot 中使用，停用后才能删除。',
   removeBody: '将从共享扩展目录移除此扩展包，重启进程后生效。使用它的其他 Bot 也会受到影响。不会删除 Memory、已有配置或本地扩展源码。',
   builtin: '内置扩展',
-  builtinNote: '随 Cortico 提供，不能单独删除。',
+  builtinNote: '随 Coopanion 提供，不能单独删除。',
 
   installedAction: '安装',
   updatedAction: '更新',
@@ -293,7 +293,7 @@ export const en: typeof zh = {
   removeInUse: 'In use by this Bot. Disable it before deleting.',
   removeBody: 'Removes this package from the shared extensions directory; takes effect after the process restarts. Other Bots using it are affected. Memory, saved configuration and local source directories are kept.',
   builtin: 'Built in',
-  builtinNote: 'Included with Cortico; cannot be deleted separately.',
+  builtinNote: 'Included with Coopanion; cannot be deleted separately.',
 
   installedAction: 'Install',
   updatedAction: 'Update',

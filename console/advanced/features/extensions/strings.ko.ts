@@ -52,7 +52,7 @@ export const S: Partial<typeof en> = {
   removeInUse: '이 봇에서 사용 중입니다. 비활성화한 뒤 삭제하세요.',
   removeBody: '공유 확장 디렉터리에서 이 패키지를 제거하며, 프로세스를 재시작한 뒤 적용됩니다. 이 패키지를 쓰는 다른 봇도 영향을 받습니다. Memory, 저장된 설정, 로컬 확장 소스는 삭제되지 않습니다.',
   builtin: '기본 제공',
-  builtinNote: 'Cortico에 포함되어 있어 따로 삭제할 수 없습니다.',
+  builtinNote: 'Coopanion에 포함되어 있어 따로 삭제할 수 없습니다.',
 
   installedAction: '설치',
   updatedAction: '업데이트',

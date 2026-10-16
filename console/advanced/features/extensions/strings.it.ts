@@ -52,7 +52,7 @@ export const S: Partial<typeof en> = {
   removeInUse: 'In uso da questo bot. Disattivala prima di eliminarla.',
   removeBody: 'Rimuove questo pacchetto dalla directory condivisa delle estensioni; ha effetto dopo il riavvio del processo. Gli altri bot che lo usano ne risentono. Memory, la configurazione salvata e le directory sorgente locali vengono conservate.',
   builtin: 'Integrata',
-  builtinNote: 'Inclusa in Cortico; non può essere eliminata separatamente.',
+  builtinNote: 'Inclusa in Coopanion; non può essere eliminata separatamente.',
 
   installedAction: 'Installazione',
   updatedAction: 'Aggiornamento',

@@ -25,7 +25,7 @@ export const S: Partial<typeof en> = {
   runtimeVersion: (version: string) => `Il processo usa ancora ${version}`,
 
   providerManagement: 'Le estensioni provider servono i bot che usano questo ambiente condiviso.',
-  idleManagement: 'Attiva o disattiva i World nella pagina World. Le estensioni integrate non possono essere eliminate.',
+  idleManagement: 'Carica o disattiva i World nella pagina Panoramica dei World, a sinistra. Le estensioni integrate non possono essere eliminate.',
   createBody: 'Apri una riga di comando nel progetto Cortico sul suo host, esegui pnpm start --new, poi seleziona questo template di bot per creare una nuova istanza.',
 
   restartConfirmTitle: 'Riavviare il processo?',
@@ -43,7 +43,7 @@ export const S: Partial<typeof en> = {
   updateVersions: (current: string, latest: string) => `${current} → ${latest}`,
   updateAction: 'Aggiorna',
   updateCheckFailed: (detail: string) => `Controllo aggiornamenti non riuscito: ${detail}`,
-  noteConsoleMissing: "Bundle del browser mancante. Esegui la build nella directory dell'estensione e riavvia il processo.",
+  noteWebUiMissing: "Bundle del browser mancante. Esegui la build nella directory dell'estensione e riavvia il processo.",
   noExtensions: 'Ancora nessuna estensione installata',
   listLoadFailed: (msg: string) => `Caricamento dell'elenco delle estensioni non riuscito: ${msg}`,
 
@@ -65,6 +65,8 @@ export const S: Partial<typeof en> = {
   filterPlaceholder: 'Filtra: nome, descrizione, parole chiave',
   installedFilter: 'Filtra: nome, tipo, descrizione',
   sortLabel: {
+    certified: "Prima i certificati",
+    rating: 'Valutazione',
     downloads: 'Download (30 giorni)',
     date: 'Pubblicati di recente',
     name: 'Nome',
@@ -139,4 +141,5 @@ export const S: Partial<typeof en> = {
   labelled: (label: string, value: string) => `${label}: ${value}`,
   metaSeparator: ' · ',
   listSeparator: ', ',
+  feedbackTags: 'Segnala tag',
 };

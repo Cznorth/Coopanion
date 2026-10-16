@@ -249,6 +249,8 @@ The Extensions page in advanced mode lists Worlds on npm with the `cortico-world
 - Plants vs. Zombies (`cortico-world-pvz`)
 - Slay the Spire (`cortico-world-sts-1`)
 
+Packages in the official index ([Pal-AI-Lab/cortico-extensions](https://github.com/Pal-AI-Lab/cortico-extensions)) also show tags, badges, votes and comments. Voting and commenting need a GitHub sign-in with a one-time code; the sign-in is kept in the extensions folder.
+
 After installing, click **Restart process** and enable it in **World Overview**. Reinstalling the app keeps your extensions.
 
 ## Cost and privacy
@@ -257,7 +259,7 @@ After installing, click **Restart process** and enable it in **World Overview**.
 - **Sent to the model service**: what you say and type, your interactions with Coo, and screenshots during computer use. Only the service you configured receives them.
 - **Kept on your machine**: API keys and the ChatGPT sign-in, memory, conversation history, settings and logs. Speech is recognized locally and only the text is sent.
 - **Anonymous usage statistics**: sent to `survey.palailab.org`. Only counts, time used, settings and a random install ID; no conversations, screenshots, keys or files. Every field is listed in [docs/TELEMETRY.md](docs/TELEMETRY.md). Turn it off in Habits.
-- **Other network access**: a check for new releases on GitHub when the settings window opens; npm when installing extensions; ModelScope (or Hugging Face as a fallback) when downloading the speech model.
+- **Other network access**: a check for new releases on GitHub when the settings window opens; npm and the official extension index on GitHub on the Extensions page, and GitHub for votes and comments; ModelScope (or Hugging Face as a fallback) when downloading the speech model.
 
 ## Data and uninstalling
 

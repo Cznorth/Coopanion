@@ -4,7 +4,8 @@
  * change to one of these fails here. The bot is Cormini with a `probe` World standing in for the
  * desktop-pet World's panel and stream, and an empty extensions directory; delivery stays paused, so no
  * model is called. Routes that reach the npm registry (extension search, updates, package details,
- * install, uninstall) and the native path picker's dialog are not called.
+ * install, uninstall) or GitHub (the market's sign-in, comments, votes once signed in) and the native path
+ * picker's dialog are not called.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -160,6 +161,16 @@ describe('routes the advanced mode uses beyond the public table', () => {
     expect((await get('/api/extensions/icon?name=cortico-world-none')).status).toBe(404);
     const check = await json(await post('/api/extensions/check', { target: { path: join(dir, 'no-such-package') }, kind: 'world' }));
     expect(check.body.ok === false || typeof check.body.error === 'string').toBe(true);
+  });
+
+  it('the extension market signed out: no GitHub account; a vote or a comment answers 428 to ask for a sign-in', async () => {
+    expect((await json(await get('/api/extensions/github'))).body).toEqual({});
+    expect((await json(await post('/api/extensions/github/logout'))).body).toEqual({ ok: true });
+    for (const [path, body] of [['/api/extensions/vote', { name: 'cortico-world-none', vote: 'up' }], ['/api/extensions/comments', { name: 'cortico-world-none', body: 'hi' }]] as const) {
+      const reply = await json(await post(path, body));
+      expect(reply.status).toBe(428);
+      expect(reply.body.error).toEqual(expect.any(String));
+    }
   });
 
   it('the path picker refuses a request it cannot read', async () => {

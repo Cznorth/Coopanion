@@ -31,7 +31,7 @@ export const S: Partial<typeof en> = {
   runtimeVersion: (version: string) => `Процесс всё ещё использует ${version}`,
 
   providerManagement: 'Расширения провайдеров обслуживают ботов, использующих эту общую среду.',
-  idleManagement: 'Включайте и отключайте World на странице World. Встроенные расширения удалить нельзя.',
+  idleManagement: 'Загружайте и отключайте World на странице «Обзор World» слева. Встроенные расширения удалить нельзя.',
   createBody: 'Откройте командную строку в проекте Cortico на его хосте, выполните pnpm start --new, затем выберите этот шаблон бота, чтобы создать новый экземпляр.',
 
   restartConfirmTitle: 'Перезапустить процесс?',
@@ -49,7 +49,7 @@ export const S: Partial<typeof en> = {
   updateVersions: (current: string, latest: string) => `${current} → ${latest}`,
   updateAction: 'Обновить',
   updateCheckFailed: (detail: string) => `Не удалось проверить обновления: ${detail}`,
-  noteConsoleMissing: 'Нет сборки для браузера. Соберите её в папке расширения и перезапустите процесс.',
+  noteWebUiMissing: 'Нет сборки для браузера. Соберите её в папке расширения и перезапустите процесс.',
   noExtensions: 'Расширения пока не установлены',
   listLoadFailed: (msg: string) => `Не удалось загрузить список расширений: ${msg}`,
 
@@ -71,6 +71,8 @@ export const S: Partial<typeof en> = {
   filterPlaceholder: 'Фильтр: имя, описание, ключевые слова',
   installedFilter: 'Фильтр: имя, тип, описание',
   sortLabel: {
+    certified: "Сначала сертифицированные",
+    rating: 'Оценка',
     downloads: 'Скачивания (30 дней)',
     date: 'Недавно опубликованные',
     name: 'Имя',
@@ -145,4 +147,5 @@ export const S: Partial<typeof en> = {
   labelled: (label: string, value: string) => `${label}: ${value}`,
   metaSeparator: ' · ',
   listSeparator: ', ',
+  feedbackTags: 'Сообщить о метках',
 };

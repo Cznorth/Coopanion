@@ -6,6 +6,8 @@
  *
  * The desktop-pet World is wired to the app: the header of the pet's right-click menu pauses and
  * resumes the run, opens the settings window and quits the app, as the console's rail foot does.
+ * Its extension pages entry lists the links other Worlds declare (`extension-pages.ts`); the main
+ * process opens the one picked.
  *
  * The `coopanion` World (`notice.ts`) tells Coo what the app has to say: the release notes after
  * an update, and the settings the person changes.
@@ -33,6 +35,7 @@
  * The parent (Electron main) gets `{ type: 'companion:ready', port, dataDir, keyMissing, language }` once the
  * console listens, `{ type: 'companion:language', language }` after the app language changes, `{ type: 'companion:open', path }` to show the settings window at a console
  * route, `{ type: 'companion:browse', url }` to open the ChatGPT sign-in page in the system browser,
+ * `{ type: 'companion:page', href }` to open a page a World declared as a WebUI link,
  * `{ type: 'companion:hide' }` to put it away (the introduction runs again on the desktop)
  * and `{ type: 'companion:quit' }` to quit the whole app; it asks for a clean stop with
  * `{ type: 'companion:shutdown' }`.
@@ -61,6 +64,7 @@ import { desktopPetDefinition, figurePacks, type DesktopPetWorld } from 'cortico
 import COO, { CHATGPT, CHATGPT_PROVIDER, signedIn, usageLimited, vendorOf } from 'cortico-provider-coo';
 import { bundledWebUiAssets } from './bundled-panels.ts';
 import { followPetLook } from './console-theme.ts';
+import { extensionPages } from './extension-pages.ts';
 import { askForKey, guideDone, markDone, runGuide, type GuideDeps } from './guide.ts';
 import { noticeDefinition, type NoticeWorld } from './notice.ts';
 import { coreText } from './i18n/index.ts';
@@ -404,6 +408,8 @@ export async function main(): Promise<void> {
   let telemetry: Telemetry | null = null;
   let config: CoreConfig | null = null;
   let notice: NoticeWorld | null = null;
+  /** The console's origin, set once it listens. */
+  let consoleOrigin: string | null = null;
   /** The introduction is running: the settings it makes are not told as changes. */
   let guiding = false;
   const guideRun = async (deps: GuideDeps) => {
@@ -424,6 +430,8 @@ export async function main(): Promise<void> {
       openSettings: () => process.send?.({ type: 'companion:open', path: '' }),
       openChat: () => process.send?.({ type: 'companion:open', path: '#/chat' }),
       openDress: () => process.send?.({ type: 'companion:open', path: '#/dress' }),
+      extensionPages: async () => (consoleOrigin ? extensionPages(consoleOrigin, language()) : []),
+      openPage: (href) => process.send?.({ type: 'companion:page', href }),
       quit: () => process.send?.({ type: 'companion:quit' }),
       quitLabel: () => coreText(language()).quit,
       guide: () => {
@@ -573,9 +581,10 @@ export async function main(): Promise<void> {
   });
   stats.start();
   process.send?.({ type: 'companion:ready', port, dataDir: loaded.dataDir, keyMissing, language: language() });
+  consoleOrigin = `http://127.0.0.1:${port}`;
   const guideDeps: GuideDeps = {
     pet: () => pet,
-    console: `http://127.0.0.1:${port}`,
+    console: consoleOrigin,
     doneFile: join(deployDir, GUIDE_FILE),
     workspace: loaded.memoryDir,
     whale: process.env.COOPANION_CHANNEL !== 'steam',

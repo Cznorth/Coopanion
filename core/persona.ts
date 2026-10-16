@@ -1,8 +1,9 @@
 /**
  * Coo's Persona: Cortico's Cormini with three changes for the desktop pet.
  *
- * - `PARTNER.md` in the workspace, once Coo writes it, goes into the system prefix whole (Cormini's
- *   partner segment) and cannot be deleted with `delete_file`, as `CONSTITUTION.md` cannot.
+ * - `PARTNER.md` in the workspace goes into the system prefix whole (Cormini's partner segment), after a
+ *   standing line asking Coo to keep it short and put details under `partner/`, and cannot be deleted with
+ *   `delete_file`, as `CONSTITUTION.md` cannot.
  * - Every write Coo makes to its workspace is committed to the workspace's Git repository, one commit
  *   per tool call, so the workspace has a history to look back on and go back to. `blobs/` is left out
  *   of the repository. Without Git (`gitInstalled`) the files are written all the same.
@@ -14,7 +15,7 @@
  * passed in: the app loads it from the staged Cortico (`companion.ts`), the tests from vendor/cortico.
  */
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, statSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import type { EventEnvelope, SessionOpeningReason, ToolDef, WorldLifecycleEvent } from 'cortico/core/types.ts';
 import type { Cormini } from '../vendor/cortico/bots/cormini/persona/persona.ts';
@@ -22,6 +23,12 @@ import type { GitAuthor, WorkspaceGit } from '../vendor/cortico/bots/cormini/per
 
 /** The workspace file that goes into the prefix as Coo's notes on the person. */
 export const PARTNER_FILE = 'PARTNER.md';
+/** The workspace directory for details about the person that PARTNER.md leaves out; Coo reads them when needed. */
+export const PARTNER_DIR = 'partner';
+/** Heads the partner segment: the segment is the whole file on every request, so its length is paid each time. */
+export const PARTNER_NOTE = `${PARTNER_FILE} in your workspace, below, is read in full on every request. Keep it a short, distilled portrait `
+  + `of the person: merge or drop what is outdated. Put stories, logs and longer notes in files under ${PARTNER_DIR}/ and read them `
+  + 'when needed.';
 /** Commits of Coo's own writes. */
 export const AUTHOR_COO: GitAuthor = { name: 'coo', email: 'coo@persona.local' };
 /** Commits the app makes on its own: the snapshot at start. */
@@ -51,6 +58,54 @@ function untrack(dir: string, path: string): void {
   execFileSync('git', ['-C', dir, '-c', 'safe.directory=*', 'rm', '-r', '--cached', '--quiet', '--ignore-unmatch', '--', path], { cwd: dir, env, stdio: 'ignore' });
 }
 
+/**
+ * Puts the partner notes where this Persona reads them. Top-level entries whose names differ from `PARTNER.md` or
+ * `partner/` only in letter case (possible on a case-sensitive file system) are merged in: such a file is renamed to
+ * PARTNER.md, or appended to it under a line naming it when PARTNER.md exists; such a directory's entries move into
+ * partner/. A file named `partner` moves into the directory as `partner/partner`. partner/ exists afterwards.
+ * Returns whether anything moved.
+ */
+export function arrangePartner(dir: string): boolean {
+  let moved = false;
+  const names = () => readdirSync(dir);
+  for (const name of names()) {
+    if (name === PARTNER_FILE || name.toLowerCase() !== PARTNER_FILE.toLowerCase() || !statSync(join(dir, name)).isFile()) continue;
+    if (names().includes(PARTNER_FILE)) {
+      appendFileSync(join(dir, PARTNER_FILE), `
+
+--- merged from ${name} ---
+${readFileSync(join(dir, name), 'utf8')}`, 'utf8');
+      unlinkSync(join(dir, name));
+    } else {
+      renameSync(join(dir, name), join(dir, PARTNER_FILE));
+    }
+    moved = true;
+  }
+  const target = join(dir, PARTNER_DIR);
+  if (names().includes(PARTNER_DIR) && statSync(target).isFile()) {
+    const held = join(dir, `${PARTNER_DIR}.moving`);
+    renameSync(target, held);
+    mkdirSync(target);
+    renameSync(held, join(target, PARTNER_DIR));
+    moved = true;
+  }
+  for (const name of names()) {
+    if (name === PARTNER_DIR || name.toLowerCase() !== PARTNER_DIR || !statSync(join(dir, name)).isDirectory()) continue;
+    if (!names().includes(PARTNER_DIR)) {
+      renameSync(join(dir, name), target);
+    } else {
+      for (const entry of readdirSync(join(dir, name))) {
+        const free = existsSync(join(target, entry)) ? `${name}-${entry}` : entry;
+        renameSync(join(dir, name, entry), join(target, free));
+      }
+      rmdirSync(join(dir, name));
+    }
+    moved = true;
+  }
+  mkdirSync(target, { recursive: true });
+  return moved;
+}
+
 /** Coo's Persona class on `Base`, Cormini as the staged Cortico has it. */
 export function coopanionPersona(Base: typeof Cormini) {
   return class CoopanionPersona extends Base {
@@ -70,16 +125,34 @@ export function coopanionPersona(Base: typeof Cormini) {
       return join(this.memoryDir, PARTNER_FILE);
     }
 
+    protected override partnerDoc(): string {
+      return `${PARTNER_NOTE}
+
+${super.partnerDoc() || `(${PARTNER_FILE} is empty.)`}`;
+    }
+
     /**
      * Brings the repository in line with this Persona: `blobs/` ignored and untracked, then whatever is
-     * not committed yet committed and tagged `start-<version>` the first time `version` runs. Run once
-     * at start, before Coo writes anything; does nothing without Git. A Git failure is logged and the app
-     * starts without this start's snapshot.
+     * not committed yet committed and tagged `start-<version>` the first time `version` runs; then the partner
+     * notes are arranged (`arrangePartner`) and that is committed on its own, so the tag holds the workspace as it
+     * was. Run once at start, before Coo writes anything; without Git only the arranging runs. A failure is logged
+     * and the app starts without that step.
      */
     snapshot(version: string): void {
       const git = this.git;
       git.ensureRepo();
-      if (!git.status().repo) return;
+      const repo = git.status().repo;
+      if (repo) this.tagStart(version);
+      try {
+        if (arrangePartner(this.memoryDir) && repo) git.commitAll('Move partner notes into PARTNER.md and partner/', AUTHOR_APP);
+      } catch (err) {
+        console.warn('[persona] arranging the partner notes failed', err);
+      }
+    }
+
+    /** `blobs/` ignored and untracked, then the start commit or tag; a Git failure is logged. */
+    private tagStart(version: string): void {
+      const git = this.git;
       try {
         const ignore = join(this.memoryDir, '.gitignore');
         const lines = existsSync(ignore) ? readFileSync(ignore, 'utf8').split(/\r?\n/) : [];

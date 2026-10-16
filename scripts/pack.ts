@@ -49,7 +49,7 @@ const WORKSPACE = ['cortico-world-desktop-pet', 'cortico-provider-coo'];
  * (app/updater.cjs) or for Steam steamworks.js (app/steam.cjs), and the workspace packages' own.
  */
 const DEPS: Record<string, string> = {
-  express: '^4.22.3', ws: '^8.21.3', tsx: '^4.23.15', pnpm: '11.5.0',
+  express: '^4.22.3', ws: '^8.21.3', tsx: '^4.23.15', pnpm: '11.28.6',
   ...STEAM ? { 'steamworks.js': '0.4.0' } : { 'electron-updater': '^6.8.9' },
 };
 for (const name of WORKSPACE) {

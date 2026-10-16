@@ -1,6 +1,6 @@
 /** First-run files of the app's deployment. */
 import { createHash } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defaultRegion, endpointName, firstVendor, vendorEntry } from 'cortico-provider-coo/src/vendors.ts';
@@ -38,8 +38,9 @@ export const personaFile = (id: PersonaId, language: Language) => join(SEED_DIR,
  * still exactly as a version seeded it, which becomes the same persona in the config's `language`
  * (`followLanguage`), endpoints of the old `deepseek` module, which now belong
  * to `coo`, a config of computer use as its own World (`worlds.cua`), whose section, whether it was on
- * included, moves to `worlds.desktop-pet.cua`, and a config without a computer-use `permission`, which
- * keeps the `ask-each-turn` it had before new installs got `ask-once`.
+ * included, moves to `worlds.desktop-pet.cua`, a config without a computer-use `permission`, which
+ * keeps the `ask-each-turn` it had before new installs got `ask-once`, and the keys Cortico 0.2.0 renamed
+ * (`moveTerminalToConsole`).
  */
 export function seed(home: string, language: Language): void {
   const deploy = join(home, DEPLOYMENT);
@@ -72,11 +73,37 @@ export function seed(home: string, language: Language): void {
   if (upgrading) {
     moveCuaIntoPet(config);
     keepCuaAsking(config);
+    moveTerminalToConsole(deploy, config);
   }
 }
 
 type Section = Record<string, unknown>;
 type WorldSections = { worlds?: Record<string, Section | undefined> };
+
+/**
+ * Cortico 0.2.0 renamed the `terminal` World to `console` and `logging.console` to `logging.stdout`:
+ * `worlds.terminal`, `logging.console` and the deployment's `worlds/terminal/` prompt override move to
+ * the new names. A key or folder already at the new name stays as it is.
+ */
+function moveTerminalToConsole(deploy: string, file: string): void {
+  const config = JSON.parse(readFileSync(file, 'utf8')) as WorldSections & { logging?: Section };
+  let changed = false;
+  const old = config.worlds?.terminal;
+  if (config.worlds && old) {
+    config.worlds.console = { ...old, ...config.worlds.console };
+    delete config.worlds.terminal;
+    changed = true;
+  }
+  const logging = config.logging;
+  if (logging && 'console' in logging) {
+    logging.stdout ??= logging.console;
+    delete logging.console;
+    changed = true;
+  }
+  if (changed) writeFileSync(file, JSON.stringify(config, null, 2) + '\n');
+  const prompts = join(deploy, 'worlds', 'terminal');
+  if (existsSync(prompts) && !existsSync(join(deploy, 'worlds', 'console'))) renameSync(prompts, join(deploy, 'worlds', 'console'));
+}
 
 /** `worlds.cua` becomes `worlds.desktop-pet.cua`; a key already there stays as it is. */
 function moveCuaIntoPet(file: string): void {

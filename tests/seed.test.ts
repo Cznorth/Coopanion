@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defaultRegion, endpointName, firstVendor } from 'cortico-provider-coo/src/vendors.ts';
 import { LANGUAGES } from 'cortico/core/language.ts';
+import { CONSOLE } from 'cortico/worlds/console/definition.ts';
 import { DEPLOYMENT, PERSONAS, applyPersona, personaFile, personaOf, seed } from '../core/seed.ts';
 
 /** The self-description 0.1.1 seeded (0.1.0's after the rename). */
@@ -108,5 +109,23 @@ describe('first-run seed', () => {
     writeFileSync(cfg, JSON.stringify({ worlds: { cua: { enabled: true } } }));
     seed(home, 'zh');
     expect(read(cfg)).toEqual({ worlds: { 'desktop-pet': { cua: { enabled: true, permission: 'ask-each-turn' } } } });
+  });
+
+  it('moves the terminal World, its prompt override and the console log level to the names Cortico 0.2.0 gave them', () => {
+    const home = mkdtempSync(join(tmpdir(), 'cc-seed-'));
+    seed(home, 'zh');
+    const deploy = join(home, DEPLOYMENT);
+    const cfg = join(deploy, 'config.json');
+    const pet = { cua: { permission: 'ask-once' } };
+    writeFileSync(cfg, JSON.stringify({ worlds: { terminal: { enabled: true, pin: '123456' }, 'desktop-pet': pet }, logging: { file: 'debug', console: 'warn' } }));
+    mkdirSync(join(deploy, 'worlds', 'terminal'), { recursive: true });
+    writeFileSync(join(deploy, 'worlds', 'terminal', 'ENV_PROMPT.md'), 'mine');
+    seed(home, 'zh');
+    expect(read(cfg)).toEqual({ worlds: { 'desktop-pet': pet, [CONSOLE.id]: { enabled: true, pin: '123456' } }, logging: { file: 'debug', stdout: 'warn' } });
+    expect(readFileSync(join(deploy, 'worlds', CONSOLE.id, 'ENV_PROMPT.md'), 'utf8')).toBe('mine');
+    // a key already under the new name wins over the old one
+    writeFileSync(cfg, JSON.stringify({ worlds: { terminal: { enabled: true, pin: '' }, [CONSOLE.id]: { pin: '654321' }, 'desktop-pet': pet }, logging: { console: 'warn', stdout: 'error' } }));
+    seed(home, 'zh');
+    expect(read(cfg)).toEqual({ worlds: { [CONSOLE.id]: { enabled: true, pin: '654321' }, 'desktop-pet': pet }, logging: { stdout: 'error' } });
   });
 });

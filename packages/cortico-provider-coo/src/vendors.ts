@@ -80,6 +80,8 @@ export interface Vendor {
   /**
    * Responses with past reasoning sent back as text: whether a tool call with no reasoning recorded
    * before it gets a placeholder reasoning item (`sendSyntheticReasoning`). Unset sends one.
+   * Chat with thinking on: a tool call after the newest user message gets placeholder
+   * `reasoning_content` only where this is true (`roundReasoning`).
    */
   syntheticReasoning?: boolean;
   /**

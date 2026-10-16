@@ -163,7 +163,7 @@ export const COO = {
       contextWindow: (model) => stated(model) ?? catalog.contextWindow(model),
       compatibilityKey,
       client: protocol === 'chat'
-        ? new VendorChat({ baseUrl: entry.baseUrl, apiKey, media, keepThinking: host.keepThinking, log: host.log, effort })
+        ? new VendorChat({ baseUrl: entry.baseUrl, apiKey, media, keepThinking: host.keepThinking, log: host.log, effort, syntheticReasoning: vendor?.syntheticReasoning })
         : new VendorResponses({
           baseUrl: entry.baseUrl,
           apiKey,

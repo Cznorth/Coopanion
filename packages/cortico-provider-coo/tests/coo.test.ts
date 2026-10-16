@@ -137,6 +137,37 @@ describe('Coo Pet Provider', () => {
     expect(outputs[1].output).toContainEqual(expect.objectContaining({ type: 'input_image' }));
   });
 
+  it('gives DeepSeek over Chat placeholder reasoning on tool calls after the newest user message while thinking is on', async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    const reply = { id: 'c', model: 'deepseek-flash', choices: [{ index: 0, message: { role: 'assistant', content: 'ok' }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 } };
+    vi.stubGlobal('fetch', async (_url: string, init: { body: string }) => {
+      bodies.push(JSON.parse(init.body) as Record<string, unknown>);
+      return new Response(JSON.stringify(reply), { status: 200, headers: { 'content-type': 'application/json' } });
+    });
+    const [frame] = RESERVED_FRAME_NAMES;
+    const context = [
+      message('user', '开始'),
+      functionCall('c0', 'look', '{}'), functionResult('c0', '桌面'),
+      message('user', '现在呢'),
+      functionCall('f1', frame!, '{}'), functionResult('f1', '[打字] 几点了'),
+    ];
+    const send = async (thinking: boolean) => {
+      const instance = COO.create('deepseek', entry({ options: { protocol: 'chat' }, spec: { model: 'deepseek-flash', thinking, reasoningEffort: 'low' } }), host() as never);
+      await instance.client.respond({ model: 'deepseek-flash', input: context.map((r) => r.item), reasoning: { effort: thinking ? 'low' : 'none' } } as unknown as Request, { context });
+      const calls = (bodies.at(-1)!.messages as Array<{ tool_calls?: Array<{ id: string }>; reasoning_content?: string }>).filter((m) => m.tool_calls);
+      return Object.fromEntries(calls.map((m) => [m.tool_calls![0].id, m.reasoning_content]));
+    };
+    try {
+      // the service answers 400 for a call after the newest user message without reasoning; earlier calls pass
+      expect(await send(true)).toEqual({ c0: undefined, f1: '-' });
+      expect(await send(false)).toEqual({ c0: undefined, f1: undefined });
+      expect(bodies.at(-1)!.reasoning_effort).toBe('none');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('moves tool result images into a user message after them for a service whose tool output takes text only', async () => {
     const bodies: Array<Record<string, unknown>> = [];
     const reply = { id: 'r', object: 'response', model: 'm', status: 'completed', created_at: 1, output: [], usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 } };

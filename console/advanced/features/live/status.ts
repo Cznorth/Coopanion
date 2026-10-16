@@ -1,5 +1,5 @@
 /**
- * 终端页只读状态条，使用 ui.chip 的统一 tone。控制动作归其他控制页；本 feature 仅更新 document.title，品牌名与面包屑由 host 根据状态渲染。
+ * 控制台页只读状态条，使用 ui.chip 的统一 tone。控制动作归其他控制页；本 feature 仅更新 document.title，品牌名与面包屑由 host 根据状态渲染。
  */
 
 import type { WebUi } from 'cortico/web/shared/client-panel.ts';

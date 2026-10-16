@@ -102,11 +102,11 @@ describe('routes the advanced mode uses beyond the public table', () => {
     expect((await json(await get('/api/webui/lamps'))).body.lamps).toEqual(expect.any(Object));
   });
 
-  it('run: the boot id the Terminal page watches for a restart', async () => {
+  it('run: the boot id the Console page watches for a restart', async () => {
     expect((await json(await get('/api/run/lifecycle'))).body).toEqual({ deployment: expect.any(String), bootId: expect.any(String), ready: expect.any(Boolean) });
   });
 
-  it('events, runs, the run log and diagnostics for the Core and Terminal pages', async () => {
+  it('events, runs, the run log and diagnostics for the Core and Console pages', async () => {
     expect((await json(await get('/api/events?limit=5'))).body).toMatchObject({ latest: expect.any(Number), events: expect.any(Array) });
     const runs = await json(await get('/api/runs'));
     expect(runs.body).toMatchObject({ current: expect.any(String), runs: expect.any(Array) });

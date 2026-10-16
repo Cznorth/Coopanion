@@ -26,7 +26,7 @@ export const S: Partial<typeof en> = {
 
   providerManagement: '供應商擴充功能供共用環境中的 Bot 使用。',
   idleManagement: '在 World 頁啟用或停用 World；內建擴充功能不能刪除。',
-  createBody: '在執行 Cortico 的電腦上開啟專案終端機，執行 pnpm start --new，選擇此 Bot 範本並建立新實例。',
+  createBody: '在執行 Cortico 的電腦上於專案目錄開啟命令列，執行 pnpm start --new，選擇此 Bot 範本並建立新實例。',
 
   restartConfirmTitle: '重新啟動處理程序？',
   restartNoLoopTitle: '需要手動啟動',
@@ -38,7 +38,7 @@ export const S: Partial<typeof en> = {
   resultDefault: '關閉步驟已執行。',
   reloadWait: '等待目前 Bot 的新處理程序就緒…',
   otherBot: '此連接埠已由另一個 Bot 使用，已停止恢復。',
-  restartManual: '處理程序已結束，請在終端機手動啟動；此頁面會等待就緒。',
+  restartManual: '處理程序已結束，請在命令列手動啟動；此頁面會等待就緒。',
 
   updateVersions: (current: string, latest: string) => `${current} → ${latest}`,
   updateAction: '更新',

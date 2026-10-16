@@ -7,7 +7,7 @@
  * system prompt with 「清空对话并重开」, the page of advanced/ that uses public routes only), 用量与成本 and 对话;
  * every other route opens 开始. The advanced mode adds the pages copied from Cortico's WebUI
  * (advanced/): the World tree with the World pages, 接入 (模型供应商, 扩展), 人格与记忆 (the Persona and
- * Memory pages), 诊断 (终端, Core). Pages from the manifest (`/api/webui/manifest`: Worlds, the
+ * Memory pages), 诊断 (控制台, Core). Pages from the manifest (`/api/webui/manifest`: Worlds, the
  * Persona, Memory) mount through the page host (advanced/console-pages) by the panel contract. The rail is built once; a mode
  * change only hides or shows the entries the normal mode does not list, and the page open stays.
  *

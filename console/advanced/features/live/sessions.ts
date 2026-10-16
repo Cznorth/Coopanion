@@ -1,5 +1,5 @@
 /**
- * session 卡条 —— 终端页顶上那一排"主意识 + 各 fork"。
+ * session 卡条 —— 控制台页顶上那一排"主意识 + 各 fork"。
  *
  * 一张卡就是一个可点的入口:点谁,时间线就切去看谁。数据来自 `/ws/debug` 的
  * `sessions` 帧;调试通道没挂时由 `/ws/sessions` 顶上(见 `index.ts`)。

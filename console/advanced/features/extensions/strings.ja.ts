@@ -26,7 +26,7 @@ export const S: Partial<typeof en> = {
 
   providerManagement: 'プロバイダー拡張機能は、この共有環境を使うボットに提供されます。',
   idleManagement: 'World の有効化と無効化は World ページで行います。組み込みの拡張機能は削除できません。',
-  createBody: 'Cortico を実行しているコンピューターでプロジェクトのターミナルを開き、pnpm start --new を実行して、このボットテンプレートを選んで新しいインスタンスを作成してください。',
+  createBody: 'Cortico を実行しているコンピューターでプロジェクトでコマンドラインを開き、pnpm start --new を実行して、このボットテンプレートを選んで新しいインスタンスを作成してください。',
 
   restartConfirmTitle: 'プロセスを再起動しますか？',
   restartNoLoopTitle: '手動での起動が必要です',
@@ -38,7 +38,7 @@ export const S: Partial<typeof en> = {
   resultDefault: 'シャットダウン手順を実行しました。',
   reloadWait: 'このボットの新しいプロセスの準備ができるのを待っています…',
   otherBot: 'このポートは別のボットが使用しているため、復帰を中止しました。',
-  restartManual: 'プロセスが終了しました。ターミナルで手動で起動してください。このページは準備ができるまで待機します。',
+  restartManual: 'プロセスが終了しました。コマンドラインから手動で起動してください。このページは準備ができるまで待機します。',
 
   updateVersions: (current: string, latest: string) => `${current} → ${latest}`,
   updateAction: '更新',

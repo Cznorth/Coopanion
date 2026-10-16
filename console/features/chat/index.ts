@@ -88,7 +88,7 @@ async function mount(ctx: PageContext): Promise<void> {
   const expanded = new Set<string>();
 
   // ---- layout
-  // the page's heading as on every page; the run phase and the way to the Terminal page take the note's line
+  // the page's heading as on every page; the run phase and the way to the Console page take the note's line
   const phaseEl = ui.h('span', 'chat-phase');
   const phaseDot = ui.h('span', 'dot');
   const phaseText = ui.h('span');

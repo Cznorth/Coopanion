@@ -1,7 +1,7 @@
 /**
  * 新部署的开场引导：四条 Cortico 署名的气泡，用 assistant 直接输出那套气泡样式。
- * 端点状态由终端页从 providers 灯推进来，已启用的 World 在挂载时读一次接口。
- * 是否显示由终端页判定，这里只画。
+ * 端点状态由控制台页从 providers 灯推进来，已启用的 World 在挂载时读一次接口。
+ * 是否显示由控制台页判定，这里只画。
  */
 
 import type { WebUi } from 'cortico/web/shared/client-panel.ts';

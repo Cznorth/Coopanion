@@ -434,7 +434,7 @@ function mountLive(ctx: FeatureContext, env: SocketEnv): Disposable | void {
     clearTimer: env.clearTimer,
     onError: (err) => ctx.onError(err),
     handlers: {
-      // 时间线由调试通道画;这条流上只读终端 World 对本连接所发帧的拒收与附带说明。
+      // 时间线由调试通道画;这条流上只读控制台 World 对本连接所发帧的拒收与附带说明。
       message: (raw) => {
         let frame: unknown;
         try {

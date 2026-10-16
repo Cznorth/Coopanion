@@ -204,7 +204,7 @@ function footLine(ui: WebUi, parts: readonly (string | { b: string })[]): HTMLDi
 }
 
 /**
- * 分类分布面板。定位由终端输入器里的 `.ctxanchor` 提供。
+ * 分类分布面板。定位由控制台输入器里的 `.ctxanchor` 提供。
  */
 export function buildCtxPanel(ui: WebUi, d: ContextBreakdown | null): HTMLElement {
   const box = ui.h('div', 'ctxpanel');

@@ -226,7 +226,7 @@ Click the tray icon, or right-click Coo and click the gear. The window opens in 
 
 The expanded sidebar shows the current version at the top left, with a download link below it when a newer release is out. The Windows build and the AppImage download new versions in the background; Coo then asks in its bubble whether to restart and update, or the update installs the next time you quit. If a download stalls, get it from GitHub yourself. On Mac and with the deb, download new versions by hand. After an update, Coo tells you what the new version brings; when you change what it calls you, its dress, walking, computer use or similar settings here, it hears about it and responds.
 
-**Advanced mode** at the bottom left shows every page (Worlds, models, extensions, memory, terminal and diagnostics); **Back to normal mode** hides them again. In normal mode, expand the sidebar to show the Advanced mode button.
+**Advanced mode** at the bottom left shows every page (Worlds, models, extensions, memory, console and diagnostics); **Back to normal mode** hides them again. In normal mode, expand the sidebar to show the Advanced mode button.
 
 ### Changing the model
 

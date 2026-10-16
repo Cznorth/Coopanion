@@ -1501,7 +1501,7 @@
     .usagecards { grid-template-columns: minmax(0, 1fr); }
   }
 
-  /* 开场引导:终端页时间线上方那一组 Cortico 气泡。 */
+  /* 开场引导:控制台页时间线上方那一组 Cortico 气泡。 */
   .onboarding { padding: 4px 0 14px; }
   .ob-grid {
     display: grid;

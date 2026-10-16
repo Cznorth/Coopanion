@@ -9,8 +9,9 @@ The advanced mode's pages of the settings window: 模型供应商, 扩展, 控�
 
 The files were copied from Cortico's `src/web/client/` (and the runtime helpers under `lib/` from its
 `src/`) at vendor/cortico `c5bb075` and are Coopanion's own since: they do not follow Cortico, and
-imports of Cortico's WebUI modules were rewired to `console/base/`. From Cortico they take types only
-(`tests/console-imports.test.ts`).
+imports of Cortico's WebUI modules were rewired to `console/base/`. The extension page (`features/extensions/`) was
+copied again at vendor/cortico `54004f86`, with the icons it uses in `console/base/ui/icons.ts` and the extension rules at
+the end of `console/styles.css`. From Cortico they take types only (`tests/console-imports.test.ts`).
 
 These pages call routes of the WebUI HTTP API that Cortico does not make public. That is an exception
 for this directory only. 系统提示词 (`features/prompts/`) is listed in the

@@ -25,7 +25,7 @@ export const S: Partial<typeof en> = {
   runtimeVersion: (version: string) => `Le processus utilise encore ${version}`,
 
   providerManagement: 'Les extensions de fournisseur servent les bots qui utilisent cet environnement partagé.',
-  idleManagement: 'Activez ou désactivez les World sur la page World. Les extensions intégrées ne peuvent pas être supprimées.',
+  idleManagement: "Chargez ou désactivez les World dans la page Vue d'ensemble des World, à gauche. Les extensions intégrées ne peuvent pas être supprimées.",
   createBody: 'Ouvrez une ligne de commande dans le projet Cortico sur sa machine hôte, lancez pnpm start --new, puis sélectionnez ce modèle de bot pour créer une nouvelle instance.',
 
   restartConfirmTitle: 'Redémarrer le processus ?',
@@ -43,7 +43,7 @@ export const S: Partial<typeof en> = {
   updateVersions: (current: string, latest: string) => `${current} → ${latest}`,
   updateAction: 'Mettre à jour',
   updateCheckFailed: (detail: string) => `Échec de la vérification des mises à jour : ${detail}`,
-  noteConsoleMissing: "Bundle navigateur manquant. Compilez dans le répertoire de l'extension et redémarrez le processus.",
+  noteWebUiMissing: "Bundle navigateur manquant. Compilez dans le répertoire de l'extension et redémarrez le processus.",
   noExtensions: 'Aucune extension installée',
   listLoadFailed: (msg: string) => `Échec du chargement de la liste des extensions : ${msg}`,
 
@@ -52,7 +52,7 @@ export const S: Partial<typeof en> = {
   removeInUse: 'Utilisée par ce bot. Désactivez-la avant de la supprimer.',
   removeBody: "Retire ce paquet du répertoire d'extensions partagé ; prend effet après le redémarrage du processus. Les autres bots qui l'utilisent sont concernés. Memory, la configuration enregistrée et les répertoires sources locaux sont conservés.",
   builtin: 'Intégrée',
-  builtinNote: 'Fournie avec Cortico ; ne peut pas être supprimée séparément.',
+  builtinNote: 'Fournie avec Coopanion ; ne peut pas être supprimée séparément.',
 
   installedAction: 'Installation',
   updatedAction: 'Mise à jour',
@@ -65,6 +65,8 @@ export const S: Partial<typeof en> = {
   filterPlaceholder: 'Filtrer : nom, description, mots-clés',
   installedFilter: 'Filtrer : nom, type, description',
   sortLabel: {
+    certified: "Certifiées d'abord",
+    rating: 'Note',
     downloads: 'Téléchargements (30 jours)',
     date: 'Publiés récemment',
     name: 'Nom',
@@ -139,4 +141,5 @@ export const S: Partial<typeof en> = {
   labelled: (label: string, value: string) => `${label} : ${value}`,
   metaSeparator: ' · ',
   listSeparator: ', ',
+  feedbackTags: 'Signaler les étiquettes',
 };

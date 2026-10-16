@@ -247,6 +247,8 @@ irm https://raw.githubusercontent.com/Pal-AI-Lab/Coopanion/main/installer/instal
 - 植物大战僵尸（`cortico-world-pvz`）
 - 杀戮尖塔（`cortico-world-sts-1`）
 
+收录在官方索引（[Pal-AI-Lab/cortico-extensions](https://github.com/Pal-AI-Lab/cortico-extensions)）里的包还显示标签、徽标、投票和评论。投票和评论要用一次性验证码登录 GitHub，登录状态保存在扩展目录里。
+
 安装后点「重启进程」，再到「World 总览」里启用。重装应用不会丢失扩展。
 
 ## 费用与隐私
@@ -255,7 +257,7 @@ irm https://raw.githubusercontent.com/Pal-AI-Lab/Coopanion/main/installer/instal
 - **发给模型服务的内容**：你说的话、打的字、和 Coo 的互动，以及操作电脑时的截图。只发给你配置的那一家。
 - **留在本机的内容**：API Key 和 ChatGPT 的登录状态、记忆、对话记录、设置、日志。语音在本机识别，只把识别出的文字发出去。
 - **匿名使用统计**：发到 `survey.palailab.org`，只有使用次数、时长、设置和随机生成的安装编号，不含对话、截图、Key 和文件。字段见 [docs/TELEMETRY.md](docs/TELEMETRY.md)，可在「习惯」页关闭。
-- **其他联网**：打开设置窗口时向 GitHub 查询新版本；安装扩展时访问 npm；下载语音模型时访问 ModelScope（失败时用 Hugging Face）。
+- **其他联网**：打开设置窗口时向 GitHub 查询新版本；扩展页访问 npm 与 GitHub 上的官方扩展索引，投票和评论访问 GitHub；下载语音模型时访问 ModelScope（失败时用 Hugging Face）。
 
 ## 数据与卸载
 

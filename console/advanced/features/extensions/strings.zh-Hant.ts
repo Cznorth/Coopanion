@@ -25,7 +25,7 @@ export const S: Partial<typeof en> = {
   runtimeVersion: (version: string) => `目前處理程序仍為 ${version}`,
 
   providerManagement: '供應商擴充功能供共用環境中的 Bot 使用。',
-  idleManagement: '在 World 頁啟用或停用 World；內建擴充功能不能刪除。',
+  idleManagement: '在左側的 World 總覽頁面載入或停用 World；內建擴充功能不能刪除。',
   createBody: '在執行 Cortico 的電腦上於專案目錄開啟命令列，執行 pnpm start --new，選擇此 Bot 範本並建立新實例。',
 
   restartConfirmTitle: '重新啟動處理程序？',
@@ -43,7 +43,7 @@ export const S: Partial<typeof en> = {
   updateVersions: (current: string, latest: string) => `${current} → ${latest}`,
   updateAction: '更新',
   updateCheckFailed: (detail: string) => `更新檢查失敗： ${detail}`,
-  noteConsoleMissing: '缺少瀏覽器建置產物。請在擴充功能目錄建置，再重新啟動處理程序。',
+  noteWebUiMissing: '缺少瀏覽器建置產物。請在擴充功能目錄建置，再重新啟動處理程序。',
   noExtensions: '還沒安裝任何擴充功能',
   listLoadFailed: (msg: string) => `擴充功能清單載入失敗： ${msg}`,
 
@@ -52,7 +52,7 @@ export const S: Partial<typeof en> = {
   removeInUse: '正在本 Bot 中使用，停用後才能刪除。',
   removeBody: '將從共用擴充功能目錄移除此擴充套件，重新啟動處理程序後生效。使用它的其他 Bot 也會受到影響。不會刪除 Memory、既有設定或本機擴充功能原始碼。',
   builtin: '內建擴充功能',
-  builtinNote: '隨 Cortico 提供，不能單獨刪除。',
+  builtinNote: '隨 Coopanion 提供，不能單獨刪除。',
 
   installedAction: '安裝',
   updatedAction: '更新',
@@ -65,6 +65,8 @@ export const S: Partial<typeof en> = {
   filterPlaceholder: '篩選：套件名稱、描述、關鍵字',
   installedFilter: '篩選：名稱、類型、描述',
   sortLabel: {
+    certified: "依認證",
+    rating: '依評分',
     downloads: '依近 30 天下載量',
     date: '依最近發布',
     name: '依名稱',
@@ -139,4 +141,5 @@ export const S: Partial<typeof en> = {
   labelled: (label: string, value: string) => `${label}：${value}`,
   metaSeparator: '　',
   listSeparator: '、',
+  feedbackTags: '回報標籤',
 };

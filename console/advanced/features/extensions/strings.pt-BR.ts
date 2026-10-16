@@ -25,7 +25,7 @@ export const S: Partial<typeof en> = {
   runtimeVersion: (version: string) => `O processo ainda usa ${version}`,
 
   providerManagement: 'As extensões de provedor atendem aos Bots que usam este ambiente compartilhado.',
-  idleManagement: 'Ative ou desative Worlds na página de World. Extensões integradas não podem ser excluídas.',
+  idleManagement: 'Carregue ou desative Worlds na página Visão geral dos Worlds, à esquerda. Extensões integradas não podem ser excluídas.',
   createBody: 'Abra uma linha de comando no projeto Cortico no host dele, execute pnpm start --new e selecione este modelo de Bot para criar uma nova instância.',
 
   restartConfirmTitle: 'Reiniciar o processo?',
@@ -43,7 +43,7 @@ export const S: Partial<typeof en> = {
   updateVersions: (current: string, latest: string) => `${current} → ${latest}`,
   updateAction: 'Atualizar',
   updateCheckFailed: (detail: string) => `Falha ao verificar atualizações: ${detail}`,
-  noteConsoleMissing: 'Pacote do navegador ausente. Compile no diretório da extensão e reinicie o processo.',
+  noteWebUiMissing: 'Pacote do navegador ausente. Compile no diretório da extensão e reinicie o processo.',
   noExtensions: 'Nenhuma extensão instalada ainda',
   listLoadFailed: (msg: string) => `Falha ao carregar a lista de extensões: ${msg}`,
 
@@ -52,7 +52,7 @@ export const S: Partial<typeof en> = {
   removeInUse: 'Em uso por este Bot. Desative-a antes de excluir.',
   removeBody: 'Remove este pacote do diretório compartilhado de extensões; tem efeito após reiniciar o processo. Outros Bots que o usam são afetados. A Memory, a configuração salva e os diretórios de código-fonte locais são mantidos.',
   builtin: 'Integrada',
-  builtinNote: 'Incluída no Cortico; não pode ser excluída separadamente.',
+  builtinNote: 'Incluída no Coopanion; não pode ser excluída separadamente.',
 
   installedAction: 'Instalação',
   updatedAction: 'Atualização',
@@ -65,6 +65,8 @@ export const S: Partial<typeof en> = {
   filterPlaceholder: 'Filtrar: nome, descrição, palavras-chave',
   installedFilter: 'Filtrar: nome, tipo, descrição',
   sortLabel: {
+    certified: "Certificados primeiro",
+    rating: 'Avaliação',
     downloads: 'Downloads (30 dias)',
     date: 'Publicadas recentemente',
     name: 'Nome',
@@ -139,4 +141,5 @@ export const S: Partial<typeof en> = {
   labelled: (label: string, value: string) => `${label}: ${value}`,
   metaSeparator: ' · ',
   listSeparator: ', ',
+  feedbackTags: 'Relatar tags',
 };

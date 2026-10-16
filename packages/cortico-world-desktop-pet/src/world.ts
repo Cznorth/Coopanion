@@ -120,19 +120,6 @@ export interface PetBotControls {
   quitLabel?: string | (() => string);
   /** Runs the embedding app's introduction again (the console's `pet.guide` panel method). */
   guide?(): void;
-  /**
-   * Pages of other Worlds, by World, for the menu's extension pages entry; read each time the menu
-   * opens. The entry shows only while this returns a group and `openPage` is lent.
-   */
-  extensionPages?(): Promise<PetPageGroup[]>;
-  /** Opens a page `extensionPages` listed. */
-  openPage?(href: string): void;
-}
-
-/** One World's pages in the menu: its display name, and each page's label and address. */
-export interface PetPageGroup {
-  label: string;
-  links: Array<{ label: string; href: string }>;
 }
 
 /**
@@ -385,8 +372,6 @@ export class DesktopPetWorld implements World {
   /** Text the bubble's expand button carried, until a chat page takes it. */
   private draft: string | null = null;
   private pausedShown: boolean | null = null;
-  /** The extension pages as the pet page was last told them; it opens one by its place in this list. */
-  private pages: PetPageGroup[] = [];
 
   /** Installs packs the dressing page sends, when the app named a directory for them. */
   private readonly importer: PackImporter | null;
@@ -1040,8 +1025,7 @@ export class DesktopPetWorld implements World {
         c.resolve(msg.index === 0 ? 'yes' : msg.index === c.choices - 1 ? 'no' : msg.index === 1 ? 'always' : 'dismissed');
         return;
       }
-      case 'control': return this.onControl(msg);
-      case 'pages': void this.sendPages(); return;
+      case 'control': return this.onControl(String(msg.action));
       case 'dialog': {
         const settle = this.dialogs.get(String(msg.id));
         if (!settle) return;
@@ -1056,27 +1040,14 @@ export class DesktopPetWorld implements World {
     }
   }
 
-  private onControl(msg: PageMessage): void {
+  private onControl(action: string): void {
     const c = this.opts.controls;
     if (!c) return;
-    const action = String(msg.action);
     if (action === 'pause' || action === 'resume') c.setPaused?.(action === 'pause');
     else if (action === 'settings') c.openSettings?.();
     else if (action === 'dress') c.openDress?.();
     else if (action === 'quit') c.quit?.();
-    else if (action === 'page') {
-      const href = this.pages[Number(msg.group)]?.links[Number(msg.link)]?.href;
-      if (href) c.openPage?.(href);
-    }
     this.syncPrefs();
-  }
-
-  /** Tells the pet page the extension pages' labels; the addresses stay here. */
-  private async sendPages(): Promise<void> {
-    const c = this.opts.controls;
-    if (!c?.extensionPages || !c.openPage) return;
-    this.pages = await c.extensionPages().catch(() => []);
-    this.server.sendPet({ t: 'pages', groups: this.pages.map((g) => ({ label: g.label, links: g.links.map((l) => l.label) })) });
   }
 
   /**

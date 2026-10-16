@@ -43,7 +43,6 @@ export default {
   'action.soundOn': '音效：已开启 · 点击关闭',
   'action.soundOff': '音效：已关闭 · 点击开启',
   'action.dress': '装扮',
-  'action.pages': '扩展页面',
   'action.hide': '隐藏桌宠（可从托盘图标重新显示）',
   'menu.cancel': '取消',
   'menu.resume': '继续',

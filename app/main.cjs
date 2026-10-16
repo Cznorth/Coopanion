@@ -324,30 +324,6 @@ function keepOnConsole(contents) {
   contents.on('did-create-window', (child) => keepOnConsole(child.webContents));
 }
 
-/** In memory: the app windows of World pages keep nothing between runs. */
-const PAGES_PARTITION = 'coopanion-pages';
-
-/**
- * A page a World declared as a WebUI link, picked in the pet's menu, opens as the settings window opens World
- * links (keepOnConsole): a page on the Core's console origin in an app window, any other web address in the
- * system browser. The app window has no preload and runs sandboxed in a session of its own, which
- * keepRemoteOut keeps on this machine.
- */
-function openWorldPage(href) {
-  const origin = coreOrigin();
-  if (!origin) return;
-  let url;
-  try { url = new URL(href, `${origin}/`); } catch { return; }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
-  if (url.origin !== origin) { void shell.openExternal(url.href); return; }
-  const page = new BrowserWindow({
-    width: 1000, height: 720, title: 'Coopanion', icon: join(ICONS, 'icon.png'), autoHideMenuBar: true,
-    webPreferences: { partition: PAGES_PARTITION, contextIsolation: true, sandbox: true, nodeIntegration: false, spellcheck: false },
-  });
-  keepOnConsole(page.webContents);
-  void page.loadURL(url.href);
-}
-
 function loadingPage(text) {
   // with lang set, Chromium takes the system's Chinese, Japanese or Korean font for the language
   const html = `<!doctype html><html lang="${language}"><meta charset="utf-8"><style>html,body{height:100%;margin:0;display:grid;place-items:center;background:#f4f5f4;color:#5c5c60;font:15px system-ui,-apple-system,"Segoe UI",sans-serif}@media(prefers-color-scheme:dark){html,body{background:#0e1113;color:#9aa0a6}}</style><body>${text}</body></html>`;
@@ -472,7 +448,6 @@ core.on('update-install', () => updater?.installNow());
 core.on('releases', () => void shell.openExternal(RELEASES_URL));
 // the ChatGPT sign-in page the introduction sends to the system browser; no other address is opened
 core.on('browse', (url) => { if (url.startsWith('https://auth.openai.com/')) void shell.openExternal(url); });
-core.on('page', openWorldPage);
 core.on('state', (state, exit) => {
   if (!exit) return;
   const detail = exit.kind === 'locked' ? T().coreLocked(exit.pid, exit.file)
@@ -533,7 +508,6 @@ app.whenReady().then(() => {
   const settingsSession = session.fromPartition(SETTINGS_PARTITION);
   settingsSession.protocol.handle('http', serveWindow);
   keepRemoteOut(settingsSession);
-  keepRemoteOut(session.fromPartition(PAGES_PARTITION));
   app.setAppUserModelId('ai.pal.coopanion');
   const system = systemLanguage(app);
   core.opts.env.COOPANION_SYSTEM_LANGUAGE = system;

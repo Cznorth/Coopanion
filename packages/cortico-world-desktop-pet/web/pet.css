@@ -348,13 +348,6 @@ body.desk .floor{display:none}
 .m-tile .ic svg{width:22px; height:22px; display:block}
 .m-tile.on{background:color-mix(in srgb, var(--skin-eye) 16%, transparent); border-color:var(--skin-eye); color:var(--skin-eye)}
 .m-tile.off{color:var(--muted); border-style:dashed}
-/* the extension pages, under the tiles: each World's name over its pages */
-.m-pages{max-height:40vh; overflow-y:auto; margin-top:6px; padding-top:4px; border-top:1px solid var(--line)}
-.m-world{padding:5px 8px 2px; font-size:12px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.menu .m-page{display:flex; align-items:center; gap:6px; width:100%; padding:5px 8px; border:0; border-radius:10px; background:none; color:var(--text); text-align:left}
-.menu .m-page:hover, .menu .m-page:focus-visible{background:var(--bg); outline:none}
-.m-page span{flex:1 1 0; width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.m-page svg{flex:none; width:14px; height:14px; color:var(--muted)}
 .badge{
   position:absolute; right:-9px; bottom:-8px; padding:0 3px; border-radius:6px; border:1.5px solid var(--surface);
   background:var(--skin-eye); color:var(--surface); font:700 8.5px/12px ui-monospace,Consolas,monospace; letter-spacing:.02em; text-transform:uppercase;

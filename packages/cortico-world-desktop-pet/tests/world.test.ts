@@ -504,6 +504,23 @@ describe('with a pet page', () => {
     await expect.poll(() => calls).toEqual(['settings']);
   });
 
+  it('extension pages: the page gets the names only, and a page picked by its place opens that address', async () => {
+    const opened: string[] = [];
+    const groups = [
+      { label: 'Notes', links: [{ label: 'All notes', href: 'http://127.0.0.1:9001/' }, { label: 'Reminders', href: 'http://127.0.0.1:9001/alarms' }] },
+      { label: 'Game', links: [{ label: 'Viewer', href: 'http://127.0.0.1:9002/' }] },
+    ];
+    const { world } = await mounted(undefined, { controls: { extensionPages: async () => groups, openPage: (href) => opened.push(href) } });
+    const win = await FakePage.open(origin(world), 'role=pet&host=window');
+    cleanup.push(() => win.close());
+    win.send({ t: 'pages' });
+    expect(await win.next((m) => m.t === 'pages')).toEqual({ t: 'pages', groups: [{ label: 'Notes', links: ['All notes', 'Reminders'] }, { label: 'Game', links: ['Viewer'] }] });
+    win.send({ t: 'control', action: 'page', group: 0, link: 1 });
+    win.send({ t: 'control', action: 'page', group: 1, link: 3 });
+    win.send({ t: 'control', action: 'page', group: 1, link: 0 });
+    await expect.poll(() => opened).toEqual([groups[0].links[1].href, groups[1].links[0].href]);
+  });
+
   it('rejects requests whose Host is not a loopback name', async () => {
     const { world } = await mounted();
     const url = new URL(origin(world));

@@ -40,6 +40,7 @@ export default {
   'action.soundOn': 'サウンド：オン · クリックでオフ',
   'action.soundOff': 'サウンド：オフ · クリックでオン',
   'action.dress': '着せ替え',
+  'action.pages': '拡張機能のページ',
   'action.hide': 'しばらく隠れる（トレイアイコンで呼び戻せます）',
   'menu.cancel': 'キャンセル',
   'menu.resume': '再開',

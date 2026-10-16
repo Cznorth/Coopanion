@@ -40,6 +40,7 @@ export default {
   'action.soundOn': 'Töne: an · klicken zum Ausschalten',
   'action.soundOff': 'Töne: aus · klicken zum Einschalten',
   'action.dress': 'Outfit',
+  'action.pages': 'Erweiterungsseiten',
   'action.hide': 'Versteck mich erst mal (das Symbol im Infobereich holt mich zurück)',
   'menu.cancel': 'Abbrechen',
   'menu.resume': 'Fortsetzen',

@@ -40,6 +40,7 @@ export default {
   'action.soundOn': 'Suoni: attivi · clicca per disattivarli',
   'action.soundOff': 'Suoni: disattivati · clicca per attivarli',
   'action.dress': 'Guardaroba',
+  'action.pages': 'Pagine delle estensioni',
   'action.hide': "Nascondimi per ora (l'icona nell'area di notifica mi riporta qui)",
   'menu.cancel': 'Annulla',
   'menu.resume': 'Riprendi',

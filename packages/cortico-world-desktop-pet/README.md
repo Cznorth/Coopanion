@@ -61,6 +61,7 @@ World 在 `127.0.0.1:7797`(被占向上顺延)起一个页面服务:`/pet` 是�
 右键菜单顶上一行是 bot 的头像(部署目录的 `avatar.png`,没有时画桌宠自己)和名字;内嵌应用借出运行控制时,
 旁边还有暂停/继续、退出按钮,最下面多一行「打开设置」。点退出先在这一行问一次,菜单宽度不变。
 下面六个圆按钮两行三列:打字、语音输入、夜间模式、音效、隐藏、装扮。走动不在菜单里，可以放成悬停按钮。
+内嵌应用借出扩展页面时多一个「扩展页面」按钮,点开在按钮下面按 World 名列出各页,点一页交给应用打开;应用一页也没列时不显示这个按钮。
 提问气泡的选项出来时,窗口把键盘从前台窗口那里接过来(Windows 不让后台进程直接抢前台,
 所以借 `AttachThreadInput` 与前台线程共享一次输入),按 1–9(主键盘或小键盘)选对应的选项;
 答完、关掉或被新问题替换时还给原来那个窗口,期间人点了别处就不还。
@@ -376,7 +377,8 @@ macOS 上是 AppleScript 的 `display dialog`,Linux 上是 `zenity --question`)�
 ## 给内嵌应用
 
 `desktopPetDefinition({ controls, onCreate, onSkin, packRoots, onBotChange, language })` 生成定义(`packRoots` 是更多形象包目录,`onBotChange` 在 bot 用 `pet_set` 改了设置之后调用,`language` 见下面「文字」一节):`controls`(`PetBotControls`)给右键菜单借出暂停、设置、退出,
-借了哪个就只画哪个按钮或菜单行(暂停要 `isPaused` 和 `setPaused`,设置要 `openSettings`,退出要 `quit` 与可选的 `quitLabel`,可以是每次开菜单时调用的函数);
+借了哪个就只画哪个按钮或菜单行(暂停要 `isPaused` 和 `setPaused`,设置要 `openSettings`,退出要 `quit` 与可选的 `quitLabel`,可以是每次开菜单时调用的函数;
+「扩展页面」要 `extensionPages` 和 `openPage`:前者在页面连上和每次开菜单时调用,回 `PetPageGroup[]`(World 名和各页的名字、地址),页面只拿到名字,点了哪页由 World 按位置查出地址交给 `openPage`);
 `onCreate` 拿到 World 实例,应用可以调 `world.confirm(问题, [同意, 不同意])` 弹一个两选项气泡(或 `[同意, 以后都同意, 不同意]` 三选项,中间那项答 `always`),
 结果是 `yes` / `no` / `dismissed` / `timeout`(60 秒没人答) / `unavailable`(没有桌宠页),不会作为事件送给 bot。
 

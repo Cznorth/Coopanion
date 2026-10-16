@@ -93,7 +93,7 @@ function send(msg) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg))
 function connect() {
   ws = new WebSocket(`ws://${location.host}/socket?role=pet&host=${host ? 'window' : 'tab'}`);
   ws.binaryType = 'arraybuffer';
-  ws.onopen = () => { backoff = 500; send({ t: 'hello', screen: { w: innerWidth, h: innerHeight }, host: host ? 'window' : 'tab' }); reportVisibility(); };
+  ws.onopen = () => { backoff = 500; send({ t: 'hello', screen: { w: innerWidth, h: innerHeight }, host: host ? 'window' : 'tab' }); reportVisibility(); send({ t: 'pages' }); };
   ws.onmessage = (e) => { try { onOrder(JSON.parse(e.data)); } catch (err) { console.error(err); } };
   ws.onclose = (e) => {
     ws = null;
@@ -272,6 +272,9 @@ async function switchLanguage(code) {
   host?.setLanguage?.(code);
   if (!menu.hidden && !menu.querySelector('.m-head.confirm')) renderMenuHead();
   refreshButtons();
+  // the World names come in the app language too
+  if (!menu.hidden) renderPages();
+  send({ t: 'pages' });
 }
 
 function onOrder(m) {
@@ -293,6 +296,7 @@ function onOrder(m) {
     case 'dialog': queue.push({ kind: 'dialog', id: m.id, d: m }); holdRoam(20); break;
     case 'dialog-update': updateDialog(m); break;
     case 'dialog-close': endDialog(m.id); break;
+    case 'pages': setPages(m.groups); break;
   }
 }
 
@@ -1060,16 +1064,72 @@ function openMenu(x, y) {
     grid.appendChild(b);
   }
   menu.append(grid);
+  pagesOpen = false;
+  renderPages();
   menu.style.width = '';
   menu.hidden = false;
   // focused, so a click anywhere else blurs the window and folds the menu
   host?.focus?.();
   // held at its opening width: the quit confirmation in the header must not widen the menu
   menu.style.width = getComputedStyle(menu).width;
+  menuAt = { x, y };
+  placeMenu();
+  // the list may have changed since the page last asked; an answer that differs redraws the entry
+  send({ t: 'pages' });
+}
+
+/** Where the menu was opened; it grows upward from there, kept on screen. */
+let menuAt = { x: 0, y: 0 };
+function placeMenu() {
   // layout size: the opening animation scales the box, so its bounding rect is still shrunk here
   const w = menu.offsetWidth, h = menu.offsetHeight;
-  menu.style.left = f(clamp(x, 8, innerWidth - w - 8)) + 'px';
-  menu.style.top = f(clamp(y - h, 8, innerHeight - h - 8)) + 'px';
+  menu.style.left = f(clamp(menuAt.x, 8, innerWidth - w - 8)) + 'px';
+  menu.style.top = f(clamp(menuAt.y - h, 8, innerHeight - h - 8)) + 'px';
+}
+
+/* ---------- extension pages: what the embedding app lists of other Worlds' pages, by World ---------- */
+/** `[{ label, links: [label] }]` as the World last sent it; a page is opened by its place in this list. */
+let pageGroups = [];
+/** The menu shows the list under its tiles. */
+let pagesOpen = false;
+function setPages(groups) {
+  if (JSON.stringify(groups) === JSON.stringify(pageGroups)) return;
+  pageGroups = groups;
+  if (!menu.hidden) renderPages();
+}
+/** The menu's tile for the list, and the list while it is open; neither without a page. */
+function renderPages() {
+  const grid = menu.querySelector('.m-grid');
+  if (!grid) return;
+  grid.querySelector('.m-tile.pages')?.remove();
+  menu.querySelector('.m-pages')?.remove();
+  if (!pageGroups.length) pagesOpen = false;
+  else {
+    const label = t('action.pages');
+    const b = document.createElement('button');
+    b.type = 'button'; b.setAttribute('role', 'menuitem');
+    b.className = `m-tile pages${pagesOpen ? ' on' : ''}`;
+    b.title = label; b.setAttribute('aria-label', label); b.setAttribute('aria-expanded', String(pagesOpen));
+    b.innerHTML = `<span class="ic">${ICONS.pages}</span>`;
+    b.addEventListener('click', () => { sfx.tick(); pagesOpen = !pagesOpen; renderPages(); });
+    grid.appendChild(b);
+  }
+  if (pagesOpen) {
+    const list = Object.assign(document.createElement('div'), { className: 'm-pages' });
+    pageGroups.forEach((g, gi) => {
+      list.appendChild(Object.assign(document.createElement('div'), { className: 'm-world', textContent: g.label, title: g.label }));
+      g.links.forEach((label, li) => {
+        const a = document.createElement('button');
+        a.type = 'button'; a.setAttribute('role', 'menuitem'); a.className = 'm-page'; a.title = label;
+        a.innerHTML = `<span></span>${ICONS.external}`;
+        a.firstChild.textContent = label;
+        a.addEventListener('click', () => { sfx.tick(); closeMenu(); send({ t: 'control', action: 'page', group: gi, link: li }); });
+        list.appendChild(a);
+      });
+    });
+    menu.appendChild(list);
+  }
+  if (!menu.hidden) placeMenu();
 }
 
 /**
@@ -1110,7 +1170,7 @@ function closeMenu() { menu.hidden = true; }
 
 /** Redraws whatever shows an action: the open menu's tiles and the hover buttons. */
 function refreshButtons() {
-  for (const b of menu.querySelectorAll('.m-tile')) drawAction(b, b.dataset.action);
+  for (const b of menu.querySelectorAll('.m-tile[data-action]')) drawAction(b, b.dataset.action);
   renderTools();
 }
 

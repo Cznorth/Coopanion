@@ -59,6 +59,17 @@ $env:CORTICO_COMPANION_DATA = "$env:TEMP\coo-test"; pnpm run start
 | `telemetry-server/` | 匿名使用统计的服务端(单文件 Node + SQLite),部署在 `survey.palailab.org`,说明见 [telemetry-server/README.md](../telemetry-server/README.md) |
 | `promo/` | 宣传片与仓库 banner,网页渲染,说明见 [promo/README.md](../promo/README.md) |
 
+## 应用界面与 World 的边界
+
+Cortico 是内核,Coopanion 是用它做的一个产品。使用者看到的界面按下面分工:
+
+- **Coopanion 只渲染自己绑定的 World**:桌宠 World(含电脑操作)、`coopanion` World 和控制台 World。应用壳和这些 World 之间的接口(比如桌宠 World 的 `PetBotControls`)归 Coopanion 所有，随产品需要修改，不属于 Cortico 的契约。
+- **应用壳不为其他 World 提供界面入口。** 桌宠菜单和设置窗口的普通模式里，不放扩展提供的按钮、页面或菜单项。高级模式的扩展页、World 总览等页面复制自 Cortico WebUI,是给开发者用的，扩展 World 用 `webUi()` 声明的面板和链接显示在那里。
+- **扩展 World 想让使用者看到内容，走下面两条路之一:**
+  - **经过 Bot。** World 给 Bot 提供读写内容的工具，把使用者需要知道的事投递成事件,Coo 再用桌宠的气泡、选项和对话页告诉使用者。怎么呈现由桌宠 World 决定;呈现能力不够时扩充桌宠 World,不对扩展开放。适合偶尔看一眼的内容。
+  - **托管自己的环境。** 使用者要直接、频繁操作的界面，做成扩展自己的小应用：由 World 启动时拉起、停止时关闭,World 在应用和 Bot 之间转递事件和工具。这类扩展需要和使用者在同一台电脑上，发布时用 `os` 字段和 `local` 等标签写明。不要借用 Coopanion 的运行时(`CORTICO_NODE_EXE` 指向的 Electron)开窗口：它只供扩展安装使用，随时可能改。
+- v0.2.2 在桌宠右键菜单里加过「扩展页面」,列出扩展 World 声明的链接，越过了上面第二条,v0.2.3 已撤回。
+
 ## 发布
 
 1. 改 `package.json` 里的 `version`;

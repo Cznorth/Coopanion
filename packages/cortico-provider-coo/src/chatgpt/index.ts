@@ -41,6 +41,7 @@ export function chatgptModule(service: ChatGPTService = CHATGPT_SERVICE, stateRo
     id: CHATGPT_MODULE,
     title: 'ChatGPT',
     description: cooText('en').chatgpt.description,
+    describe: { protocols: ['openai-responses'], auth: ['oauth'], local: false, input: ['text', 'image'] },
     localize: (language) => {
       const t = cooText(language);
       return { description: t.chatgpt.description, reasoningTiers: tiers(t.tiers) };

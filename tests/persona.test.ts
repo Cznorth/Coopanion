@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ToolDef } from 'cortico/core/types.ts';
 import { Cormini } from '../vendor/cortico/bots/cormini/persona/persona.ts';
 import { gitInstalled } from '../vendor/cortico/bots/cormini/persona/workspaceGit.ts';
-import { AUTHOR_COO, PARTNER_FILE, SNAPSHOT_TAG, coopanionPersona } from '../core/persona.ts';
+import { AUTHOR_COO, PARTNER_DIR, PARTNER_FILE, PARTNER_NOTE, SNAPSHOT_TAG, arrangePartner, coopanionPersona } from '../core/persona.ts';
 
 const CoopanionPersona = coopanionPersona(Cormini);
 const ctx = { role: 'main', log: { emit: () => {}, warn: () => {}, error: () => {}, info: () => {}, debug: () => {} } } as never;
@@ -60,7 +60,61 @@ describe('PARTNER.md', () => {
     const { p, run } = persona();
     await run('write_file', { path: PARTNER_FILE, content: 'Likes cats. Works late.' });
     const prefix = (await p.systemSegments({ now: new Date(), timezone: 'UTC', worlds: [] })).map((s) => s.text).join('\n');
-    expect(prefix).toContain('Likes cats. Works late.');
+    expect(prefix).toContain(`${PARTNER_NOTE}
+
+Likes cats. Works late.`);
     expect(String(await run('delete_file', { path: PARTNER_FILE }))).toContain('[delete failed]');
+  });
+});
+
+/** Whether this file system tells `a` and `A` apart; the case-variant merges only arise where it does. */
+function caseSensitive(): boolean {
+  const dir = mkdtempSync(join(tmpdir(), 'coo-case-'));
+  writeFileSync(join(dir, 'a'), '');
+  return !existsSync(join(dir, 'A'));
+}
+
+describe('arranging the partner notes', () => {
+  it('moves a file named partner into the partner directory and leaves PARTNER.md as it was', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'coo-partner-'));
+    writeFileSync(join(dir, PARTNER_FILE), 'Likes cats.');
+    writeFileSync(join(dir, PARTNER_DIR), 'old notes');
+    expect(arrangePartner(dir)).toBe(true);
+    expect(statSync(join(dir, PARTNER_DIR)).isDirectory()).toBe(true);
+    expect(readFileSync(join(dir, PARTNER_DIR, PARTNER_DIR), 'utf8')).toBe('old notes');
+    expect(readFileSync(join(dir, PARTNER_FILE), 'utf8')).toBe('Likes cats.');
+    expect(arrangePartner(dir)).toBe(false);
+  });
+
+  it('renames a partner.md Coo wrote before to PARTNER.md', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'coo-partner-'));
+    writeFileSync(join(dir, 'partner.md'), 'Works late.');
+    expect(arrangePartner(dir)).toBe(true);
+    expect(readdirSync(dir).sort()).toEqual([PARTNER_FILE, PARTNER_DIR].sort());
+    expect(readFileSync(join(dir, PARTNER_FILE), 'utf8')).toBe('Works late.');
+  });
+
+  it.skipIf(!caseSensitive())('merges a partner.md and a Partner directory left beside the real ones', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'coo-partner-'));
+    writeFileSync(join(dir, PARTNER_FILE), 'Likes cats.');
+    writeFileSync(join(dir, 'partner.md'), 'Works late.');
+    mkdirSync(join(dir, PARTNER_DIR));
+    writeFileSync(join(dir, PARTNER_DIR, 'trips.md'), 'Kyoto');
+    mkdirSync(join(dir, 'Partner'));
+    writeFileSync(join(dir, 'Partner', 'trips.md'), 'Osaka');
+    expect(arrangePartner(dir)).toBe(true);
+    expect(readFileSync(join(dir, PARTNER_FILE), 'utf8')).toContain('Likes cats.');
+    expect(readFileSync(join(dir, PARTNER_FILE), 'utf8')).toContain('Works late.');
+    expect(readdirSync(dir).sort()).toEqual([PARTNER_FILE, PARTNER_DIR].sort());
+    expect(readdirSync(join(dir, PARTNER_DIR)).sort()).toEqual(['Partner-trips.md', 'trips.md']);
+  });
+
+  it.skipIf(!gitInstalled())('commits the arranging after the start tag, so the tag keeps the workspace as it was', () => {
+    const { dir, p } = persona();
+    writeFileSync(join(dir, PARTNER_DIR), 'old notes');
+    p.snapshot('2.0.0');
+    expect(git(dir, 'show', `${SNAPSHOT_TAG('2.0.0')}:${PARTNER_DIR}`)).toBe('old notes');
+    expect(git(dir, 'show', `HEAD:${PARTNER_DIR}/${PARTNER_DIR}`)).toBe('old notes');
+    expect(git(dir, 'status', '--porcelain')).toBe('');
   });
 });

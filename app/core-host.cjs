@@ -16,7 +16,7 @@
  * Events: `ready` ({ port, keyMissing, language }), `language` (the app language after a change),
  * `state` (the state, and for an unexpected exit `{ kind: 'restarting', code }` or, once it stops
  * retrying, `{ kind: 'failed', times, code, logFile }`, or for a lock held elsewhere `{ kind: 'locked', pid, file }`), and the Core's requests `open`, `hide`,
- * `quit`, `update-install` and `releases`.
+ * `quit`, `update-install`, `releases`, `browse` and `page`.
  */
 const { fork } = require('node:child_process');
 const { coreEnvironment, systemProxyEnvironment } = require('./core-env.cjs');
@@ -130,6 +130,8 @@ class CoreHost extends EventEmitter {
         this.emit('releases');
       } else if (msg?.type === 'companion:browse' && typeof msg.url === 'string') {
         this.emit('browse', msg.url);
+      } else if (msg?.type === 'companion:page' && typeof msg.href === 'string') {
+        this.emit('page', msg.href);
       }
     });
     const exited = (code, signal, startFailed) => {

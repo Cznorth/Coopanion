@@ -178,7 +178,7 @@ Speech is recognized on your machine and audio is never uploaded: by **FunASR** 
 
 - **Click** to poke it, **move back and forth over its head** to pat it, **press and drag** to pick it up; let go mid-swing to throw it. By default a poke makes Coo respond, and pats and pick-ups are passed on the next time it wakes. **Response mode** in Habits changes this: Quiet keeps every touch until you next talk to Coo, Eager responds to every touch, Custom… picks the touches that get a response right away.
 - **Expressions and motions**: Coo pairs what it says with a face and a motion. Faces: happy, wink, love, shy, surprised, angry, sad, sleepy, thinking, smug, pout, worried, determined, flustered, scared, excited (starry eyes), crying, confused. Motions include nod, shake, look around, turn, spin, jump, sit, sleep, wave, bow, shiver, flap, dance. As the DeepSeek Whale, a nod really dips the head and a shake turns the face, a wave raises the arm nearer you, and a bow tips the upper body forward.
-- **Right-click** for the menu: pause / resume, settings, quit, plus typing, voice input, night mode, sounds, hide and dress up.
+- **Right-click** for the menu: pause / resume, settings, quit, plus typing, voice input, night mode, sounds, hide and dress up. When an enabled extension World declares pages, **Extension pages** lists them by World.
 - **Hover buttons**: the buttons beside Coo while the pointer rests on it. Typing and voice by default; pick up to six in Habits.
 - **Remember where Coo stands**: turn it on in Habits and Coo returns to the same spot across the screen on the next start.
 - **OBS overlay**: turn on Export OBS overlay under Habits › Other, then add a Browser source in OBS with the address shown and your screen's resolution as its size. A Browser source draws 30 frames a second unless its custom frame rate is set; set it to 60 to see the pet at 60. Coo and its bubbles sit where they are on screen, on a transparent background.
@@ -251,7 +251,7 @@ The Extensions page in advanced mode lists Worlds on npm with the `cortico-world
 
 Packages in the official index ([Pal-AI-Lab/cortico-extensions](https://github.com/Pal-AI-Lab/cortico-extensions)) also show tags, badges, votes and comments. Voting and commenting need a GitHub sign-in with a one-time code; the sign-in is kept in the extensions folder.
 
-After installing, click **Restart process** and enable it in **World Overview**. Reinstalling the app keeps your extensions.
+After installing, click **Restart process** and enable it in **World Overview**. Reinstalling the app keeps your extensions. Pages an extension declares open from **Extension pages** in Coo's right-click menu: a page on the console's own address in an app window, any other in the system browser.
 
 ## Cost and privacy
 

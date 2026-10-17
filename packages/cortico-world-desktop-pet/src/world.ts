@@ -1760,7 +1760,7 @@ export class DesktopPetWorld implements World {
     const user = this.userName;
     const reply = this.opts.replyLanguage?.() ?? null;
     return {
-      'pet.cua': this.cuaOn ? await this.cua.envPrompt() : '',
+      'pet.cua': this.cuaOn ? await this.cua.envPrompt() : this.cua.unsupported() === null ? t.cuaOff(user) : '',
       'pet.user': user,
       'pet.vocab': vocabTable(this.vocab(), language),
       'pet.voice': this.cfg.asr.enabled ? t.on : t.off,

@@ -32,7 +32,7 @@ cooStyle.textContent = COO_CSS;
 document.head.append(cooStyle, skinStyle, accentStyle);
 
 const prefs = {
-  roam: 'calm', sound: true, theme: document.documentElement.dataset.theme, scale: 1, glow: 7, user: '', mic: false, micDevice: '', bot: null,
+  roam: 'calm', sound: true, theme: document.documentElement.dataset.theme, scale: 1, bubbleSize: 1, fontSize: 1, glow: 7, user: '', mic: false, micDevice: '', bot: null,
   /** Voice input: switched on, recognizer ready, why not, how to talk, and the mode in force. */
   voice: { enabled: false, ready: false, detail: null, hint: '', mode: 'hold' },
   /** The actions shown as buttons beside the pet on hover. */
@@ -247,6 +247,8 @@ function applyPrefs(p) {
   if (p.theme === 'dark' || p.theme === 'light') { prefs.theme = p.theme; applyTheme(p.theme); modeBtn?.show(p.theme); body?.set({ theme: p.theme }); }
   if (typeof p.glow === 'number') prefs.glow = p.glow;
   if (typeof p.scale === 'number') { prefs.scale = p.scale; body?.set({ bounds: bounds() }); }
+  if (typeof p.bubbleSize === 'number') { prefs.bubbleSize = p.bubbleSize; sizeVar('--bubble-size', p.bubbleSize); }
+  if (typeof p.fontSize === 'number') { prefs.fontSize = p.fontSize; sizeVar('--bubble-font', p.fontSize); }
   if (typeof p.rememberPosition === 'boolean') { prefs.rememberPosition = p.rememberPosition; reportPosition(); }
   if (typeof p.user === 'string') prefs.user = p.user;
   if (typeof p.micDevice === 'string' && p.micDevice !== prefs.micDevice) { prefs.micDevice = p.micDevice; stopMic(); }
@@ -263,6 +265,12 @@ function applyPrefs(p) {
   if (typeof p.language === 'string' && p.language !== language()) void switchLanguage(p.language);
   if ('status' in p) setStatus(p.status);
   refreshButtons();
+}
+
+/** Sets a bubble size factor on the page (pet.css); at 1 it is unset, so the bubbles are drawn exactly as pet.css writes them. */
+function sizeVar(name, k) {
+  if (k === 1) document.documentElement.style.removeProperty(name);
+  else document.documentElement.style.setProperty(name, String(k));
 }
 
 /** A new app language: what is drawn from the page's own text is drawn again; bubbles already up keep theirs. */
@@ -1530,7 +1538,7 @@ function placeTalk(it, a) {
   if (mode === 'drag' || (FLYING.has(mode) && !talk.motion)) it.carried = true;
   if (it.carried) { it.pinX = a.x; it.pinY = a.y; if (!FLYING.has(mode)) it.carried = false; }
   const left = clamp(it.pinX - bw / 2, 10, Math.max(10, innerWidth - bw - 10));
-  const top = Math.max(8, it.pinY - bh - 18);
+  const top = Math.max(8, it.pinY - bh - 18 * prefs.bubbleSize);
   bubble.style.left = f(left) + 'px';
   bubble.style.top = f(top) + 'px';
   bubble.style.setProperty('--tail', f(tailAt(bw, a.x - left)) + 'px');
@@ -1554,11 +1562,11 @@ function layout(dt = 0) {
   let sayBox = null;
   // choice cards keep their bubble where it was; its tail follows Coo along the bottom edge
   if (!bubble.hidden && item?.kind === 'dialog' && item.pinX !== undefined) sayBox = placeTalk(item, a);
-  else if (!bubble.hidden) sayBox = place(bubble, a, 18);
+  else if (!bubble.hidden) sayBox = place(bubble, a, 18 * prefs.bubbleSize);
   placeLines(l, a, sayBox, dt);
 }
 
-/** From Coo's head to the newest line's bottom edge, between lines, and from Coo's bubble beside them, in pixels. */
+/** From Coo's head to the newest line's bottom edge, between lines, and from Coo's bubble beside them, in pixels at bubble size 1. */
 const LINES_UP = 46, LINES_GAP = 8, LINES_BESIDE = 12;
 /**
  * The person's lines beside Coo: newest at the bottom, nearest the head, older ones above it, on the side Coo
@@ -1568,15 +1576,16 @@ const LINES_UP = 46, LINES_GAP = 8, LINES_BESIDE = 12;
  */
 function placeLines(l, a, box, dt) {
   if (!lines.length) { trail.hidden = true; return; }
-  const W = innerWidth;
+  const W = innerWidth, size = prefs.bubbleSize;
+  const rise = LINES_UP * size, gap = LINES_GAP * size, beside = LINES_BESIDE * size;
   const widest = Math.max(...lines.map((line) => line.el.offsetWidth));
   if (!linesSide) linesSide = -l.facing;
   // where the stack starts on each side: past Coo's bubble, or beside Coo's head
-  const inner = (s) => (box ? (s < 0 ? box.left - LINES_BESIDE : box.left + box.bw + LINES_BESIDE) : a.x + s * 10);
+  const inner = (s) => (box ? (s < 0 ? box.left - beside : box.left + box.bw + beside) : a.x + s * 10);
   const fits = (s) => (s < 0 ? inner(s) - widest >= 10 : inner(s) + widest <= W - 10);
   if (!fits(linesSide) && fits(-linesSide)) linesSide = -linesSide;
   const above = !fits(linesSide);
-  let bottom = above && box ? box.top - LINES_GAP : a.y - LINES_UP;
+  let bottom = above && box ? box.top - gap : a.y - rise;
   const k = dt > 0 ? Math.min(1, dt * 12) : 1;
   for (let i = lines.length - 1; i >= 0; i--) {
     const line = lines[i], el = line.el;
@@ -1587,7 +1596,7 @@ function placeLines(l, a, box, dt) {
       const top = Math.max(8, bottom - bh);
       if (line.ox === null) { line.ox = left - a.x; line.oy = top - a.y; }
       else { line.ox += (left - a.x - line.ox) * k; line.oy += (top - a.y - line.oy) * k; }
-      bottom = top - LINES_GAP;
+      bottom = top - gap;
     }
     el.style.left = f(a.x + line.ox) + 'px';
     el.style.top = f(a.y + line.oy) + 'px';
@@ -1597,7 +1606,7 @@ function placeLines(l, a, box, dt) {
   trail.hidden = last.fadeAt !== null;
   const bx = a.x + last.ox + last.el.offsetWidth / 2, by = a.y + last.oy + last.el.offsetHeight;
   [...trail.children].forEach((d, i) => {
-    const kk = [.22, .5, .78][i], sz = [7, 10, 13][i];
+    const kk = [.22, .5, .78][i], sz = [7, 10, 13][i] * size;
     d.style.width = d.style.height = sz + 'px';
     d.style.left = f(a.x + (bx - a.x) * kk - sz / 2) + 'px';
     d.style.top = f(a.y - 4 + (by + 4 - a.y + 4) * kk - sz / 2) + 'px';

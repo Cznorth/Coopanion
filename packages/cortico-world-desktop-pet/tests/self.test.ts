@@ -8,8 +8,8 @@ const packs = figurePacks([]).packs;
 
 describe('pet_set', () => {
   it('changes what reaches the person only after asking them', () => {
-    const { changes } = planSettings({ roam: 'free', sound: false, scale: 1.5, theme: 'light', user: '小明', hoverButtons: ['chat'] }, cfg(), packs);
-    expect(Object.fromEntries(changes.map((c) => [c.key, c.tier]))).toEqual({ roam: 'self', sound: 'ask', scale: 'ask', theme: 'ask', user: 'ask', hoverButtons: 'ask' });
+    const { changes } = planSettings({ roam: 'free', sound: false, scale: 1.5, bubbleSize: 1.2, fontSize: 1.2, theme: 'light', user: '小明', hoverButtons: ['chat'] }, cfg(), packs);
+    expect(Object.fromEntries(changes.map((c) => [c.key, c.tier]))).toEqual({ roam: 'self', sound: 'ask', scale: 'ask', bubbleSize: 'ask', fontSize: 'ask', theme: 'ask', user: 'ask', hoverButtons: 'ask' });
   });
 
   it('refuses settings that are not the bot\'s', () => {

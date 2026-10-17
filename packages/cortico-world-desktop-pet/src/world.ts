@@ -813,6 +813,8 @@ export class DesktopPetWorld implements World {
       hoverButtons: hoverButtonList(this.cfg.hoverButtons),
       doubleClickChat: this.cfg.doubleClickChat,
       scale: this.cfg.window.scale,
+      bubbleSize: this.cfg.window.bubbleSize,
+      fontSize: this.cfg.window.fontSize,
       glow: this.cfg.window.glow,
       frameRate: this.cfg.window.frameRate,
       lockFrameRate: this.cfg.window.lockFrameRate,

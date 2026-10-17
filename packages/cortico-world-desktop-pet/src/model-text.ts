@@ -138,7 +138,7 @@ const zh = {
   /** `pet_set`'s items, named for the bot with the parameter each is. */
   settingNames: {
     figure: '形象(figure)', scheme: '打扮(scheme)', roam: '走动(roam)', snoreSeconds: '呼噜时长(snoreSeconds)', sound: '音效(sound)',
-    scale: '大小(scale)', theme: '黑白模式(theme)', hoverButtons: '悬停按钮(hoverButtons)', user: '对对方的称呼(user)',
+    scale: '大小(scale)', bubbleSize: '气泡尺寸(bubbleSize)', fontSize: '字体尺寸(fontSize)', theme: '黑白模式(theme)', hoverButtons: '悬停按钮(hoverButtons)', user: '对对方的称呼(user)',
   } as Record<SelfKey, string>,
   /** `{{pet.self}}`: the items that change at once and the ones asked first. */
   selfTiers: (user: string, direct: string[], asked: string[]) => (!asked.length ? '现在这些都直接生效。'
@@ -251,7 +251,7 @@ const en: typeof zh = {
   off: 'off',
   settingNames: {
     figure: 'figure', scheme: 'dress (scheme)', roam: 'walking (roam)', snoreSeconds: 'snoring time (snoreSeconds)', sound: 'sound effects (sound)',
-    scale: 'size (scale)', theme: 'night or day look (theme)', hoverButtons: 'hover buttons (hoverButtons)', user: 'what you call them (user)',
+    scale: 'size (scale)', bubbleSize: 'bubble size (bubbleSize)', fontSize: 'text size (fontSize)', theme: 'night or day look (theme)', hoverButtons: 'hover buttons (hoverButtons)', user: 'what you call them (user)',
   },
   selfTiers: (user, direct, asked) => (!asked.length ? 'Right now all of these take effect at once.'
     : !direct.length ? `Right now all of these are first asked of ${user} in a bubble.`

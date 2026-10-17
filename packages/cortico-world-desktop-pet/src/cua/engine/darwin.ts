@@ -4,9 +4,8 @@
  * window list from CGWindowListCopyWindowInfo, the seconds since the last hardware input, and
  * AppleScript for bringing an app forward and for the yes/no dialog.
  *
- * Coordinates are physical pixels of the main display, as on Windows: the capture is at pixel
- * size, and positions are divided by the display's backing scale before they become CoreGraphics
- * points. macOS lets an app capture the screen only under Privacy & Security → Screen Recording,
+ * Coordinates are CoreGraphics points of the global display space (the main display's top-left
+ * corner is (0, 0)); each display reports its own pixels per point, and a capture is at pixel size. macOS lets an app capture the screen only under Privacy & Security → Screen Recording,
  * and post input events only under Accessibility; the first use asks for each, and until they are
  * given the calls throw with where to turn them on. This module runs only inside the engine child.
  */
@@ -18,6 +17,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { appleString, dialogAnswer, macKey, unicodeChunks } from './mac-keys.ts';
 import { EngineFailure } from './fail.ts';
+import type { NativeDisplay } from './display.ts';
 
 const cg = koffi.load('/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics');
 const cf = koffi.load('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation');
@@ -26,6 +26,7 @@ const CGPoint = koffi.struct('CGPoint', { x: 'double', y: 'double' });
 const CGRect = koffi.struct('CGRect', { x: 'double', y: 'double', width: 'double', height: 'double' });
 
 const CGMainDisplayID = cg.func('uint32_t CGMainDisplayID()');
+const CGGetActiveDisplayList = cg.func('int32_t CGGetActiveDisplayList(uint32_t max, uint32_t *displays, _Out_ uint32_t *count)');
 const CGDisplayBounds = cg.func('CGRect CGDisplayBounds(uint32_t display)');
 const CGDisplayCopyDisplayMode = cg.func('void *CGDisplayCopyDisplayMode(uint32_t display)');
 const CGDisplayModeGetPixelWidth = cg.func('size_t CGDisplayModeGetPixelWidth(void *mode)');
@@ -75,28 +76,29 @@ const UNICODE_CHUNK = 20;
 /** A second press this soon and this close to the last counts as a double (or triple) click. */
 const MULTI_CLICK_MS = 500, MULTI_CLICK_PX = 4;
 
-export interface Size { width: number; height: number }
 export interface Rect { x: number; y: number; width: number; height: number }
 
 const t0 = Date.now();
 
-/** The main display: size in points, and pixels per point. */
-function display(): { points: Size; scale: number } {
-  const id = CGMainDisplayID();
-  const b = CGDisplayBounds(id) as Rect;
-  const mode = CGDisplayCopyDisplayMode(id);
-  let scale = 1;
-  if (mode) {
-    const pw = Number(CGDisplayModeGetPixelWidth(mode)), w = Number(CGDisplayModeGetWidth(mode));
-    if (pw > 0 && w > 0) scale = pw / w;
-    CGDisplayModeRelease(mode);
-  }
-  return { points: { width: b.width, height: b.height }, scale };
-}
+/** Most displays asked for at once. */
+const MAX_DISPLAYS = 16;
 
-export function screenSize(): Size {
-  const d = display();
-  return { width: Math.round(d.points.width * d.scale), height: Math.round(d.points.height * d.scale) };
+/** The active displays: bounds in points, and pixels per point from each one's mode. */
+export function displays(): NativeDisplay[] {
+  const ids = new Uint32Array(MAX_DISPLAYS), count = [0];
+  if (CGGetActiveDisplayList(MAX_DISPLAYS, ids, count) !== 0) return [];
+  const main = CGMainDisplayID();
+  return [...ids.subarray(0, count[0])].map((id) => {
+    const b = CGDisplayBounds(id) as Rect;
+    const mode = CGDisplayCopyDisplayMode(id);
+    let scale = 1;
+    if (mode) {
+      const pw = Number(CGDisplayModeGetPixelWidth(mode)), w = Number(CGDisplayModeGetWidth(mode));
+      if (pw > 0 && w > 0) scale = pw / w;
+      CGDisplayModeRelease(mode);
+    }
+    return { id: String(id), primary: id === main, x: b.x, y: b.y, width: b.width, height: b.height, scale };
+  });
 }
 
 function needScreen(): void {
@@ -109,14 +111,14 @@ function needInput(): void {
   throw new EngineFailure('macInputPermission');
 }
 
-/** The main display as top-down BGRA at its pixel size. */
-export function capture(): { width: number; height: number; bgra: Buffer } {
+/** Display `d` as top-down BGRA at its pixel size. */
+export function capture(d: NativeDisplay): { width: number; height: number; bgra: Uint8Array } {
   needScreen();
   const dir = mkdtempSync(join(tmpdir(), 'cua-shot-'));
   const file = join(dir, 'screen.jpg');
   try {
-    // -x: no sound, -m: the main display only
-    execFileSync('/usr/sbin/screencapture', ['-x', '-m', '-t', 'jpg', file], { stdio: 'ignore', timeout: 15_000 });
+    // -x: no sound, -R: a rectangle of the global space in points
+    execFileSync('/usr/sbin/screencapture', ['-x', `-R${d.x},${d.y},${d.width},${d.height}`, '-t', 'jpg', file], { stdio: 'ignore', timeout: 15_000 });
     const img = jpeg.decode(readFileSync(file), { useTArray: true, formatAsRGBA: true, maxMemoryUsageInMB: 1024 });
     const bgra = Buffer.from(img.data.buffer, img.data.byteOffset, img.data.byteLength);
     for (let i = 0; i < bgra.length; i += 4) { const r = bgra[i]!; bgra[i] = bgra[i + 2]!; bgra[i + 2] = r; }
@@ -134,8 +136,7 @@ function pointerPoints(): { x: number; y: number } {
 }
 
 export function cursor(): { x: number; y: number } {
-  const p = pointerPoints(), s = display().scale;
-  return { x: Math.round(p.x * s), y: Math.round(p.y * s) };
+  return pointerPoints();
 }
 
 /** Milliseconds since the engine started, wrapping at 2^32 as Windows' tick does. */
@@ -165,12 +166,11 @@ const BUTTON: Record<Button, { down: number; up: number; drag: number; n: number
 let held: Button | null = null;
 let lastPress: { button: Button; at: number; x: number; y: number; count: number } | null = null;
 
-/** Absolute move in physical pixels of the main display. */
+/** Absolute move to a point of the global display space. */
 export function moveTo(x: number, y: number): void {
   needInput();
-  const s = display().scale;
   const b = held ? BUTTON[held] : null;
-  post(CGEventCreateMouseEvent(null, b ? b.drag : EV.move, { x: x / s, y: y / s }, b ? b.n : 0));
+  post(CGEventCreateMouseEvent(null, b ? b.drag : EV.move, { x, y }, b ? b.n : 0));
 }
 
 function mouseEvent(button: Button, down: boolean): void {
@@ -278,7 +278,6 @@ function cfNumber(dict: unknown, name: string): number {
  * Titles come only with the Screen Recording permission; without it a window is named by its app.
  */
 export function windows(): WindowInfo[] {
-  const s = display().scale;
   // kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements
   const list = CGWindowListCopyWindowInfo(1 | 16, 0);
   if (!list) return [];
@@ -300,7 +299,7 @@ export function windows(): WindowInfo[] {
         handle: `${pid}:${cfNumber(w, 'kCGWindowNumber')}`,
         title: name ? `${name} - ${app}` : app,
         pid,
-        rect: { x: Math.round(r.x * s), y: Math.round(r.y * s), width: Math.round(r.width * s), height: Math.round(r.height * s) },
+        rect: { x: r.x, y: r.y, width: r.width, height: r.height },
         minimized: false,
         foreground: out.length === 0,
       });

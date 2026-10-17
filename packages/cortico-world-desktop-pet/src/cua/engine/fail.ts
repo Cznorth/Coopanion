@@ -5,7 +5,8 @@
 export type EngineErrorCode =
   | 'macScreenPermission' | 'macInputPermission' | 'macNoKey'
   | 'x11Display' | 'linuxNoScreenshot' | 'linuxPixelFormat' | 'linuxNoKey' | 'linuxNoXdotool'
-  | 'winBitBlt' | 'winGetDIBits' | 'winSendInput';
+  | 'winBitBlt' | 'winGetDIBits' | 'winSendInput' | 'winSetCursorPos'
+  | 'layoutChanged' | 'noDisplay';
 
 export class EngineFailure extends Error {
   constructor(readonly code: EngineErrorCode, readonly args: Array<string | number> = []) {

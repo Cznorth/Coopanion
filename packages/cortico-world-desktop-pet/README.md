@@ -71,6 +71,14 @@ World 进程退出后窗口在 2 秒内自己关掉。
 桌宠身后的屏幕颜色和身体相近时(比如浅色身体停在白色窗口前),身体背后会亮起一圈浅灰色的柔光:
 Windows 上每 0.8 秒用 GDI 取一小块身体周围的屏幕像素来比,其他系统读屏代价大,光圈一直亮着。
 
+人说的话留在 Coo 旁边(`web/pet-app.js`):打字框发出的、识别完成的语音、对话页发来的消息各成一个虚线气泡,最新的在最下面,
+放在 Coo 背朝的一侧并让开 Coo 的气泡;那侧放不下换到另一侧,两侧都放不下就放到 Coo 的气泡上方。识别完成的语音前面画话筒,对话页来的画双向箭头。
+一条话由它之后 Coo 开始的第一句说话或提问回答:回答的气泡还在时,或者还没回答而 Coo 在忙(有状态)、有说话在排队时,这条和更早的都不淡出;
+回答的气泡关掉 1 秒后淡出,没有回答的 8 秒后淡出。最多 3 条、合计 6 行,超出时最早的先淡出,即使还在等回答。点一下关掉一条,识别中的那条用「取消」。
+
+气泡尺寸 `worlds.desktop-pet.window.bubbleSize` 缩放所有气泡的宽度、留白、圆角、尾巴、离头顶的距离和连到桌宠的小圆点,边框粗细不变;
+字体尺寸 `window.fontSize` 缩放气泡里的字和同一行的小图标,气泡的宽度不变。两项都是 0.8–1.6 倍,默认 1,不随桌宠的大小变。
+
 用哪个 Electron,依次是:
 
 1. 环境变量 `CORTICO_DESKTOP_PET_HOST`:内嵌应用给的 JSON 数组命令,末尾追加 `--pet-url=<url>`。
@@ -137,7 +145,7 @@ overlay 页按画出的时刻显示各帧，帧与帧隔开的时间和桌宠页
 
 桌宠窗口里的页面用麦克风收音,16 kHz 单声道 PCM 经 WebSocket 送到 World,按能量门限切句
 (`src/asr/segmenter.ts`),交给识别引擎,挡掉已知幻觉后作为 `desktop-pet.speech` 投递;应用语言是简体中文且 `asr.simplified` 开着时先把繁体转成简体。
-说话时桌宠歪头倾听,虚线气泡里边说边显示听到的字,还没定下来的部分是灰色的;用 Whisper 时一句说完才出字。
+说话时桌宠歪头倾听,虚线气泡里边说边显示听到的字,还没定下来的部分是灰色的;用 Whisper 时一句说完才出字。识别完成后这个气泡留在 Coo 旁边(见「桌宠窗口」)。
 按键收音(`hold`、`toggle`)时气泡里有「取消」按钮:桌宠页发 `cancel`,World 丢掉这次收音手上的音频、转写队列和已识别的文字,在途的转写落地后也丢掉,发 `listen` 的 `none`,不投递事件;`toggle` 下同时关掉收音。
 
 识别引擎存在 `asr.engine`:
@@ -263,7 +271,7 @@ Windows 上经 koffi 轮询 Win32 `GetAsyncKeyState` 读取;macOS 上轮询 Core
 `pet_set` 让 bot 改自己的外观和习惯,每项要么直接改,要么先在气泡里征得对方同意、同意了才改(`src/self.ts`)。
 哪项归哪档由 `worlds.desktop-pet.selfAdjust`(「习惯」页的「自主配置权限」)定:
 
-- `default`(默认):形象和打扮(Coo 的配色和配件也是打扮)、走动多少、呼噜多久直接改;音效、大小、夜间模式、悬停按钮、对对方的称呼先征得同意;
+- `default`(默认):形象和打扮(Coo 的配色和配件也是打扮)、走动多少、呼噜多久直接改;音效、大小、气泡尺寸、字体尺寸、夜间模式、悬停按钮、对对方的称呼先征得同意;
 - `any`:都直接改;
 - `custom`:按 `selfAdjustCustom` 逐项定,`true` 直接改,`false` 先征得同意;
 - `off`:都不能改,`pet_quiet` 也不行。
@@ -277,28 +285,33 @@ Windows 上经 koffi 轮询 Win32 `GetAsyncKeyState` 读取;macOS 上轮询 Core
 
 ## 电脑操作
 
-`worlds.desktop-pet.cua.enabled` 开着时(默认关),bot 还看得见这台电脑(Windows、macOS 或 Linux)的主屏幕,能移动和点击鼠标、滚动、打字、按组合键、
-列出和切换窗口;使用者一动鼠标键盘,操作就让位。代码在 `src/cua/`;关着时没有这些工具,环境提示词的 `{{pet.cua}}` 为空。
-开关和下面的配置都是热更新,下一轮起生效。
+`worlds.desktop-pet.cua.enabled` 开着时(默认关),bot 还看得见这台电脑(Windows、macOS 或 Linux)的屏幕,接了几块显示器都能看、能操作,能移动和点击鼠标、滚动、打字、按组合键、
+列出和切换窗口;使用者一动鼠标键盘,操作就让位。代码在 `src/cua/`;关着时没有这些工具,环境提示词的 `{{pet.cua}}` 只说明功能存在、在应用设置里打开;内嵌应用给了 `controls.openCuaSettings` 时,
+bot 还有 `pet_cua_open_settings`,在使用者同意后把设置窗口打开到这个开关。
+开关和下面的配置都是热更新,下一轮起生效;内嵌应用要在开关改动后重载 session 前缀,工具表才跟着变。
 
 ### 工具
 
-坐标一律是最近一张截图的像素;截图缩放到 `cua.screenshot.maxWidth`×`maxHeight`(默认 1280×800)以内,画上鼠标指针,JPEG 编码。
+截图一次截一块显示器,缩放到 `cua.screenshot.maxWidth`×`maxHeight`(默认 1280×800)以内,画上鼠标指针,JPEG 编码。
+显示器从左到右(再从上到下)编号,从 1 起。坐标一律是最近一张截图的像素,落在它那块显示器上;截图之后显示器变了
+(接上、拔掉、挪动或改了缩放),输入工具一律拒绝,回执要求重新截图。
 
 | 工具 | 作用 |
 |---|---|
-| `pet_cua_screenshot` | 截主屏幕;回执带屏幕与截图尺寸、指针位置、前台窗口标题 |
+| `pet_cua_screenshot(display)` | 截一块显示器:不带 `display` 时截上次看的那块,第一次截前台窗口所在的那块;回执带截图与显示器尺寸、其他显示器、指针位置、前台窗口标题 |
+| `pet_cua_zoom(x, y, width, height)` | 按原始分辨率重截最近一张截图里的一块,读缩小后看不清的小字;只用来看 |
 | `pet_cua_click(x, y, button, clicks)` | 左/右/中键,单击、双击、三击 |
 | `pet_cua_move(x, y)` | 只移动,用于悬停 |
-| `pet_cua_drag(from, to)` | 按住左键拖动 |
+| `pet_cua_drag(from, to)` | 按住左键拖动,两点在同一块显示器上 |
 | `pet_cua_scroll(x, y, down, right)` | 在某处转滚轮,单位是格 |
 | `pet_cua_type(text)` | 按 Unicode 字符打字,与键盘布局和输入法状态无关;`\n` 按回车 |
 | `pet_cua_key(keys)` | `"ctrl+s"`、`"alt+f4"`、`"ctrl+a delete"`:`+` 同时按,空格分先后 |
-| `pet_cua_windows` | 可见顶层窗口的标题、位置(截图坐标)、是否最小化、前台 |
-| `pet_cua_focus(window)` | 按句柄或标题片段切到前台,最小化的先还原 |
+| `pet_cua_windows` | 可见顶层窗口的标题、在哪块显示器(在最近一张截图那块上的给出截图坐标)、是否最小化、前台 |
+| `pet_cua_focus(window)` | 按句柄或标题片段切到前台,最小化的先还原;窗口在另一块显示器上时,附带的截图截那块 |
 | `pet_cua_wait(seconds)` | 等一会儿再截图 |
 
-操作类工具默认做完等 `cua.screenshot.settleMs`(500 ms)再附一张截图;参数 `screenshot: false` 可以省掉。
+操作类工具默认做完等 `cua.screenshot.settleMs`(500 ms)再附一张截图;参数 `screenshot: false` 可以省掉,这时等完同样的时间再读一次指针和前台窗口,
+没有窗口接收键盘输入时回执提醒先截图。
 
 ### 什么时候先问
 
@@ -331,7 +344,7 @@ macOS 上是 AppleScript 的 `display dialog`,Linux 上是 `zenity --question`)�
 
 ### 打断
 
-十个工具都声明为 `interruptible`。Core 投递 `interrupt` 事件时,执行中的调用停在下一个不留半截输入的地方,
+十一个工具都声明为 `interruptible`。Core 投递 `interrupt` 事件时,执行中的调用停在下一个不留半截输入的地方,
 回执写明停下前做了什么:
 
 | 停下时在做什么 | 结果 |
@@ -341,27 +354,29 @@ macOS 上是 AppleScript 的 `display dialog`,Linux 上是 `zenity --question`)�
 | `pet_cua_type` 打字途中 | 停在两段之间,回执报告打出了几个字符 |
 | 点击、移动、拖动、滚动、按键序列、切窗口 | 已开始的输入发完(拖动会松开左键),之后不等 `settleMs`、不附截图 |
 | `pet_cua_wait` 等待中 | 立即结束,回执报告等了几秒,不截图 |
-| `pet_cua_screenshot`、`pet_cua_windows` 已发出请求 | 照常完成 |
+| `pet_cua_screenshot`、`pet_cua_zoom`、`pet_cua_windows` 已发出请求 | 照常完成 |
 
 主进程在调用的 `signal` 触发时给引擎子进程发 `{ cancel: id }`,引擎只在等使用者停手和打字的段间响应它。
 
 ### 实现
 
-操作系统调用都在引擎子进程(`src/cua/engine-child.ts`)里,经 [koffi](https://koffi.dev/) 直接调系统接口,坐标都是主屏幕的物理像素。
+操作系统调用都在引擎子进程(`src/cua/engine-child.ts`)里,经 [koffi](https://koffi.dev/) 直接调系统接口。请求和结果里的坐标是某块显示器的物理像素,
+各系统自己的全局坐标只在子进程里换算(`src/cua/engine/display.ts`)。
 引擎在第一次要用时拉起;子进程崩溃只让在途的那次调用失败,下次调用重新拉起。World 页多一盏「操作引擎」灯。
 
-- Windows(`src/cua/engine/win32.ts`):GDI `BitBlt`(带 `CAPTUREBLT`,透明与分层窗口也截得到)、`SendInput`、`EnumWindows`、
-  `GetLastInputInfo`;子进程声明为 per-monitor DPI aware(v2)。
-- macOS(`src/cua/engine/darwin.ts`):系统自带的 `screencapture` 截图;鼠标键盘是 CoreGraphics 的 `CGEventPost`
-  (坐标按屏幕的缩放比从像素换成点,双击靠事件里的点击计数);窗口表来自 `CGWindowListCopyWindowInfo`;
+- Windows(`src/cua/engine/win32.ts`):`EnumDisplayMonitors` 列显示器,GDI `BitBlt` 按显示器矩形截图(带 `CAPTUREBLT`,透明与分层窗口也截得到)、
+  `SetCursorPos` 定位指针(`SendInput` 的绝对坐标要折算到 0–65535,在显示器接缝处会差一个像素)、`SendInput` 发按键和滚轮、`EnumWindows`、
+  `GetLastInputInfo`;子进程声明为 per-monitor DPI aware(v2),坐标是虚拟屏幕的物理像素,主显示器左上角为原点。
+- macOS(`src/cua/engine/darwin.ts`):`CGGetActiveDisplayList` 列显示器,系统自带的 `screencapture -R` 按显示器矩形截图;鼠标键盘是 CoreGraphics 的 `CGEventPost`
+  (坐标按每块显示器各自的缩放比从像素换成点,双击靠事件里的点击计数);窗口表来自 `CGWindowListCopyWindowInfo`;
   切到某个窗口所属的应用、弹确认框用 AppleScript。`pet_cua_key` 里的 `cmd` 是 Command 键。
   macOS 要在「系统设置 → 隐私与安全性」里给应用两项权限:「录屏与系统录音」(截图、读窗口标题)和「辅助功能」(鼠标键盘);
   第一次用时系统会问,没给之前工具回执写明去哪里打开。切换应用时 System Events 还会问一次能不能被控制。
-- Linux(`src/cua/engine/linux.ts`,X11 或 Wayland 下的 XWayland):根窗口的 `XGetImage` 截图(无根的 XWayland 给不出画面时,
+- Linux(`src/cua/engine/linux.ts`,X11 或 Wayland 下的 XWayland):XRandR 的 `XRRGetMonitors` 列显示器(没有 libXrandr 时整块 X 屏当一块),根窗口的 `XGetImage` 按显示器矩形截图(无根的 XWayland 给不出画面时,
   改用 `grim`、`spectacle`、`scrot` 或 ImageMagick 的 `import`);鼠标键盘是 XTest;窗口表和前台窗口来自窗口管理器的 EWMH 属性;
   打字和切窗口用 `xdotool`,确认框用 `zenity`。XWayland 下只看得到 X11 程序的窗口。
 
-只支持 Windows、macOS 和 Linux(X11)的主屏幕;在别的系统上、或 Linux 上没有 `DISPLAY` 时,开着也没有这些工具,灯显示原因。
+只支持 Windows、macOS 和 Linux(X11);多显示器在 macOS 和 Linux 上还没有真机验证过;在别的系统上、或 Linux 上没有 `DISPLAY` 时,开着也没有这些工具,灯显示原因。
 
 ### 端到端测试
 
@@ -394,6 +409,7 @@ macOS 上是 AppleScript 的 `display dialog`,Linux 上是 `zenity --question`)�
 
 - 页面发 `send` 的文字和图片作为 `desktop-pet.message` 投递;送达前在页面上排队,`now` 让它以 interrupt 立即送达,`withdraw` 撤回(需要宿主提供 `promotePending` / `withdrawPending`);World 的 `onEventsSettled` 告诉页面何时送达。
 - `pet_say` 的每一拍、`pet_ask` 的问题、两句话之间调用过的工具名记为 `desktop-pet.self` 事件,只落库不投递;`hello` 时 World 从事件库还原历史,排过队的消息放在送达的位置。`pet_say` 的图片按句柄读出字节后重新附在这条事件上,存成 `log:` 附件。页面经控制台的 `/api/blob` 取消息里的图片。
+- 页面发出的消息交给 bot 后,World 给桌宠页发 `said`(`via: 'chat'`、文字、图片数、事件游标),桌宠把它留在 Coo 旁边;撤回时发 `said-withdrawn`,桌宠关掉那条。
 - `pet_ask` 在页面上也能回答,回答后桌宠上的气泡关掉。页面还收到 Core 的运行阶段(`phase`)与暂停状态。
 - `controls.openChat` 借出后,打字气泡多一个展开钮,带着草稿打开对话页;环境提示词的 `{{pet.chat}}` 也只在这时说明对话页。
 

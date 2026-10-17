@@ -79,11 +79,11 @@ export function touchWakes(touch: { wakeOn: TouchWake; wakeKinds?: readonly stri
 export type SelfAdjust = 'off' | 'default' | 'any' | 'custom';
 export const SELF_ADJUST: readonly SelfAdjust[] = ['off', 'default', 'any', 'custom'];
 /** The settings `pet_set` takes, in its order. */
-export const SELF_KEYS = ['figure', 'scheme', 'roam', 'snoreSeconds', 'sound', 'scale', 'theme', 'hoverButtons', 'user'] as const;
+export const SELF_KEYS = ['figure', 'scheme', 'roam', 'snoreSeconds', 'sound', 'scale', 'bubbleSize', 'fontSize', 'theme', 'hoverButtons', 'user'] as const;
 export type SelfKey = typeof SELF_KEYS[number];
 /** Per item, whether the bot changes it at once (true) or asks first (false), under `default`. */
 export const SELF_DEFAULT: Readonly<Record<SelfKey, boolean>> = {
-  figure: true, scheme: true, roam: true, snoreSeconds: true, sound: false, scale: false, theme: false, hoverButtons: false, user: false,
+  figure: true, scheme: true, roam: true, snoreSeconds: true, sound: false, scale: false, bubbleSize: false, fontSize: false, theme: false, hoverButtons: false, user: false,
 };
 
 /** `selfAdjust` as it reads: versions up to 0.1.20 wrote true (now `default`) or false (now `off`). */
@@ -133,6 +133,10 @@ export interface DesktopPetConfigSection extends WorldSection {
     electronFile: string;
     /** Figure size on screen, 1 = 256 logo units drawn at 107 px. */
     scale: number;
+    /** The bubbles' frame (widths, padding, corners, tail, distance from the head), 1 = as drawn by pet.css; the text keeps its size. */
+    bubbleSize: number;
+    /** The text in the bubbles and the icons on its line, 1 = as drawn by pet.css; the bubbles keep their widths. */
+    fontSize: number;
     /** How far the light halo reaches out from the body, in pixels (its outer blur); 0 turns it off. */
     glow: number;
     /** The pet page draws 60 frames a second at rest too; off, it drops to 30 while the body stands, sits or sleeps. */
@@ -203,6 +207,8 @@ export interface DesktopPetConfigSection extends WorldSection {
 
 /** The pet's size range on screen. */
 export const SCALE_MIN = .5, SCALE_MAX = 10;
+/** The range of `window.bubbleSize` and `window.fontSize`. */
+export const BUBBLE_SIZE_MIN = .8, BUBBLE_SIZE_MAX = 1.6;
 /** The halo's reach in pixels: 0 is off; past GLOW_MAX it reads as a gray cloud rather than an outline. */
 export const GLOW_MAX = 16, GLOW_DEFAULT = 7;
 
@@ -210,7 +216,7 @@ export const DESKTOP_PET_DEFAULTS: DesktopPetConfigSection = {
   enabled: false,
   port: 7797,
   user: '',
-  window: { enabled: true, electronFile: '', scale: 1, glow: GLOW_DEFAULT, frameRate: 60, lockFrameRate: false, hideWhenFullscreen: false, exportOverlay: false },
+  window: { enabled: true, electronFile: '', scale: 1, bubbleSize: 1, fontSize: 1, glow: GLOW_DEFAULT, frameRate: 60, lockFrameRate: false, hideWhenFullscreen: false, exportOverlay: false },
   roam: 'calm',
   sound: true,
   sounds: { move: true, touch: true, face: true, snore: true, talk: true, ui: true, snoreSeconds: 0 },
@@ -263,6 +269,8 @@ export function desktopPetConfigGroups(language: Language = 'zh'): ConfigGroup[]
         [`${K}.selfAdjust`]: { type: 'string', title: c.selfAdjust.title, enum: [...SELF_ADJUST], description: c.selfAdjust.description, 'x-hot': true },
         [`${K}.window.enabled`]: { type: 'boolean', title: c.windowEnabled.title, 'x-hot': false },
         [`${K}.window.scale`]: { type: 'number', title: c.scale.title, minimum: SCALE_MIN, maximum: SCALE_MAX, multipleOf: .05, 'x-hot': true },
+        [`${K}.window.bubbleSize`]: { type: 'number', title: c.bubbleSize.title, description: c.bubbleSize.description, minimum: BUBBLE_SIZE_MIN, maximum: BUBBLE_SIZE_MAX, multipleOf: .05, 'x-hot': true },
+        [`${K}.window.fontSize`]: { type: 'number', title: c.fontSize.title, description: c.fontSize.description, minimum: BUBBLE_SIZE_MIN, maximum: BUBBLE_SIZE_MAX, multipleOf: .05, 'x-hot': true },
         [`${K}.window.glow`]: { type: 'number', title: c.glow.title, description: c.glow.description, minimum: 0, maximum: GLOW_MAX, multipleOf: 1, 'x-hot': true },
         [`${K}.window.frameRate`]: { type: 'integer', title: c.frameRate.title, minimum: 0, description: c.frameRate.description, 'x-hot': true },
         [`${K}.window.lockFrameRate`]: { type: 'boolean', title: c.lockFrameRate.title, description: c.lockFrameRate.description, 'x-hot': true },

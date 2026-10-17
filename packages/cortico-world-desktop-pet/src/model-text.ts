@@ -138,7 +138,7 @@ const zh = {
   /** `pet_set`'s items, named for the bot with the parameter each is. */
   settingNames: {
     figure: '形象(figure)', scheme: '打扮(scheme)', roam: '走动(roam)', snoreSeconds: '呼噜时长(snoreSeconds)', sound: '音效(sound)',
-    scale: '大小(scale)', theme: '黑白模式(theme)', hoverButtons: '悬停按钮(hoverButtons)', user: '对对方的称呼(user)',
+    scale: '大小(scale)', bubbleSize: '气泡尺寸(bubbleSize)', fontSize: '字体尺寸(fontSize)', theme: '黑白模式(theme)', hoverButtons: '悬停按钮(hoverButtons)', user: '对对方的称呼(user)',
   } as Record<SelfKey, string>,
   /** `{{pet.self}}`: the items that change at once and the ones asked first. */
   selfTiers: (user: string, direct: string[], asked: string[]) => (!asked.length ? '现在这些都直接生效。'
@@ -148,6 +148,11 @@ const zh = {
   selfNone: (user: string) => `${user}在「习惯」页把「自主配置权限」设成了「禁止」,现在这些你都改不了,\`pet_quiet\` 也用不了。`,
   /** `{{pet.chat}}`, when the app has a chat page. */
   chatPage: (_user: string) => '应用的「对话」页按时间列出这些气泡、对方的话,以及你两句话之间调用过的工具名;对方也能在那里打字、发图片(同样是 `[typed]` 事件,图片接在正文后),回答 `pet_ask`。`pet_say` 带的 `images` 只显示在对话页,头顶气泡不显示。',
+  /** `{{pet.cua}}` while computer use is off on a system that runs it. */
+  cuaOff: (user: string, canOpen: boolean) => `## 电脑操作\n\n电脑操作现在关着:你看不到屏幕,也动不了鼠标和键盘。${user}想让你看屏幕或帮忙操作电脑时,可以提出打开它:在设置窗口「习惯」页的「电脑操作」一节,打开前那里会讲清风险。` +
+    (canOpen ? `${user}同意去打开的话,\`pet_cua_open_settings\` 把设置窗口直接打开到那里。` : ''),
+  /** The receipt of `pet_cua_open_settings`. */
+  cuaSettingsOpened: (user: string) => `设置窗口已打开到「电脑操作」,正弹着风险说明;${user}点「打开」之后,下一条消息起你就能用电脑操作的工具。`,
   /** `{{pet.reply}}`: the language to talk to the person in, named by the app. */
   reply: (user: string, language: string) => `对${user}说的话,气泡、提问和选项,都用${language}。`,
 };
@@ -251,7 +256,7 @@ const en: typeof zh = {
   off: 'off',
   settingNames: {
     figure: 'figure', scheme: 'dress (scheme)', roam: 'walking (roam)', snoreSeconds: 'snoring time (snoreSeconds)', sound: 'sound effects (sound)',
-    scale: 'size (scale)', theme: 'night or day look (theme)', hoverButtons: 'hover buttons (hoverButtons)', user: 'what you call them (user)',
+    scale: 'size (scale)', bubbleSize: 'bubble size (bubbleSize)', fontSize: 'text size (fontSize)', theme: 'night or day look (theme)', hoverButtons: 'hover buttons (hoverButtons)', user: 'what you call them (user)',
   },
   selfTiers: (user, direct, asked) => (!asked.length ? 'Right now all of these take effect at once.'
     : !direct.length ? `Right now all of these are first asked of ${user} in a bubble.`
@@ -259,6 +264,9 @@ const en: typeof zh = {
   selfNone: (user) => `${user} set "Self-adjustment" to "Off" on the Habits page, so right now you can change none of these, and \`pet_quiet\` does not work either.`,
   // the English template puts these right after a sentence, so they start with a space
   chatPage: (user) => ` The app's Chat page lists these bubbles in time order, with what ${user} said and the names of the tools you called between two lines; ${user} can also type and send images there (they arrive as \`[typed]\` events too, images after the text) and answer \`pet_ask\`. The \`images\` of \`pet_say\` show only on the Chat page, not in the bubble.`,
+  cuaOff: (user, canOpen) => `## Computer use\n\nComputer use is off: you cannot see the screen or use the mouse and keyboard. When ${user} wants you to look at the screen or help operate the computer, you can suggest turning it on: the Computer use section of the Habits page in the settings window, which explains the risks before it turns on.` +
+    (canOpen ? ` If ${user} agrees to turn it on, \`pet_cua_open_settings\` opens the settings window right there.` : ''),
+  cuaSettingsOpened: (user) => `The settings window is open at Computer use, showing what it risks; once ${user} clicks to turn it on, the computer-use tools are yours from the next message.`,
   reply: (user, language) => ` Talk to ${user} in ${language}: bubbles, questions and options alike.`,
 };
 

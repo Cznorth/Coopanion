@@ -4,7 +4,7 @@
  */
 import type { Language } from 'cortico/core/language.ts';
 import type { ToolDef } from 'cortico/core/types.ts';
-import { SCALE_MAX, SCALE_MIN, USER_MAX } from './config.ts';
+import { BUBBLE_SIZE_MAX, BUBBLE_SIZE_MIN, SCALE_MAX, SCALE_MIN, USER_MAX } from './config.ts';
 import { capFor } from './i18n/index.ts';
 
 /** Longest `pet_ask` option, in characters as seen, for Chinese, Japanese and Korean. */
@@ -65,6 +65,8 @@ export const petToolDecls = (language: Language = 'zh'): Array<Omit<ToolDef, 'ha
         snoreSeconds: { type: 'integer', minimum: 0, maximum: 3600, description: 'Seconds of snoring each time you fall asleep; 0 snores until you wake.' },
         sound: { type: 'boolean', description: 'Sound effects on or off.' },
         scale: { type: 'number', minimum: SCALE_MIN, maximum: SCALE_MAX, description: 'Size on screen, 1 being the default.' },
+        bubbleSize: { type: 'number', minimum: BUBBLE_SIZE_MIN, maximum: BUBBLE_SIZE_MAX, description: "Width, padding, corners and tail of the speech bubbles (yours and the person's), 1 being the default; the text keeps its size." },
+        fontSize: { type: 'number', minimum: BUBBLE_SIZE_MIN, maximum: BUBBLE_SIZE_MAX, description: 'Size of the text in the speech bubbles, 1 being the default; the bubbles keep their width.' },
         theme: { type: 'string', enum: ['dark', 'light'], description: 'dark is night (light body), light is day (dark body).' },
         hoverButtons: { type: 'array', items: { type: 'string', enum: ['chat', 'voice', 'roam', 'theme', 'sound', 'dress', 'hide'] }, maxItems: 6, description: 'The buttons beside you while the mouse pointer rests on you.' },
         user: { type: 'string', maxLength: capFor(USER_MAX, language), description: `What you call the person, at most ${capFor(USER_MAX, language)} characters.` },

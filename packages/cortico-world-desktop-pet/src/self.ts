@@ -6,7 +6,7 @@
  *
  * Which item is in which tier is the person's `selfAdjust` (config.ts `directSettings`): by default the
  * bot's own looks and habits (figure and its picks, how much it walks about, how long it snores) are
- * `self`, and what reaches the person's screen, ears or name (sounds, size, the dark/light look, the
+ * `self`, and what reaches the person's screen, ears or name (sounds, size, bubble and text size, the dark/light look, the
  * hover buttons, what it calls them) is `ask`; on the Habits page they can make every item `self`,
  * pick per item, or take the whole of it back.
  *
@@ -18,7 +18,7 @@
  */
 import type { Language } from 'cortico/core/language.ts';
 import type { DeepPartial } from 'cortico/world.ts';
-import { MAX_HOVER_BUTTONS, PET_ACTIONS, SCALE_MAX, SCALE_MIN, USER_MAX, directSettings, hoverButtonList, type DesktopPetConfigSection, type SelfKey } from './config.ts';
+import { BUBBLE_SIZE_MAX, BUBBLE_SIZE_MIN, MAX_HOVER_BUTTONS, PET_ACTIONS, SCALE_MAX, SCALE_MIN, SELF_KEYS, USER_MAX, directSettings, hoverButtonList, type DesktopPetConfigSection, type SelfKey } from './config.ts';
 import { charCount, petText } from './i18n/index.ts';
 import type { ModelLanguage } from './model-text.ts';
 import { COO, lookOf, lookPatch, modelName, nameIn, type FigurePack } from './packs.ts';
@@ -53,6 +53,10 @@ const zh = {
   sound: (on: boolean) => `音效 ${on ? '打开' : '关掉'}`,
   badScale: `scale 应为 ${SCALE_MIN}–${SCALE_MAX} 的数`,
   scale: (from: number, to: number) => `在屏幕上的大小 ${from} 倍 → ${to} 倍`,
+  badBubbleSize: `bubbleSize 应为 ${BUBBLE_SIZE_MIN}–${BUBBLE_SIZE_MAX} 的数`,
+  bubbleSize: (from: number, to: number) => `气泡尺寸 ${from} 倍 → ${to} 倍`,
+  badFontSize: `fontSize 应为 ${BUBBLE_SIZE_MIN}–${BUBBLE_SIZE_MAX} 的数`,
+  fontSize: (from: number, to: number) => `字体尺寸 ${from} 倍 → ${to} 倍`,
   badTheme: 'theme 应为 dark 或 light',
   themeTo: (to: string) => `换成${to}`,
   badHover: `hoverButtons 应为 1–${MAX_HOVER_BUTTONS} 个不重复的 ${PET_ACTIONS.join('、')}`,
@@ -86,6 +90,10 @@ const en: typeof zh = {
   sound: (on) => `sound effects ${on ? 'on' : 'off'}`,
   badScale: `scale must be a number from ${SCALE_MIN} to ${SCALE_MAX}`,
   scale: (from, to) => `size on screen ${from}× → ${to}×`,
+  badBubbleSize: `bubbleSize must be a number from ${BUBBLE_SIZE_MIN} to ${BUBBLE_SIZE_MAX}`,
+  bubbleSize: (from, to) => `bubble size ${from}× → ${to}×`,
+  badFontSize: `fontSize must be a number from ${BUBBLE_SIZE_MIN} to ${BUBBLE_SIZE_MAX}`,
+  fontSize: (from, to) => `text size ${from}× → ${to}×`,
   badTheme: 'theme must be dark or light',
   themeTo: (to) => `theme → ${to}`,
   badHover: `hoverButtons must be 1–${MAX_HOVER_BUTTONS} distinct items of ${PET_ACTIONS.join(', ')}`,
@@ -193,6 +201,13 @@ export function planSettings(args: Record<string, unknown>, cfg: DesktopPetConfi
       if (s !== cfg.window.scale) changes.push({ key: 'scale', tier: tier('scale'), say: t.scale(cfg.window.scale, s), show: a.scale(cfg.window.scale, s), patch: { window: { scale: s } } });
     }
   }
+  for (const key of ['bubbleSize', 'fontSize'] as const) {
+    if (!(key in args)) continue;
+    const v = args[key];
+    if (typeof v !== 'number' || !(v >= BUBBLE_SIZE_MIN && v <= BUBBLE_SIZE_MAX)) { errors.push(key === 'bubbleSize' ? t.badBubbleSize : t.badFontSize); continue; }
+    const s = Math.round(v * 20) / 20, from = cfg.window[key];
+    if (s !== from) changes.push({ key, tier: tier(key), say: t[key](from, s), show: a[key](from, s), patch: { window: { [key]: s } } });
+  }
   if ('theme' in args) {
     const v = args.theme;
     if (typeof v !== 'string' || !(v in t.theme)) errors.push(t.badTheme);
@@ -210,7 +225,7 @@ export function planSettings(args: Record<string, unknown>, cfg: DesktopPetConfi
     if (!v || charCount(v) > userMax) errors.push(t.badUser(userMax));
     else if (v !== cfg.user) changes.push({ key: 'user', tier: tier('user'), say: t.user(cfg.user, v), show: a.user(v), patch: { user: v } });
   }
-  const known = new Set(['figure', 'scheme', 'roam', 'snoreSeconds', 'sound', 'scale', 'theme', 'hoverButtons', 'user']);
+  const known = new Set<string>(SELF_KEYS);
   for (const k of Object.keys(args)) if (!known.has(k)) errors.push(t.unknown(k));
   return { changes, errors };
 }

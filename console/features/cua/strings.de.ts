@@ -20,4 +20,11 @@ export const S: Partial<typeof en> = {
   saveFailed: (why: string) => `Nicht gespeichert: ${why}`,
   enabledLabel: 'Computer verwenden',
   controlLabel: 'Maus und Tastatur',
+  riskTitle: 'Coo diesen Computer bedienen lassen?',
+  riskLead: 'Wenn das an ist, sieht Coo deinen Bildschirm und bedient Maus und Tastatur. ',
+  riskDanger: 'Das kann sehr gefährlich sein',
+  riskAfter: '. Bitte bestätige, dass du Folgendes verstehst:',
+  risks: ['Bildschirmfotos (sie können Privates zeigen, etwa Chatverläufe) gehen an den Modelldienst, den du nutzt', 'Coo kann danebenklicken, sich vertippen oder im falschen Fenster landen. Sorge immer dafür, dass du es jederzeit beobachten und unterbrechen kannst.', 'Überlass Coo keine Zahlungen, Passwörter oder anderes, das sensible Daten, Handlungen in der echten Welt oder Unwiderrufliches betrifft.'],
+  riskNote: 'Coo hält von selbst an, sobald du Maus oder Tastatur benutzt. Du kannst die Funktion jederzeit ausschalten.',
+  riskOk: 'Einschalten',
 };

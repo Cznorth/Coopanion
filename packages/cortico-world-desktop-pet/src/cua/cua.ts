@@ -4,10 +4,11 @@
  * engine child process (`engine-child.ts`); a crash there fails the call in flight and the
  * next call starts a fresh engine.
  *
- * Screenshots are scaled to fit `screenshot.maxWidth`×`maxHeight`; tool coordinates are
- * pixels of that scaled image and are mapped back to physical pixels here. Input tools
- * first wait for the user to leave mouse and keyboard alone (`userIdleMs`), up to
- * `maxYieldWaitMs`, and fail without acting if the user keeps going.
+ * A screenshot shows one display, scaled to fit `screenshot.maxWidth`×`maxHeight`; tool coordinates
+ * are pixels of the latest screenshot and are mapped back to physical pixels of its display here.
+ * An input aimed at an arrangement of displays that has changed since that screenshot is refused
+ * by the engine. Input tools first wait for the user to leave mouse and keyboard alone
+ * (`userIdleMs`), up to `maxYieldWaitMs`, and fail without acting if the user keeps going.
  *
  * `permission` sets when the person is asked first (config.ts, PERMISSION_LEVELS): at most once
  * a turn, before the first call that reads the screen or before the first input, or once for
@@ -36,7 +37,7 @@ import { CUA_TOOL_DECLS } from './tools.ts';
 import { fit } from './engine/image.ts';
 import { parseKeys } from './engine/keys.ts';
 import { MODEL_TEXT, type ModelLanguage, type ModelText } from './model-text.ts';
-import type { Answer, Button, ChildToMain, EngineRequest, InputResult, MainToChild, ScreenInfo, ScreenshotResult, TypeResult, WindowEntry, Yield } from './engine-ipc.ts';
+import type { Answer, Button, ChildToMain, EngineRequest, InputResult, MainToChild, ScreenInfo, ScreenshotResult, Target, TypeResult, WindowEntry, Yield, ZoomResult } from './engine-ipc.ts';
 
 const ENGINE_FILE = fileURLToPath(new URL('./engine-child.ts', import.meta.url));
 /** The computer-use part of the environment prompt, for each model-text language; English falls back to Chinese while its file is missing. */
@@ -72,6 +73,17 @@ class Interrupted extends Error {}
 
 type Args = Record<string, unknown>;
 
+/** A screenshot's display, the arrangement it was taken in, and its size. */
+interface View extends Target {
+  width: number;
+  height: number;
+  /** Screenshot pixels per physical pixel of the display. */
+  scale: number;
+}
+
+/** The display part of an engine result. */
+const screenOf = (r: ScreenInfo): ScreenInfo => ({ displays: r.displays, layout: r.layout, cursor: r.cursor, foreground: r.foreground, foregroundDisplay: r.foregroundDisplay });
+
 /** `p`'s value, or null when `signal` aborts first. */
 function untilAborted<T>(p: Promise<T>, signal: AbortSignal | undefined): Promise<T | null> {
   if (!signal) return p;
@@ -96,7 +108,10 @@ export class Cua {
   private engine: ChildProcess | null = null;
   private seq = 0;
   private readonly pending = new Map<number, { done: (v: unknown) => void; fail: (e: Error) => void; timer: NodeJS.Timeout }>();
-  private screen: { width: number; height: number } | null = null;
+  /** The displays as the engine last reported them. */
+  private screen: ScreenInfo | null = null;
+  /** The latest screenshot; coordinates refer to it. */
+  private view: View | null = null;
   /** The exit code of an engine that exited with an error, until the next one starts. */
   private engineExit: number | null = null;
   /** This turn's answer, asked on first use; cleared when the turn ends. */
@@ -144,10 +159,10 @@ export class Cua {
     this.log = host.log.child('cua');
   }
 
-  /** Starts the engine and reads the screen size, once; the environment prompt and coordinates need it. */
+  /** Starts the engine and reads the displays, once; the environment prompt and coordinates need them. */
   ready(): Promise<void> {
     this.screenAsked ??= this.call<ScreenInfo>({ op: 'info' }).then(
-      (info) => { this.screen = info.screen; },
+      (info) => { this.screen = screenOf(info); },
       (err) => { this.screenAsked = null; this.log?.warn('电脑操作引擎没有给出屏幕尺寸', { error: String(err) }); },
     );
     return this.screenAsked;
@@ -198,7 +213,7 @@ export class Cua {
    * gets a cancel and the call still resolves with what the engine reports it did.
    */
   private async call<T>(req: EngineRequest, signal?: AbortSignal): Promise<T> {
-    if (req.op !== 'info' && req.op !== 'confirm') await this.permit(req.op === 'screenshot' || req.op === 'windows' ? 'see' : 'act', signal);
+    if (req.op !== 'info' && req.op !== 'confirm') await this.permit(req.op === 'screenshot' || req.op === 'zoom' || req.op === 'windows' ? 'see' : 'act', signal);
     if (signal?.aborted) throw new Interrupted(this.t.interruptedBeforeAct);
     if (!this.engine) { this.engine = this.spawn(); this.engineExit = null; }
     const id = ++this.seq;
@@ -249,29 +264,49 @@ export class Cua {
 
   /* ---------- coordinates ---------- */
 
-  private shotSize() {
-    const s = this.screen ?? { width: 1920, height: 1080 };
-    return fit(s.width, s.height, this.cfg.screenshot.maxWidth, this.cfg.screenshot.maxHeight);
+  /** The display a screenshot without `display` shows before the first one: the foreground window's, else the primary. */
+  private defaultDisplay(): number {
+    const s = this.screen;
+    return s?.foregroundDisplay ?? s?.displays.find((d) => d.primary)?.index ?? 1;
   }
 
-  /** Screenshot pixel → physical pixel, or a reason the point is off the screenshot. */
-  private toScreen(x: unknown, y: unknown): { x: number; y: number } | string {
-    const size = this.shotSize();
+  /** The latest screenshot, or what one of the default display would be before the first. */
+  private shotSize(): View {
+    if (this.view) return this.view;
+    const n = this.defaultDisplay();
+    const d = this.screen?.displays.find((x) => x.index === n) ?? { width: 1920, height: 1080 };
+    return { display: n, layout: this.screen?.layout ?? '', ...fit(d.width, d.height, this.cfg.screenshot.maxWidth, this.cfg.screenshot.maxHeight) };
+  }
+
+  /**
+   * Screenshot pixel → physical pixel of the screenshot's display, or a reason the point is off the
+   * screenshot. No screenshot is larger than `maxWidth`×`maxHeight`, so a point outside that is refused
+   * before the engine starts.
+   */
+  private async toScreen(x: unknown, y: unknown): Promise<{ at: Target; x: number; y: number } | string> {
     if (typeof x !== 'number' || typeof y !== 'number' || !Number.isFinite(x) || !Number.isFinite(y)) return this.t.notNumbers;
-    if (x < 0 || y < 0 || x >= size.width || y >= size.height) return this.t.offShot(x, y, size.width - 1, size.height - 1);
-    return { x: Math.round(x / size.scale), y: Math.round(y / size.scale) };
+    const bound = this.view ?? { width: this.cfg.screenshot.maxWidth, height: this.cfg.screenshot.maxHeight };
+    if (x < 0 || y < 0 || x >= bound.width || y >= bound.height) return this.t.offShot(x, y, bound.width - 1, bound.height - 1);
+    if (!this.view) await this.ready();
+    const v = this.shotSize();
+    if (x >= v.width || y >= v.height) return this.t.offShot(x, y, v.width - 1, v.height - 1);
+    return { at: { display: v.display, layout: v.layout }, x: Math.round(x / v.scale), y: Math.round(y / v.scale) };
   }
 
-  private toShot(p: { x: number; y: number }): string {
-    const s = this.shotSize().scale;
-    return `(${Math.round(p.x * s)}, ${Math.round(p.y * s)})`;
+  /** Where the pointer is, said against the latest screenshot. */
+  private cursorText(c: ScreenInfo['cursor']): string {
+    const t = this.t, v = this.shotSize();
+    if (!c) return t.cursorNowhere;
+    if (c.display !== v.display) return t.cursorOn(c.display);
+    return t.cursorAt(`(${Math.round(c.x * v.scale)}, ${Math.round(c.y * v.scale)})`);
   }
 
   /* ---------- tools ---------- */
 
   tools(): ToolDef[] {
     const handlers: Record<string, (args: Args, signal?: AbortSignal) => Promise<ToolOutcome>> = {
-      pet_cua_screenshot: (_, s) => this.screenshot('', s),
+      pet_cua_screenshot: (a, s) => this.screenshotTool(a, s),
+      pet_cua_zoom: (a, s) => this.zoom(a, s),
       pet_cua_click: (a, s) => this.click(a, s),
       pet_cua_move: (a, s) => this.move(a, s),
       pet_cua_drag: (a, s) => this.drag(a, s),
@@ -302,14 +337,59 @@ export class Cua {
     return { idleMs: this.cfg.userIdleMs, maxWaitMs: this.cfg.maxYieldWaitMs };
   }
 
-  /** `signal` reaches only the permission question; once the capture is requested it completes. */
-  async screenshot(lead: string, signal?: AbortSignal): Promise<ToolOutcome> {
-    const shot = await this.call<ScreenshotResult>({ op: 'screenshot', maxWidth: this.cfg.screenshot.maxWidth, maxHeight: this.cfg.screenshot.maxHeight, quality: this.cfg.screenshot.quality }, signal);
-    this.screen = shot.screen;
+  /** `pet_cua_screenshot`: the display asked for, checked against the displays known. */
+  private async screenshotTool(args: Args, signal?: AbortSignal): Promise<ToolOutcome> {
+    const n = args.display;
+    if (n !== undefined && n !== null) {
+      const total = this.screen?.displays.length;
+      if (typeof n !== 'number' || !Number.isInteger(n) || n < 1 || (total !== undefined && n > total)) {
+        return { text: this.t.notRun('pet_cua_screenshot', this.t.displayBad(n, total ?? 1)), failed: true };
+      }
+      return this.screenshot('', signal, n);
+    }
+    return this.screenshot('', signal);
+  }
+
+  /**
+   * A screenshot of display `display`, else the one looked at last, else the default. `signal`
+   * reaches only the permission question; once the capture is requested it completes.
+   */
+  async screenshot(lead: string, signal?: AbortSignal, display?: number): Promise<ToolOutcome> {
+    const { maxWidth, maxHeight, quality } = this.cfg.screenshot;
+    const shot = await this.call<ScreenshotResult>({ op: 'screenshot', display: display ?? this.view?.display ?? null, maxWidth, maxHeight, quality }, signal);
+    this.screen = screenOf(shot);
+    this.view = { display: shot.display, layout: shot.layout, width: shot.width, height: shot.height, scale: shot.scale };
     const seen = this.host?.modelFacts.accepts('image/jpeg') ?? true;
     const t = this.t;
-    const text = t.screenshot(lead, shot.width, shot.height, shot.screen.width, shot.screen.height, this.toShot(shot.cursor), shot.foreground, seen);
+    const here = shot.displays.find((d) => d.index === shot.display)!;
+    const others = shot.displays.filter((d) => d !== here);
+    const view = others.length
+      ? t.viewOf(here.index, shot.displays.length, here.width, here.height, here.primary, others.map((d) => t.displayBrief(d.index, d.width, d.height, d.primary)).join(t.listSep))
+      : t.viewOne(here.width, here.height);
+    const text = t.screenshot(lead, shot.width, shot.height, view, this.cursorText(shot.cursor), shot.foreground, seen);
     return { text, blobs: [{ bytes: shot.jpeg, mime: 'image/jpeg', name: 'screen.jpg', fallbackText: t.screenshotFallback(shot.width, shot.height) }] };
+  }
+
+  /** `pet_cua_zoom`: a region of the latest screenshot, captured again at full resolution. */
+  private async zoom(args: Args, signal?: AbortSignal): Promise<ToolOutcome> {
+    const t = this.t, v = this.view;
+    if (!v) return { text: t.notRun('pet_cua_zoom', t.zoomNoShot), failed: true };
+    const { x, y, width, height } = args;
+    const ok = [x, y, width, height].every((n) => typeof n === 'number' && Number.isFinite(n));
+    if (!ok || (x as number) < 0 || (y as number) < 0 || (x as number) >= v.width || (y as number) >= v.height || (width as number) < 1 || (height as number) < 1) {
+      return { text: t.notRun('pet_cua_zoom', t.zoomBad), failed: true };
+    }
+    const rx = Math.round(x as number), ry = Math.round(y as number);
+    const rw = Math.min(v.width - rx, Math.round(width as number)), rh = Math.min(v.height - ry, Math.round(height as number));
+    const { maxWidth, maxHeight, quality } = this.cfg.screenshot;
+    const res = await this.call<ZoomResult>({
+      op: 'zoom', at: { display: v.display, layout: v.layout },
+      x: rx / v.scale, y: ry / v.scale, width: rw / v.scale, height: rh / v.scale, maxWidth, maxHeight, quality,
+    }, signal);
+    return {
+      text: t.zoomed(res.width, res.height, rx, ry, rw, rh),
+      blobs: [{ bytes: res.jpeg, mime: 'image/jpeg', name: 'zoom.jpg', fallbackText: t.zoomFallback(res.width, res.height) }],
+    };
   }
 
   private refuseControl(tool: string): ToolOutcome | null {
@@ -317,24 +397,35 @@ export class Cua {
     return { text: this.t.notRun(tool, this.t.viewOnly), failed: true };
   }
 
-  /** Shared tail of every input tool: yield report, optional settle + screenshot; an abort skips the screenshot. */
-  private async after(tool: string, res: InputResult, signal: AbortSignal | undefined, done: string, args: Args): Promise<ToolOutcome> {
+  /**
+   * Shared tail of every input tool: the yield report, then after the settle either a screenshot or the
+   * pointer and foreground window as they stand by then, since a window or dialog an action opens takes
+   * a moment to come forward. The screenshot shows `display`, else the display the foreground window is on
+   * when the action brought another window forward or moved it to another display, else the one looked at
+   * last. An abort skips the settle.
+   */
+  private async after(tool: string, res: InputResult, signal: AbortSignal | undefined, done: string, args: Args, display?: number): Promise<ToolOutcome> {
     const t = this.t;
+    const before = { title: this.screen?.foreground ?? null, display: this.screen?.foregroundDisplay ?? null };
+    this.screen = screenOf(res);
     if (res.yielded) return { text: t.notRun(tool, t.yielded(Math.round(res.waitedMs / 1000))), failed: true };
     if (res.cancelled) return { text: t.notRun(tool, t.cancelledWaiting((res.waitedMs / 1000).toFixed(1))) };
     const line = `${done}${res.waitedMs >= 300 ? t.waitedFirst((res.waitedMs / 1000).toFixed(1)) : ''}`;
-    const plain = t.after(line, this.toShot(res.cursor), res.foreground);
+    const said = (s: ScreenInfo) => `${t.after(line, this.cursorText(s.cursor), s.foreground)}${s.foreground ? '' : t.noForeground}`;
     const want = typeof args.screenshot === 'boolean' ? args.screenshot : this.cfg.screenshot.afterAction;
-    if (!want) return { text: plain };
     await pause(this.cfg.screenshot.settleMs, signal);
-    if (signal?.aborted) return { text: `${plain}${t.noShotInterrupted}` };
-    return this.screenshot(`${line}\n`);
+    if (signal?.aborted) return { text: `${said(res)}${want ? t.noShotInterrupted : ''}` };
+    const now = await this.call<ScreenInfo>({ op: 'info' }).then(screenOf, () => screenOf(res));
+    this.screen = now;
+    if (!want) return { text: said(now) };
+    const moved = (now.foreground !== before.title || now.foregroundDisplay !== before.display) && now.foregroundDisplay !== null && now.foregroundDisplay !== this.shotSize().display;
+    return this.screenshot(`${line}\n`, undefined, display ?? (moved ? now.foregroundDisplay! : undefined));
   }
 
   private async click(args: Args, signal?: AbortSignal): Promise<ToolOutcome> {
     const refused = this.refuseControl('pet_cua_click');
     if (refused) return refused;
-    const p = this.toScreen(args.x, args.y);
+    const p = await this.toScreen(args.x, args.y);
     if (typeof p === 'string') return { text: this.t.notRun('pet_cua_click', p), failed: true };
     const button = (args.button === 'right' || args.button === 'middle' ? args.button : 'left') as Button;
     const count = args.clicks === 2 || args.clicks === 3 ? args.clicks : 1;
@@ -345,7 +436,7 @@ export class Cua {
   private async move(args: Args, signal?: AbortSignal): Promise<ToolOutcome> {
     const refused = this.refuseControl('pet_cua_move');
     if (refused) return refused;
-    const p = this.toScreen(args.x, args.y);
+    const p = await this.toScreen(args.x, args.y);
     if (typeof p === 'string') return { text: this.t.notRun('pet_cua_move', p), failed: true };
     const res = await this.call<InputResult>({ op: 'move', ...p, yield: this.yieldCfg }, signal);
     return this.after('pet_cua_move', res, signal, this.t.moved(args.x, args.y), args);
@@ -356,17 +447,17 @@ export class Cua {
     if (refused) return refused;
     const from = Array.isArray(args.from) ? args.from : [];
     const to = Array.isArray(args.to) ? args.to : [];
-    const a = this.toScreen(from[0], from[1]);
-    const b = this.toScreen(to[0], to[1]);
+    const a = await this.toScreen(from[0], from[1]);
+    const b = await this.toScreen(to[0], to[1]);
     if (typeof a === 'string' || typeof b === 'string') return { text: this.t.notRun('pet_cua_drag', typeof a === 'string' ? this.t.dragStart(a) : this.t.dragEnd(b as string)), failed: true };
-    const res = await this.call<InputResult>({ op: 'drag', x1: a.x, y1: a.y, x2: b.x, y2: b.y, yield: this.yieldCfg }, signal);
+    const res = await this.call<InputResult>({ op: 'drag', at: a.at, x1: a.x, y1: a.y, x2: b.x, y2: b.y, yield: this.yieldCfg }, signal);
     return this.after('pet_cua_drag', res, signal, this.t.dragged(from, to), args);
   }
 
   private async scroll(args: Args, signal?: AbortSignal): Promise<ToolOutcome> {
     const refused = this.refuseControl('pet_cua_scroll');
     if (refused) return refused;
-    const p = this.toScreen(args.x, args.y);
+    const p = await this.toScreen(args.x, args.y);
     if (typeof p === 'string') return { text: this.t.notRun('pet_cua_scroll', p), failed: true };
     const clampN = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(-30, Math.min(30, Math.round(v))) : 0);
     const down = clampN(args.down), right = clampN(args.right);
@@ -402,13 +493,13 @@ export class Cua {
 
   private async windows(signal?: AbortSignal): Promise<ToolOutcome> {
     const list = await this.listWindows(signal);
+    await this.ready();
     const t = this.t;
     const s = this.shotSize();
-    const screen = this.screen ?? { width: 0, height: 0 };
     const lines = list.map((w) => {
       const r = w.rect;
-      const off = r.x + r.width <= 0 || r.y + r.height <= 0 || r.x >= screen.width || r.y >= screen.height;
-      const where = w.minimized ? t.minimized : off ? t.offScreen : `(${Math.round(r.x * s.scale)}, ${Math.round(r.y * s.scale)}) ${Math.round(r.width * s.scale)}×${Math.round(r.height * s.scale)}`;
+      const where = w.minimized ? t.minimized : w.display === null ? t.offScreen : w.display !== s.display ? t.onDisplay(w.display)
+        : `(${Math.round(r.x * s.scale)}, ${Math.round(r.y * s.scale)}) ${Math.round(r.width * s.scale)}×${Math.round(r.height * s.scale)}`;
       return t.windowLine(w.handle, w.foreground, w.title, where);
     });
     return { text: t.windows(list.length, lines) };
@@ -423,8 +514,12 @@ export class Cua {
     const hit = list.find((w) => w.handle === key.toLowerCase()) ?? list.find((w) => w.title.includes(key)) ?? list.find((w) => w.title.toLowerCase().includes(key.toLowerCase()));
     if (!hit) return { text: this.t.notRun('pet_cua_focus', this.t.focusMissing(key)), failed: true };
     const res = await this.call<InputResult & { focused: boolean }>({ op: 'focus', handle: hit.handle, yield: this.yieldCfg }, signal);
-    const done = res.focused || res.foreground === hit.title ? this.t.focused(hit.title) : this.t.focusRefused(hit.title, res.foreground);
-    return this.after('pet_cua_focus', res, signal, done, args);
+    const ok = res.focused || res.foreground === hit.title;
+    // a window on another display is what the screenshot after focusing should show
+    const elsewhere = ok && hit.display !== null && hit.display !== this.shotSize().display ? hit.display : undefined;
+    const done = ok ? this.t.focused(hit.title) : this.t.focusRefused(hit.title, res.foreground);
+    const shows = typeof args.screenshot === 'boolean' ? args.screenshot : this.cfg.screenshot.afterAction;
+    return this.after('pet_cua_focus', res, signal, elsewhere !== undefined && !shows ? `${done}${this.t.focusedElsewhere(elsewhere)}` : done, args, elsewhere);
   }
 
   /** Waiting asks nobody; the screenshot after it is taken only when looking needs no new question. */
@@ -450,12 +545,13 @@ export class Cua {
   /** The computer-use part of the environment prompt, its template filled in. */
   async envPrompt(): Promise<string> {
     await this.ready();
-    const s = this.shotSize();
     const t = this.t;
+    const displays = this.screen?.displays ?? [];
     const vars = {
       'cua.os': process.platform === 'darwin' ? 'Mac' : process.platform === 'linux' ? 'Linux' : 'Windows',
       'cua.keys': process.platform === 'darwin' ? t.keysMac : t.keysOther,
-      'cua.shot': `${s.width}×${s.height}`,
+      'cua.shot': `${this.cfg.screenshot.maxWidth}×${this.cfg.screenshot.maxHeight}`,
+      'cua.displays': displays.length > 1 ? t.displays(displays.length, displays.map((d) => t.displayBrief(d.index, d.width, d.height, d.primary)).join(t.listSep)) : '',
       'cua.control': t.control(this.cfg.control),
       'cua.idle': String(Math.round(this.cfg.userIdleMs / 100) / 10),
       'cua.permission': t.permission(this.level, this.cfg.grantMinutes),
@@ -469,6 +565,11 @@ export class Cua {
     return existsSync(file) ? file : ENV_PROMPT_FILES.zh;
   }
 
+  /** The displays' sizes for the lamp. */
+  private displaysHint(c: CuaText['console']): string {
+    return (this.screen?.displays ?? []).map((d) => c.screen(d.width, d.height)).join(' · ') || c.screen(0, 0);
+  }
+
   /** The engine's lamp on the desktop-pet World page, in `language`. */
   lamp(language: Language = 'zh'): WorldLamp {
     const c = cuaText(language).console;
@@ -480,7 +581,7 @@ export class Cua {
     return {
       label: c.engine,
       state: this.engine ? 'online' : this.engineExit !== null ? 'error' : 'offline',
-      hint: this.engineExit !== null ? c.exited(this.engineExit) : `${this.engine ? c.screen(this.screen?.width ?? 0, this.screen?.height ?? 0) : c.onDemand} · ${how}`,
+      hint: this.engineExit !== null ? c.exited(this.engineExit) : `${this.engine ? this.displaysHint(c) : c.onDemand} · ${how}`,
     };
   }
 }

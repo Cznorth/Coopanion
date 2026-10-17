@@ -12,11 +12,11 @@ export default {
   'bubble.typeLabel': 'Написать сообщение',
   'bubble.expand': 'Продолжить на странице «Чат»',
 
-  // voice: what was heard, above the pet
-  'heard.done': 'Распознано',
+  // what the person said: a sentence being heard; how many images a chat-page message carries
   'heard.more': 'Слушаю…',
   'heard.listening': 'Слушаю…',
   'heard.cancel': 'Отмена',
+  'said.images': 'Изображения ×{count}',
 
   // the status bubble: added when the same kind of thing was done several times
   'status.more': ' и ещё {others}',

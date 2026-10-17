@@ -12,11 +12,11 @@ export default {
   'bubble.typeLabel': 'Écrire pour parler',
   'bubble.expand': 'Continuer sur la page Discussion',
 
-  // voice: what was heard, above the pet
-  'heard.done': 'Reconnu',
+  // what the person said: a sentence being heard; how many images a chat-page message carries
   'heard.more': "J'écoute…",
   'heard.listening': "J'écoute…",
   'heard.cancel': 'Annuler',
+  'said.images': 'Images ×{count}',
 
   // the status bubble
   'status.more': ' et {others} de plus',

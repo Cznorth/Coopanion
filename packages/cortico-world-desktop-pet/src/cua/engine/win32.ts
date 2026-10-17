@@ -3,12 +3,14 @@
  * transparent windows are included), SendInput for mouse and keyboard, the top-level window
  * list, focusing a window, and the last-input tick used to notice the user.
  *
- * All coordinates are physical pixels of the primary display. The process declares itself
- * per-monitor DPI aware (v2) before anything else, so no API here returns scaled values.
+ * Coordinates are physical pixels of the virtual screen: the primary display's top-left corner is
+ * (0, 0), displays left of or above it are negative. The process declares itself per-monitor DPI
+ * aware (v2) before anything else, so no API here returns scaled values.
  * This module runs only inside the engine child process.
  */
 import koffi from 'koffi';
 import { EngineFailure } from './fail.ts';
+import type { NativeDisplay } from './display.ts';
 
 const user32 = koffi.load('user32.dll');
 const gdi32 = koffi.load('gdi32.dll');
@@ -30,10 +32,14 @@ const MOUSEINPUT = koffi.struct('MOUSEINPUT', { dx: 'long', dy: 'long', mouseDat
 const KEYBDINPUT = koffi.struct('KEYBDINPUT', { wVk: 'uint16_t', wScan: 'uint16_t', dwFlags: 'uint32_t', time: 'uint32_t', dwExtraInfo: 'uintptr_t' });
 const HARDWAREINPUT = koffi.struct('HARDWAREINPUT', { uMsg: 'uint32_t', wParamL: 'uint16_t', wParamH: 'uint16_t' });
 const INPUT = koffi.struct('INPUT', { type: 'uint32_t', u: koffi.union({ mi: MOUSEINPUT, ki: KEYBDINPUT, hi: HARDWAREINPUT }) });
+const MONITORINFOEXW = koffi.struct('MONITORINFOEXW', { cbSize: 'uint32_t', rcMonitor: RECT, rcWork: RECT, dwFlags: 'uint32_t', szDevice: koffi.array('char16_t', 32, 'String') });
+const MonitorEnumProc = koffi.proto('bool __stdcall MonitorEnumProc(HANDLE monitor, HANDLE dc, void *rect, intptr_t data)');
 const EnumWindowsProc = koffi.proto('bool __stdcall EnumWindowsProc(HWND hwnd, intptr_t lParam)');
 
 const SetProcessDpiAwarenessContext = user32.func('bool __stdcall SetProcessDpiAwarenessContext(intptr_t value)');
-const GetSystemMetrics = user32.func('int __stdcall GetSystemMetrics(int index)');
+const EnumDisplayMonitors = user32.func('bool __stdcall EnumDisplayMonitors(HANDLE dc, void *clip, MonitorEnumProc *cb, intptr_t data)');
+const GetMonitorInfoW = user32.func('bool __stdcall GetMonitorInfoW(HANDLE monitor, _Inout_ MONITORINFOEXW *info)');
+const SetCursorPos = user32.func('bool __stdcall SetCursorPos(int x, int y)');
 const GetDC = user32.func('HANDLE __stdcall GetDC(HWND hwnd)');
 const ReleaseDC = user32.func('int __stdcall ReleaseDC(HWND hwnd, HANDLE dc)');
 const CreateCompatibleDC = gdi32.func('HANDLE __stdcall CreateCompatibleDC(HANDLE dc)');
@@ -65,7 +71,8 @@ const MessageBoxTimeoutW = user32.func('int __stdcall MessageBoxTimeoutW(HWND hw
 
 const SRCCOPY = 0x00CC0020, CAPTUREBLT = 0x40000000;
 const INPUT_MOUSE = 0, INPUT_KEYBOARD = 1;
-const MOUSEEVENTF = { MOVE: 0x1, LEFTDOWN: 0x2, LEFTUP: 0x4, RIGHTDOWN: 0x8, RIGHTUP: 0x10, MIDDLEDOWN: 0x20, MIDDLEUP: 0x40, WHEEL: 0x800, HWHEEL: 0x1000, VIRTUALDESK: 0x4000, ABSOLUTE: 0x8000 };
+const MOUSEEVENTF = { LEFTDOWN: 0x2, LEFTUP: 0x4, RIGHTDOWN: 0x8, RIGHTUP: 0x10, MIDDLEDOWN: 0x20, MIDDLEUP: 0x40, WHEEL: 0x800, HWHEEL: 0x1000 };
+const MONITORINFOF_PRIMARY = 1;
 const KEYEVENTF = { EXTENDEDKEY: 0x1, KEYUP: 0x2, UNICODE: 0x4 };
 const GWL_EXSTYLE = -20, WS_EX_TOOLWINDOW = 0x80;
 const DWMWA_EXTENDED_FRAME_BOUNDS = 9, DWMWA_CLOAKED = 14;
@@ -75,22 +82,31 @@ const IDYES = 6, MB_TIMEDOUT = 32000;
 
 SetProcessDpiAwarenessContext(-4);
 
-export interface Size { width: number; height: number }
 export interface Rect { x: number; y: number; width: number; height: number }
 
-export function screenSize(): Size {
-  return { width: GetSystemMetrics(0), height: GetSystemMetrics(1) };
+/** The active displays; the device name (\\.\DISPLAY1) identifies each. */
+export function displays(): NativeDisplay[] {
+  const out: NativeDisplay[] = [];
+  EnumDisplayMonitors(null, null, (monitor: unknown) => {
+    const info = { cbSize: koffi.sizeof(MONITORINFOEXW), rcMonitor: { left: 0, top: 0, right: 0, bottom: 0 }, rcWork: { left: 0, top: 0, right: 0, bottom: 0 }, dwFlags: 0, szDevice: '' };
+    if (!GetMonitorInfoW(monitor, info)) return true;
+    const r = info.rcMonitor;
+    out.push({ id: info.szDevice, primary: (info.dwFlags & MONITORINFOF_PRIMARY) !== 0, x: r.left, y: r.top, width: r.right - r.left, height: r.bottom - r.top, scale: 1 });
+    return true;
+  }, 0);
+  return out;
 }
 
-/** The primary screen as top-down BGRA. */
-export function capture(): { width: number; height: number; bgra: Buffer } {
-  const { width, height } = screenSize();
+/** Display `d` as top-down BGRA. */
+export function capture(d: NativeDisplay): { width: number; height: number; bgra: Uint8Array } {
+  const { width, height } = d;
+  // the screen DC spans the virtual screen in its own coordinates
   const screen = GetDC(null);
   const mem = CreateCompatibleDC(screen);
   const bmp = CreateCompatibleBitmap(screen, width, height);
   const old = SelectObject(mem, bmp);
   try {
-    if (!BitBlt(mem, 0, 0, width, height, screen, 0, 0, SRCCOPY | CAPTUREBLT)) throw new EngineFailure('winBitBlt');
+    if (!BitBlt(mem, 0, 0, width, height, screen, d.x, d.y, SRCCOPY | CAPTUREBLT)) throw new EngineFailure('winBitBlt');
     const bgra = Buffer.alloc(width * height * 4);
     const header = { biSize: koffi.sizeof(BITMAPINFOHEADER), biWidth: width, biHeight: -height, biPlanes: 1, biBitCount: 32, biCompression: 0, biSizeImage: 0, biXPelsPerMeter: 0, biYPelsPerMeter: 0, biClrUsed: 0, biClrImportant: 0 };
     // the full BITMAPINFO carries a color table after the header; 32 bpp BI_RGB uses none
@@ -129,12 +145,12 @@ function send(inputs: unknown[]): void {
 
 const mouse = (dwFlags: number, dx = 0, dy = 0, mouseData = 0) => ({ type: INPUT_MOUSE, u: { mi: { dx, dy, mouseData, dwFlags, time: 0, dwExtraInfo: 0 } } });
 
-/** Absolute move in physical pixels of the primary screen. */
+/**
+ * Moves the pointer to a point of the virtual screen. SetCursorPos takes it exactly, where SendInput's
+ * absolute moves are scaled to 0–65535 across the virtual screen and land off by a pixel at the edges between displays.
+ */
 export function moveTo(x: number, y: number): void {
-  const { width, height } = screenSize();
-  const nx = Math.round((x * 65535) / Math.max(1, width - 1));
-  const ny = Math.round((y * 65535) / Math.max(1, height - 1));
-  send([mouse(MOUSEEVENTF.MOVE | MOUSEEVENTF.ABSOLUTE, nx, ny)]);
+  if (!SetCursorPos(Math.round(x), Math.round(y))) throw new EngineFailure('winSetCursorPos', [Math.round(x), Math.round(y)]);
 }
 
 export type Button = 'left' | 'right' | 'middle';

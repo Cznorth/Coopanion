@@ -15,11 +15,11 @@ export default {
   /** 打字气泡里把草稿带到设置窗口「对话」页的按钮 */
   'bubble.expand': '在对话页继续编辑',
 
-  // 语音:头顶显示听到的话
-  'heard.done': '已识别',
+  // 你说的话:语音识别中的样子;对话页发来的消息附的图片数
   'heard.more': '正在倾听…',
   'heard.listening': '正在倾听…',
   'heard.cancel': '取消',
+  'said.images': '图片 ×{count}',
 
   // 状态气泡:同一类事做了好几次时接在后面
   'status.more': ' 和另外 {others} 个',

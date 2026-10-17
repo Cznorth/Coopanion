@@ -16,11 +16,11 @@ export default {
   /** The typing bubble's button that carries the draft to the Chat page in the settings window. */
   'bubble.expand': 'Continue on the Chat page',
 
-  // voice: what was heard, above the pet
-  'heard.done': 'Recognized',
+  // what the person said: a sentence being heard; how many images a chat-page message carries
   'heard.more': 'Listening…',
   'heard.listening': 'Listening…',
   'heard.cancel': 'Cancel',
+  'said.images': 'Images ×{count}',
 
   // the status bubble: added when the same kind of thing was done several times
   'status.more': ' and {others} more',

@@ -19,10 +19,11 @@ const ptBR: Translation<CoreText> = {
   },
 
   update: {
-    downloading: (v: string) => `A versão ${v} saiu e está sendo baixada em segundo plano; eu aviso quando estiver pronta. Se o download travar, você mesmo pode baixá-la no GitHub.`,
+    downloading: (v: string) => `A versão ${v} saiu e está sendo baixada em segundo plano; eu aviso quando estiver pronta.`,
     ready: (v: string) => `A versão ${v} foi baixada. Reiniciar para atualizar agora? Se não, ela é instalada na próxima vez que você fechar o app.`,
     failed: (v: string, why: string) => `A versão ${v} não foi baixada: ${why}. Você mesmo pode baixá-la no GitHub.`,
     ok: 'OK', github: 'Baixar do GitHub', install: 'Reiniciar e atualizar', later: 'Depois', gotIt: 'Entendi',
+    trouble: 'Algum problema?', githubByHand: 'Baixar manualmente do GitHub',
   },
 
   quit: 'Sair do app',

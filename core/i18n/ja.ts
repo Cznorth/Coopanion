@@ -19,10 +19,11 @@ const ja: Translation<CoreText> = {
   },
 
   update: {
-    downloading: (v: string) => `バージョン ${v} が出ました。バックグラウンドでダウンロードしていて、準備ができたらお知らせします。ダウンロードが止まったときは、GitHub から自分でダウンロードすることもできます。`,
+    downloading: (v: string) => `バージョン ${v} が出ました。バックグラウンドでダウンロードしていて、準備ができたらお知らせします。`,
     ready: (v: string) => `バージョン ${v} のダウンロードが終わりました。今すぐ再起動して更新しますか？あとにする場合は、次にアプリを終了するときにインストールされます。`,
     failed: (v: string, why: string) => `バージョン ${v} をダウンロードできませんでした：${why}。GitHub から自分でダウンロードできます。`,
     ok: 'OK', github: 'GitHub からダウンロード', install: '再起動して更新', later: 'あとで', gotIt: 'OK',
+    trouble: 'うまくいかない？', githubByHand: 'GitHub から手動でダウンロード',
   },
 
   quit: 'アプリを終了',

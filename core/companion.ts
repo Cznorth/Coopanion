@@ -278,7 +278,7 @@ function sayUpdates(config: CoreConfig, pet: () => DesktopPetWorld | null, guidi
     const step = pending;
     pending = null;
     const s = S();
-    const [text, options] = step.phase === 'downloading' ? [s.downloading(step.version), [{ label: s.ok, primary: true }, { label: s.github }]]
+    const [text, options] = step.phase === 'downloading' ? [s.downloading(step.version), [{ label: s.ok, primary: true }, { label: s.trouble, hover: s.githubByHand }]]
       : step.phase === 'ready' ? [s.ready(step.version), [{ label: s.install, primary: true }, { label: s.later }]]
         : [s.failed(step.version, step.reason ?? '?'), [{ label: s.github, primary: true }, { label: s.gotIt }]];
     void p.dialog({ text, actions: [step.phase === 'failed' ? 'sad' : 'happy'], closable: true, input: { kind: 'buttons', options } }).answer.then((a) => {

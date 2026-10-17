@@ -19,10 +19,11 @@ const de: Translation<CoreText> = {
   },
 
   update: {
-    downloading: (v: string) => `Version ${v} ist da und wird im Hintergrund heruntergeladen; ich sag dir Bescheid, wenn sie bereit ist. Wenn der Download hängt, kannst du sie selbst von GitHub holen.`,
+    downloading: (v: string) => `Version ${v} ist da und wird im Hintergrund heruntergeladen; ich sag dir Bescheid, wenn sie bereit ist.`,
     ready: (v: string) => `Version ${v} ist heruntergeladen. Jetzt neu starten und aktualisieren? Sonst wird sie installiert, wenn du die App das nächste Mal beendest.`,
     failed: (v: string, why: string) => `Version ${v} wurde nicht heruntergeladen: ${why}. Du kannst sie selbst von GitHub holen.`,
     ok: 'OK', github: 'Von GitHub herunterladen', install: 'Neu starten und aktualisieren', later: 'Später', gotIt: 'OK',
+    trouble: 'Probleme?', githubByHand: 'Manuell von GitHub herunterladen',
   },
 
   quit: 'App beenden',

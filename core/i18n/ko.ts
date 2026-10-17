@@ -19,10 +19,11 @@ const ko: Translation<CoreText> = {
   },
 
   update: {
-    downloading: (v: string) => `${v} 버전이 나와서 백그라운드에서 다운로드하고 있습니다. 준비되면 알려 드리겠습니다. 다운로드가 멈추면 GitHub에서 직접 받을 수 있습니다.`,
+    downloading: (v: string) => `${v} 버전이 나와서 백그라운드에서 다운로드하고 있습니다. 준비되면 알려 드리겠습니다.`,
     ready: (v: string) => `${v} 버전을 다운로드했습니다. 지금 다시 시작해서 업데이트하시겠습니까? 아니면 다음에 앱을 종료할 때 설치됩니다.`,
     failed: (v: string, why: string) => `${v} 버전을 다운로드하지 못했습니다: ${why}. GitHub에서 직접 받을 수 있습니다.`,
     ok: '확인', github: 'GitHub에서 다운로드', install: '다시 시작하고 업데이트', later: '나중에', gotIt: '확인',
+    trouble: '문제가 있나요?', githubByHand: 'GitHub에서 직접 다운로드',
   },
 
   quit: '앱 종료',

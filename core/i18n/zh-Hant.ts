@@ -19,10 +19,11 @@ const zhHant: Translation<CoreText> = {
   },
 
   update: {
-    downloading: (v: string) => `發現新版本 ${v}，正在背景下載，下載好了我再告訴你。下載卡住的話，也可以到 GitHub 手動下載安裝。`,
+    downloading: (v: string) => `發現新版本 ${v}，正在背景下載，下載好了我再告訴你。`,
     ready: (v: string) => `新版本 ${v} 下載好了。現在重新啟動更新嗎？不急的話，下次結束應用程式時會自動安裝。`,
     failed: (v: string, why: string) => `新版本 ${v} 沒能下載下來：${why}。可以到 GitHub 手動下載安裝。`,
     ok: '好', github: '前往 GitHub 下載', install: '現在重新啟動更新', later: '下次再說', gotIt: '知道了',
+    trouble: '遇到問題？', githubByHand: '前往 GitHub 手動下載',
   },
 
   quit: '結束應用程式',

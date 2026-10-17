@@ -24,10 +24,11 @@ export default {
 
   /** 自动更新的几步,在桌宠气泡里说 */
   update: {
-    downloading: (v: string) => `发现新版本 ${v}，正在后台下载，下好了我再告诉你。下载卡住的话，也可以去 GitHub 手动下载安装。`,
+    downloading: (v: string) => `发现新版本 ${v}，正在后台下载，下好了我再告诉你。`,
     ready: (v: string) => `新版本 ${v} 下载好了。现在重启更新吗？不急的话，下次退出应用时会自动装上。`,
     failed: (v: string, why: string) => `新版本 ${v} 没能下载下来：${why}。可以去 GitHub 手动下载安装。`,
     ok: '好', github: '前往 GitHub 下载', install: '现在重启更新', later: '下次再说', gotIt: '知道了',
+    trouble: '遇到问题？', githubByHand: '前往 GitHub 手动下载',
   },
 
   /** 桌宠菜单头上的电源键 */

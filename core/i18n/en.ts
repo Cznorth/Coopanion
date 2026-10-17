@@ -26,10 +26,11 @@ const en: CoreText = {
 
   /** The steps of an automatic update, said in the pet's bubble. */
   update: {
-    downloading: (v: string) => `Version ${v} is out and downloading in the background; I'll tell you when it's ready. If the download stalls, you can get it from GitHub yourself.`,
+    downloading: (v: string) => `Version ${v} is out and downloading in the background; I'll tell you when it's ready.`,
     ready: (v: string) => `Version ${v} is downloaded. Restart to update now? Otherwise it installs the next time you quit the app.`,
     failed: (v: string, why: string) => `Version ${v} did not download: ${why}. You can get it from GitHub yourself.`,
     ok: 'OK', github: 'Download from GitHub', install: 'Restart and update', later: 'Later', gotIt: 'OK',
+    trouble: 'Having trouble?', githubByHand: 'Download from GitHub by hand',
   },
 
   /** The power button in the pet menu's header. */

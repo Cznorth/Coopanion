@@ -19,10 +19,11 @@ const it: Translation<CoreText> = {
   },
 
   update: {
-    downloading: (v: string) => `È uscita la versione ${v} e si sta scaricando in background; ti avviso quando è pronta. Se il download si blocca, puoi scaricarla tu da GitHub.`,
+    downloading: (v: string) => `È uscita la versione ${v} e si sta scaricando in background; ti avviso quando è pronta.`,
     ready: (v: string) => `La versione ${v} è scaricata. Riavviare per aggiornare ora? Altrimenti si installa la prossima volta che chiudi l'app.`,
     failed: (v: string, why: string) => `La versione ${v} non si è scaricata: ${why}. Puoi scaricarla tu da GitHub.`,
     ok: 'OK', github: 'Scarica da GitHub', install: 'Riavvia e aggiorna', later: 'Più tardi', gotIt: 'OK',
+    trouble: 'Qualche problema?', githubByHand: 'Scarica a mano da GitHub',
   },
 
   quit: "Esci dall'app",

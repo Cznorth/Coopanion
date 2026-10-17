@@ -398,12 +398,15 @@ export class Cua {
   }
 
   /**
-   * Shared tail of every input tool: the yield report, then after the settle either a screenshot (of
-   * `display`, else the one looked at last) or the pointer and foreground window as they stand by then,
-   * since a window or dialog an action opens takes a moment to come forward. An abort skips the settle.
+   * Shared tail of every input tool: the yield report, then after the settle either a screenshot or the
+   * pointer and foreground window as they stand by then, since a window or dialog an action opens takes
+   * a moment to come forward. The screenshot shows `display`, else the display the foreground window is on
+   * when the action brought another window forward or moved it to another display, else the one looked at
+   * last. An abort skips the settle.
    */
   private async after(tool: string, res: InputResult, signal: AbortSignal | undefined, done: string, args: Args, display?: number): Promise<ToolOutcome> {
     const t = this.t;
+    const before = { title: this.screen?.foreground ?? null, display: this.screen?.foregroundDisplay ?? null };
     this.screen = screenOf(res);
     if (res.yielded) return { text: t.notRun(tool, t.yielded(Math.round(res.waitedMs / 1000))), failed: true };
     if (res.cancelled) return { text: t.notRun(tool, t.cancelledWaiting((res.waitedMs / 1000).toFixed(1))) };
@@ -412,10 +415,11 @@ export class Cua {
     const want = typeof args.screenshot === 'boolean' ? args.screenshot : this.cfg.screenshot.afterAction;
     await pause(this.cfg.screenshot.settleMs, signal);
     if (signal?.aborted) return { text: `${said(res)}${want ? t.noShotInterrupted : ''}` };
-    if (want) return this.screenshot(`${line}\n`, undefined, display);
-    const now = await this.call<ScreenInfo>({ op: 'info' }).then(screenOf, () => res);
+    const now = await this.call<ScreenInfo>({ op: 'info' }).then(screenOf, () => screenOf(res));
     this.screen = now;
-    return { text: said(now) };
+    if (!want) return { text: said(now) };
+    const moved = (now.foreground !== before.title || now.foregroundDisplay !== before.display) && now.foregroundDisplay !== null && now.foregroundDisplay !== this.shotSize().display;
+    return this.screenshot(`${line}\n`, undefined, display ?? (moved ? now.foregroundDisplay! : undefined));
   }
 
   private async click(args: Args, signal?: AbortSignal): Promise<ToolOutcome> {

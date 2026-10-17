@@ -357,4 +357,36 @@ describe('displays', () => {
     expect(sent.find((r) => r.op === 'click')).toMatchObject({ at: { display: 2, layout: 'two' }, x: 1920, y: 1080 });
     expect((await call('pet_cua_screenshot', { display: 3 })).text).toContain('没有显示器 3');
   });
+
+  it('after an input brings a window forward on another display, the screenshot shows that display', async () => {
+    const cfg = { ...structuredClone(CUA_DEFAULTS), permission: 'never-ask' as const };
+    cfg.screenshot.settleMs = 0;
+    const w = new Cua({ cfg: () => cfg });
+    const two = { displays: [{ index: 1, primary: true, width: 2560, height: 1600 }, { index: 2, primary: false, width: 2560, height: 1440 }], layout: 'two', cursor: null };
+    // the Run box comes up on display 1 once the key has been pressed
+    let pressed = false;
+    const fg = () => (pressed ? { foreground: 'Run', foregroundDisplay: 1 } : { foreground: 'Browser', foregroundDisplay: 2 });
+    const shots: unknown[] = [];
+    const inner = w as unknown as { spawn: () => unknown; pending: Map<number, { done: (v: unknown) => void; timer: NodeJS.Timeout }> };
+    inner.spawn = () => ({
+      exitCode: null,
+      send({ id, req }: { id: number; req: Record<string, unknown> }) {
+        if (req.op === 'key') pressed = true;
+        if (req.op === 'screenshot') shots.push(req.display);
+        const display = req.op === 'screenshot' ? (req.display ?? fg().foregroundDisplay) : undefined;
+        const value = req.op === 'screenshot' ? { ...two, ...fg(), display, jpeg: new Uint8Array(1), width: 1280, height: 720, scale: 0.5 }
+          : { ...two, ...fg(), yielded: false, cancelled: false, waitedMs: 0 };
+        const p = inner.pending.get(id)!;
+        inner.pending.delete(id);
+        clearTimeout(p.timer);
+        p.done(value);
+      },
+    });
+    const call = (name: string, args: Record<string, unknown>) =>
+      w.tools().find((t) => t.name === name)!.handler(args, { role: 'main', log: new FakeHost().log }) as Promise<{ text: string }>;
+    await call('pet_cua_screenshot', { display: 2 });
+    const out = await call('pet_cua_key', { keys: 'win+r' });
+    expect(shots).toEqual([2, 1]);
+    expect(out.text).toContain('显示器 1/2');
+  });
 });

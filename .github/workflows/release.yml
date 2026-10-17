@@ -1,7 +1,8 @@
 name: release
 
-# Pushing a tag v<version> builds the Windows installer, the macOS downloads (Apple silicon and
+# Pushing a tag v<version> builds the Windows installer and portable zip, the macOS downloads (Apple silicon and
 # Intel, both built on the Apple silicon runner) and the Linux AppImage and deb, and attaches them to that tag's release.
+# The portable zip is updated by hand, so it stays out of latest.yml.
 # Once the repository has the Steam variable and secrets (docs/STEAM.md), the same tag also builds the Steam
 # version for Windows and uploads it to the Steam branch `staging`; it goes to everyone when set live in Steamworks.
 on:
@@ -20,6 +21,10 @@ jobs:
           - os: windows-latest
             arch: x64
             files: dist/Coopanion-Setup-*.exe dist/Coopanion-Setup-*.exe.blockmap dist/latest.yml
+          - os: windows-latest
+            arch: x64
+            channel: portable
+            files: dist/Coopanion-*-win-x64-portable.zip
           - os: macos-latest
             arch: arm64
             files: dist/Coopanion-*-mac-arm64.dmg dist/Coopanion-*-mac-arm64.zip
@@ -43,6 +48,7 @@ jobs:
       - run: pnpm run build:installer
         env:
           PACK_ARCH: ${{ matrix.arch }}
+          COOPANION_CHANNEL: ${{ matrix.channel }}
           # no Developer ID: the macOS build is signed ad hoc (electron-builder.yml)
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       - name: Collect installers
@@ -52,7 +58,7 @@ jobs:
           cp ${{ matrix.files }} release-artifacts/
       - uses: actions/upload-artifact@v4
         with:
-          name: installers-${{ matrix.os }}-${{ matrix.arch }}
+          name: installers-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.channel || 'github' }}
           path: release-artifacts/*
           if-no-files-found: error
 
@@ -73,7 +79,7 @@ jobs:
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
           cd release-artifacts
-          files=("Coopanion-Setup-${version}.exe" "Coopanion-${version}-mac-arm64.dmg" "Coopanion-${version}-mac-arm64.zip" "Coopanion-${version}-mac-x64.dmg" "Coopanion-${version}-mac-x64.zip" "Coopanion-${version}-linux-x64.AppImage" "Coopanion-${version}-linux-x64.deb")
+          files=("Coopanion-Setup-${version}.exe" "Coopanion-${version}-win-x64-portable.zip" "Coopanion-${version}-mac-arm64.dmg" "Coopanion-${version}-mac-arm64.zip" "Coopanion-${version}-mac-x64.dmg" "Coopanion-${version}-mac-x64.zip" "Coopanion-${version}-linux-x64.AppImage" "Coopanion-${version}-linux-x64.deb")
           for file in "${files[@]}" latest.yml latest-linux.yml; do test -s "$file"; done
           sha256sum "${files[@]}" > SHA256SUMS.txt
           cd ..

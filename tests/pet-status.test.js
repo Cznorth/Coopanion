@@ -32,7 +32,7 @@ function page() {
     // the tab's stage (stage.js) is decoration the activity bubble does not depend on
     lightWall() {}, dressFloor() {}, modeButton: () => ({ show() {} }), glowColor: () => null, setGlow() {}, bindAppearance() {}, announcePainted() {},
   };
-  win.eval(`const { applyTheme, clamp, f, ICONS, COO_CSS, mini, normalizeSkin, skinCss, createSfx, loadBody, t, language, useLanguage, lightWall, dressFloor, modeButton, glowColor, setGlow, bindAppearance, announcePainted } = window.deps;\n${source}\nbody = window.deps.body; window.page = { onOrder, openInput, closeBubble, step: (dt) => { T += dt; stepDialog(dt); stepListen(); stepStatus(); layout(); }, interactive: () => bubble.matches(UI_SELECTOR) };`);
+  win.eval(`const { applyTheme, clamp, f, ICONS, COO_CSS, mini, normalizeSkin, skinCss, createSfx, loadBody, t, language, useLanguage, lightWall, dressFloor, modeButton, glowColor, setGlow, bindAppearance, announcePainted } = window.deps;\n${source}\nbody = window.deps.body; window.page = { onOrder, openInput, closeBubble, step: (dt) => { T += dt; stepDialog(dt); stepLines(); stepStatus(); layout(dt); }, interactive: () => bubble.matches(UI_SELECTOR), lines: () => lines, overUi: (el) => el.matches(UI_SELECTOR), REPLIED_FADE, UNANSWERED_FADE, MAX_LINES };`);
   return { ...win.page, bubble: win.document.querySelector('#bubble'), bodyChanges, doc: win.document };
 }
 const read = { kind: 'read', text: '在看', detail: '日记.md' };
@@ -131,5 +131,51 @@ describe('activity in the shared speech bubble', () => {
     expect(p.bubble.hidden || !p.bubble.classList.contains('status')).toBe(true);
     p.onOrder({ t: 'prefs', status: think, statusBubble: false }); p.step(.01);
     if (kind !== 'listen') expect(p.bubble.hidden).toBe(false);
+  });
+});
+
+describe("the person's lines beside Coo", () => {
+  const up = (p) => p.lines().filter((l) => l.fadeAt === null);
+  const said = (p, text, cursor) => p.onOrder({ t: 'said', via: 'chat', text, images: 0, cursor });
+
+  it("a line stays while Coo works on it and while its reply is up, and fades REPLIED_FADE seconds after the reply closes", () => {
+    const p = page();
+    p.onOrder({ t: 'listen', phase: 'start' });
+    p.onOrder({ t: 'listen', phase: 'heard', text: '今天天气怎么样' });
+    show(p, think);
+    // thinking for longer than an unanswered line lasts
+    p.step(p.UNANSWERED_FADE + 1);
+    expect(up(p)).toHaveLength(1);
+    p.onOrder({ t: 'say', id: 's', beats: [{ text: '晴天', actions: [], anchors: [] }] });
+    show(p, null);
+    p.step(.01);
+    expect(p.bubble.classList.contains('say')).toBe(true);
+    for (let i = 0; i < 200 && !p.bubble.hidden; i++) { p.step(.05); expect(up(p)).toHaveLength(1); }
+    expect(p.bubble.hidden).toBe(true);
+    p.step(p.REPLIED_FADE - .1);
+    expect(up(p)).toHaveLength(1);
+    p.step(.2);
+    expect(up(p)).toHaveLength(0);
+  });
+
+  it('holds MAX_LINES lines at most: past it the oldest fades even while Coo works on it, and the newest stays', () => {
+    const p = page();
+    show(p, think);
+    for (let i = 1; i <= p.MAX_LINES + 1; i++) { said(p, `第 ${i} 句`, i); p.step(.01); }
+    expect(up(p).map((l) => l.cursor)).toEqual(Array.from({ length: p.MAX_LINES }, (_, i) => i + 2));
+  });
+
+  it('a click closes a settled line, which then lets the pointer through; a line being heard closes only by its cancel button', () => {
+    const p = page();
+    said(p, '在吗', 1);
+    p.onOrder({ t: 'listen', phase: 'start' });
+    p.step(.01);
+    const [sent, heard] = p.lines();
+    heard.el.click();
+    expect(heard.fadeAt).toBeNull();
+    expect(p.overUi(sent.el)).toBe(true);
+    sent.el.click();
+    expect(sent.fadeAt).not.toBeNull();
+    expect(p.overUi(sent.el)).toBe(false);
   });
 });

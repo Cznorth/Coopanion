@@ -152,6 +152,18 @@ body.desk .floor{display:none}
 .bubble::after{background:var(--surface); clip-path:path('M3.04 0 L10.53 7.49 Q11 7.96 11.47 7.49 L18.96 0 Z')}
 .bubble.heard{border-style:dashed; box-shadow:none; max-width:min(260px, calc(100vw - 20px))}
 .bubble.heard::before, .bubble.heard::after{display:none}
+/* what the person said, beside Coo (pet-app.js lines): a settled one closes on a click, lit in the eye color on hover as the
+   hover buttons are; older ones step back; a fading one lets the pointer through. Its text shows six rows at most. */
+.bubble.said{transition:opacity .4s ease, border-color .15s}
+.bubble.said.settled{cursor:pointer}
+.bubble.said.settled:hover{border-color:var(--skin-eye); opacity:1}
+.bubble.said.older{opacity:.62}
+.bubble.said.fading{opacity:0; pointer-events:none}
+.bubble.said.settled .b-text{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:6; line-clamp:6; overflow:hidden}
+/* the way a line came, before its text: the voice button's microphone, the chat page's arrows */
+.said-mark{display:inline-flex; vertical-align:-2px; margin-right:5px; color:color-mix(in srgb, var(--skin-eye) 78%, var(--skin-ink))}
+.said-mark svg{width:15px; height:15px}
+.b-hint .said-mark{vertical-align:-3px; margin-right:4px}
 .bubble.ask{min-width:min(236px, calc(100vw - 20px)); padding-right:32px}
 .bubble.pop{animation:bubble-in .26s cubic-bezier(.3,1.5,.5,1)}
 @keyframes bubble-in{from{transform:scale(.5); opacity:0}}
@@ -396,6 +408,6 @@ body.desk .floor{display:none}
 @keyframes hold-ring{from{transform:scale(.72); opacity:0} to{transform:scale(1); opacity:1}}
 .tool.sent{animation:tool-sent .36s cubic-bezier(.3,1.5,.5,1)}
 @keyframes tool-sent{45%{transform:scale(1.2)}}
-@media (prefers-reduced-motion: reduce){.wall-glow, .wall-lens{transition:none}}
+@media (prefers-reduced-motion: reduce){.wall-glow, .wall-lens, .bubble.said{transition:none}}
 @media (prefers-reduced-motion: reduce){.bubble.status.pop, .status .status-icon svg, .status .status-icon svg *, .bubble.pop, .b-opt, .b-own, .d-body > *, .d-card, .d-key, .d-key.taps, .d-bar.wait i, .d-card.on .d-cardic, .d-field.shake, .d-pill.chosen, .trail i, .caret, .menu, .tools, .tool.holding::after, .tool.sent, .m-tile, .m-tile::before, .m-tile::after, .m-tile .ic, .m-tile .ic::before{animation:none}}
 @media (prefers-reduced-motion: reduce){.d-cards .d-card.on .d-cardic[class*="ic-persona_"], .d-cards .d-card.on .d-cardic .spout{animation:none}}

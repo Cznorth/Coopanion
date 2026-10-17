@@ -562,6 +562,21 @@ describe('chat page', () => {
       .toEqual(['帮我看看这个报错', [{ text: '看到了', mood: { id: 'happy', zh: '开心' } }]]);
   });
 
+  it('the pet page gets what was sent from the chat page, to show beside Coo, and closes it when it is withdrawn', async () => {
+    const { world } = await mounted();
+    const page = await FakePage.open(origin(world));
+    cleanup.push(() => page.close());
+    const chat = chatSocket(world);
+
+    chat.send({ t: 'send', id: 1, text: '这张截图里的报错是什么意思', images: [{ mime: 'image/png', base64: Buffer.from('png').toString('base64') }] });
+    await expect.poll(() => chat.last('sent')).toMatchObject({ id: 1 });
+    const cursor = chat.last('sent')!.cursor as number;
+    expect(await page.next((m) => m.t === 'said')).toEqual({ t: 'said', via: 'chat', text: '这张截图里的报错是什么意思', images: 1, cursor });
+
+    chat.send({ t: 'withdraw', cursor });
+    expect(await page.next((m) => m.t === 'said-withdrawn')).toEqual({ t: 'said-withdrawn', cursor });
+  });
+
   it('pet_say images show on the chat page as they were when shown, live and in history', async () => {
     const { world, host } = await mounted();
     const page = await FakePage.open(origin(world));

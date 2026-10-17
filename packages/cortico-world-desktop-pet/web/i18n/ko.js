@@ -12,11 +12,11 @@ export default {
   'bubble.typeLabel': '입력해서 말하기',
   'bubble.expand': '대화 페이지에서 계속 쓰기',
 
-  // voice: what was heard, above the pet
-  'heard.done': '인식됨',
+  // what the person said: a sentence being heard; how many images a chat-page message carries
   'heard.more': '듣는 중…',
   'heard.listening': '듣는 중…',
   'heard.cancel': '취소',
+  'said.images': '이미지 ×{count}',
 
   // the status bubble: added when the same kind of thing was done several times
   'status.more': ' 외 {others}개',

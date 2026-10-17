@@ -738,6 +738,8 @@ export class DesktopPetWorld implements World {
         const e = await this.push('desktop-pet.message', 'desktop-pet.chat', this.t.typed(this.userName, text), 'preempt',
           { meta: { via: 'chat', text }, ...(images.blobs.length ? { blobs: images.blobs } : {}) });
         this.chat.send(socket, e ? { t: 'sent', id, cursor: e.cursor } : { t: 'rejected', id, reason: s.notSent });
+        // the pet shows it beside Coo, as it shows what is typed or said there
+        if (e) this.server.sendPet({ t: 'said', via: 'chat', text, images: images.blobs.length, cursor: e.cursor });
         return;
       }
       case 'now': {
@@ -755,6 +757,7 @@ export class DesktopPetWorld implements World {
         this.pendingChat.delete(cursor);
         void this.record({ kind: 'withdrawn', cursor }, `撤回了 #${cursor}`);
         this.chat.broadcast({ t: 'withdrawn', cursor });
+        this.server.sendPet({ t: 'said-withdrawn', cursor });
         return;
       }
       case 'answer': return this.onAnswer(msg, 'chat');

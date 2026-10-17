@@ -12,11 +12,11 @@ export default {
   'bubble.typeLabel': '打字說話',
   'bubble.expand': '在對話頁繼續編輯',
 
-  // voice: what was heard, above the pet
-  'heard.done': '已辨識',
+  // what the person said: a sentence being heard; how many images a chat-page message carries
   'heard.more': '正在傾聽…',
   'heard.listening': '正在傾聽…',
   'heard.cancel': '取消',
+  'said.images': '圖片 ×{count}',
 
   // the status bubble
   'status.more': ' 和另外 {others} 個',

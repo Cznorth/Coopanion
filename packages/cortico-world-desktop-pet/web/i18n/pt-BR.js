@@ -12,11 +12,11 @@ export default {
   'bubble.typeLabel': 'Digite para falar',
   'bubble.expand': 'Continuar na página Chat',
 
-  // voice: what was heard, above the pet
-  'heard.done': 'Reconhecido',
+  // what the person said: a sentence being heard; how many images a chat-page message carries
   'heard.more': 'Ouvindo…',
   'heard.listening': 'Ouvindo…',
   'heard.cancel': 'Cancelar',
+  'said.images': 'Imagens ×{count}',
 
   // the status bubble: added when the same kind of thing was done several times
   'status.more': ' e mais {others}',

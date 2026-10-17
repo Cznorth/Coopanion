@@ -12,11 +12,11 @@ export default {
   'bubble.typeLabel': '入力して話す',
   'bubble.expand': 'チャットページで続ける',
 
-  // voice: what was heard, above the pet
-  'heard.done': '認識しました',
+  // what the person said: a sentence being heard; how many images a chat-page message carries
   'heard.more': '聞き取り中…',
   'heard.listening': '聞き取り中…',
   'heard.cancel': 'キャンセル',
+  'said.images': '画像 ×{count}',
 
   // the status bubble
   'status.more': ' ほか {others} 件',

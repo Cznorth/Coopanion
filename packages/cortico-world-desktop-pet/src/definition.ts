@@ -7,7 +7,7 @@ import { DesktopPetWorld, modelsDirFor, type PetBotControls } from './world.ts';
 import type { DescribeTool } from './status.ts';
 import type { ModelLanguage } from './model-text.ts';
 import type { Answer } from './cua/engine-ipc.ts';
-import { CUA_TOOL_DECLS } from './cua/tools.ts';
+import { CUA_OFF_TOOL_DECLS, CUA_TOOL_DECLS } from './cua/tools.ts';
 import { petToolDecls } from './tools.ts';
 import { SELF_TYPE } from './chat.ts';
 import { petText } from './i18n/index.ts';
@@ -15,16 +15,18 @@ import { petText } from './i18n/index.ts';
 /** The console keeps the bot's avatar here, in the deployment directory. */
 const AVATAR_FILE = 'avatar.png';
 
-/** Every tool the World can give (the computer-use ones while computer use is on) and every event it pushes. */
+/** Every tool the World can give (the computer-use ones while computer use is on, the way to its switch while it is off) and every event it pushes. */
 const DESCRIBE: WorldDescribe = {
-  tools: describeTools([...petToolDecls(), ...CUA_TOOL_DECLS], {
+  tools: describeTools([...petToolDecls(), ...CUA_OFF_TOOL_DECLS, ...CUA_TOOL_DECLS], {
     pet_say: { zh: '在桌宠头顶的气泡里说话,可在话里穿插表情与动作。', en: 'Speaks in a bubble above the pet, with expressions and motions in between.' },
     pet_ask: { zh: '弹出带至多 3 个选项的提问气泡,回答之后作为事件送回。', en: 'Asks a question in a bubble with up to 3 options; the answer comes back later as an event.' },
     pet_walk_to: { zh: '沿屏幕底边走到或跑到某个位置。', en: 'Walks or runs along the bottom edge of the screen to a position.' },
     pet_set: { zh: '修改桌宠自己的外观与习惯;按使用者的设置直接生效,或先在气泡里询问。', en: "Changes the pet's own looks and habits, at once or after asking in a bubble, as the person's settings say." },
     pet_quiet: { zh: '安静一段时间:关掉音效、停止走动,到时恢复。', en: 'Keeps quiet for a while: sound effects off and standing still until the time is up.' },
     pet_act: { zh: '不说话,播放一串表情或动作。', en: 'Plays a sequence of expressions or motions without speaking.' },
-    pet_cua_screenshot: { zh: '截取主屏幕,附鼠标位置与前台窗口标题。', en: 'Captures the main screen, with the pointer position and the foreground window title.' },
+    pet_cua_open_settings: { zh: '电脑操作关着时,把设置窗口打开到它的开关,附风险说明。', en: 'While computer use is off, opens the settings window at its switch, with what it risks.' },
+    pet_cua_screenshot: { zh: '截取一块显示器,附鼠标位置与前台窗口标题。', en: 'Captures one display, with the pointer position and the foreground window title.' },
+    pet_cua_zoom: { zh: '按原始分辨率重截截图里的一块,读看不清的小字。', en: 'Captures a region of the screenshot again at full resolution, for small text.' },
     pet_cua_click: { zh: '把鼠标移到某处并点击。', en: 'Moves the mouse to a point and clicks.' },
     pet_cua_move: { zh: '只移动鼠标,不点击。', en: 'Moves the mouse without clicking.' },
     pet_cua_drag: { zh: '按住左键从一处拖到另一处。', en: 'Drags with the left button from one point to another.' },

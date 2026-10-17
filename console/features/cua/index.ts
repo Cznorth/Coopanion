@@ -3,9 +3,16 @@
  * normal mode, in the page's rows (its label column, then the setting). Each row writes its key of the
  * computer-use config group through `/api/config` (only the keys shown here are sent). Yielding to the
  * person and screenshot sizes stay on the desktop-pet World's page in the advanced mode.
+ *
+ * Before computer use is first turned on here, a dialog says what it risks; once confirmed, this
+ * settings window does not ask again. Opened at `#/pet?cua=enable` (Coo's way to the switch, while it
+ * is off), the section shows the dialog at once, confirmed before or not.
  */
 import { get, setConfig } from '../../base/api.ts';
+import { createMemo } from '../../base/memo.ts';
 import type { PageContext } from '../../base/page.ts';
+import { buildHash, parseHash } from '../../base/router.ts';
+import { confirm } from '../../base/ui/overlay.ts';
 import { S } from './strings.ts';
 
 const GROUP = 'world:desktop-pet:cua';
@@ -19,6 +26,34 @@ const KEYS = {
 /** The World's PERMISSION_LEVELS, strictest first. */
 const LEVELS = ['ask-each-turn', 'ask-before-acting', 'ask-once', 'never-ask'] as const;
 type Level = (typeof LEVELS)[number];
+/** Remembers that the risks were confirmed once. */
+const memo = createMemo('coopanion.cua.');
+const RISKS_SEEN = 'risksSeen';
+/** The `cua` query value that opens the dialog. */
+const ENABLE = 'enable';
+
+/** The dialog's text: the lead with its bold warning, the risks in red, the note under them. */
+function riskBody(doc: Document): HTMLElement {
+  const box = doc.createElement('div');
+  const lead = doc.createElement('p');
+  lead.className = 'cua-risk-lead';
+  const danger = doc.createElement('strong');
+  danger.textContent = S.riskDanger;
+  lead.append(S.riskLead, danger, S.riskAfter);
+  const list = doc.createElement('ul');
+  list.className = 'cua-risks';
+  for (const risk of S.risks) {
+    const item = doc.createElement('li');
+    item.textContent = risk;
+    list.append(item);
+  }
+  const note = doc.createElement('p');
+  note.className = 'cua-risk-note';
+  note.textContent = S.riskNote;
+  box.append(lead, list, note);
+  return box;
+}
+
 /** The bounds of `grantMinutes` in the World's config group. */
 const GRANT_MIN = 1;
 const GRANT_MAX = 1440;
@@ -42,7 +77,20 @@ export function cuaSection(ctx: PageContext, row: Row): HTMLElement {
     msg.classList.toggle('bad', bad);
   };
 
-  const enabled = ui.checkbox(S.enabled, { onChange: (on) => void save(KEYS.enabled, on) });
+  const doc = sheet.el.ownerDocument;
+  /** Asks with the dialog; a yes turns computer use on and is remembered. */
+  const turnOn = async () => {
+    if (!await confirm({ doc, host: doc.body, signal }, { title: S.riskTitle, body: riskBody(doc), ok: S.riskOk })) {
+      enabled.setChecked(false);
+      return;
+    }
+    memo.set(RISKS_SEEN, true);
+    enabled.setChecked(true);
+    await save(KEYS.enabled, true);
+  };
+  const enabled = ui.checkbox(S.enabled, {
+    onChange: (on) => void (!on ? save(KEYS.enabled, false) : memo.get(RISKS_SEEN, false) ? save(KEYS.enabled, true) : turnOn()),
+  });
   const control = ui.checkbox(S.control, { onChange: (on) => void save(KEYS.control, on) });
   const levelHint = ui.h('p', 'home-note');
   const level = ui.segmented(LEVELS.map((value) => ({ value, label: S.levels[value] })), {
@@ -88,6 +136,14 @@ export function cuaSection(ctx: PageContext, row: Row): HTMLElement {
     if (signal.aborted) return;
     const values = config?.groups?.find((g) => g.group.id === GROUP)?.values ?? {};
     enabled.setChecked(values[KEYS.enabled] === true);
+    const view = doc.defaultView;
+    const route = view ? parseHash(view.location.hash) : null;
+    if (view && route?.query.cua === ENABLE) {
+      // a reload of this page does not ask again
+      view.history.replaceState(null, '', buildHash(route.segments));
+      sheet.el.scrollIntoView({ block: 'start' });
+      if (values[KEYS.enabled] !== true) void turnOn();
+    }
     if (typeof values[KEYS.control] === 'boolean') control.setChecked(values[KEYS.control] as boolean);
     const current = LEVELS.find((l) => l === values[KEYS.permission]) ?? 'ask-once';
     level.setValue(current);

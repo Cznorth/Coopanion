@@ -428,6 +428,7 @@ export async function main(): Promise<void> {
       openSettings: () => process.send?.({ type: 'companion:open', path: '' }),
       openChat: () => process.send?.({ type: 'companion:open', path: '#/chat' }),
       openDress: () => process.send?.({ type: 'companion:open', path: '#/dress' }),
+      openCuaSettings: () => process.send?.({ type: 'companion:open', path: '#/pet?cua=enable' }),
       quit: () => process.send?.({ type: 'companion:quit' }),
       quitLabel: () => coreText(language()).quit,
       guide: () => {

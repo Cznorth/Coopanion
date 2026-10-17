@@ -278,7 +278,8 @@ Windows 上经 koffi 轮询 Win32 `GetAsyncKeyState` 读取;macOS 上轮询 Core
 ## 电脑操作
 
 `worlds.desktop-pet.cua.enabled` 开着时(默认关),bot 还看得见这台电脑(Windows、macOS 或 Linux)的屏幕,接了几块显示器都能看、能操作,能移动和点击鼠标、滚动、打字、按组合键、
-列出和切换窗口;使用者一动鼠标键盘,操作就让位。代码在 `src/cua/`;关着时没有这些工具,环境提示词的 `{{pet.cua}}` 只说明功能存在、在应用设置里打开。
+列出和切换窗口;使用者一动鼠标键盘,操作就让位。代码在 `src/cua/`;关着时没有这些工具,环境提示词的 `{{pet.cua}}` 只说明功能存在、在应用设置里打开;内嵌应用给了 `controls.openCuaSettings` 时,
+bot 还有 `pet_cua_open_settings`,在使用者同意后把设置窗口打开到这个开关。
 开关和下面的配置都是热更新,下一轮起生效;内嵌应用要在开关改动后重载 session 前缀,工具表才跟着变。
 
 ### 工具

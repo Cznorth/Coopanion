@@ -11,6 +11,16 @@ const xy = {
   y: { type: 'integer', minimum: 0, description: 'Vertical position, in pixels of the latest screenshot' },
 };
 
+/** While computer use is off: the way to its switch. */
+export const CUA_OFF_TOOL_DECLS: ReadonlyArray<Omit<ToolDef, 'handler'>> = [
+  {
+    name: 'pet_cua_open_settings',
+    tags: ['act'],
+    description: 'Computer use is off. Open the settings window at its switch, where the person reads what turning it on risks and can turn it on. Only after the person has agreed to open it.',
+    parameters: { type: 'object', properties: {}, required: [] },
+  },
+];
+
 export const CUA_TOOL_DECLS: ReadonlyArray<Omit<ToolDef, 'handler'>> = [
   {
     name: 'pet_cua_screenshot',

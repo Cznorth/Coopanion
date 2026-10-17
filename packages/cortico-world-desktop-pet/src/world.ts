@@ -49,6 +49,7 @@ import { ActivityGroup, ChatSockets, SELF_TYPE, chatHistory, chatItem, chatRefs,
 import { ASK_OPTION_MAX, petToolDecls } from './tools.ts';
 import { COO, figurePacks, lookOf, modelName, nameIn, packFor, type FigurePack, type PackScan } from './packs.ts';
 import { Cua } from './cua/cua.ts';
+import { CUA_OFF_TOOL_DECLS } from './cua/tools.ts';
 import type { Answer } from './cua/engine-ipc.ts';
 import { PackImporter } from './pack-import.ts';
 import { dressTable, planSettings, type SettingChange } from './self.ts';
@@ -111,6 +112,8 @@ export interface PetBotControls {
   isPaused?(): boolean;
   setPaused?(paused: boolean): void;
   openSettings?(): void;
+  /** Shows the app's computer-use switch together with what turning it on risks; while computer use is off, `pet_cua_open_settings` calls it. */
+  openCuaSettings?(): void;
   /** Shows the chat page; the bubble's expand button carries its draft there. */
   openChat?(): void;
   /** Shows the embedding app's own dress page; the menu's 「装扮」 then opens it instead of the pet's dress window. */
@@ -649,6 +652,16 @@ export class DesktopPetWorld implements World {
   /** Computer use is on and this system runs it. */
   private get cuaOn(): boolean {
     return this.cfg.cua.enabled && this.cua.unsupported() === null;
+  }
+
+  /** Computer use is off on a system that runs it, and the app can show its switch. */
+  private get cuaCanOpen(): boolean {
+    return !this.cfg.cua.enabled && this.cua.unsupported() === null && !!this.opts.controls?.openCuaSettings;
+  }
+
+  private openCuaSettings(): ToolOutcome {
+    this.opts.controls?.openCuaSettings?.();
+    return { text: this.t.cuaSettingsOpened(this.userName) };
   }
 
   outputTap(): OutputTap | undefined {
@@ -1573,9 +1586,11 @@ export class DesktopPetWorld implements World {
       pet_act: (args) => this.act(args),
       pet_set: (args) => this.setSettings(args),
       pet_quiet: (args) => this.setQuiet(args),
+      pet_cua_open_settings: async () => this.openCuaSettings(),
     };
     const own = petToolDecls(this.appLanguage).map((decl) => ({ ...decl, handler: handlers[decl.name], ...(decl.name === 'pet_walk_to' ? { interruptible: true } : {}) }));
-    return this.cuaOn ? [...own, ...this.cua.tools()] : own;
+    if (this.cuaOn) return [...own, ...this.cua.tools()];
+    return this.cuaCanOpen ? [...own, ...CUA_OFF_TOOL_DECLS.map((decl) => ({ ...decl, handler: handlers[decl.name] }))] : own;
   }
 
   private notConnected(tool: string): ToolOutcome {
@@ -1760,7 +1775,7 @@ export class DesktopPetWorld implements World {
     const user = this.userName;
     const reply = this.opts.replyLanguage?.() ?? null;
     return {
-      'pet.cua': this.cuaOn ? await this.cua.envPrompt() : this.cua.unsupported() === null ? t.cuaOff(user) : '',
+      'pet.cua': this.cuaOn ? await this.cua.envPrompt() : this.cua.unsupported() === null ? t.cuaOff(user, this.cuaCanOpen) : '',
       'pet.user': user,
       'pet.vocab': vocabTable(this.vocab(), language),
       'pet.voice': this.cfg.asr.enabled ? t.on : t.off,

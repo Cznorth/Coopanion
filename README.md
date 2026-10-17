@@ -197,13 +197,16 @@ Speech is recognized on your machine and audio is never uploaded: by **FunASR** 
 
 ### Letting Coo use your computer
 
-Computer use is on by default. Coo looks at the screen without asking, and asks before it first uses the mouse and keyboard; after you say yes it does not ask again for 30 minutes. Installs from before this default keep asking every turn.
+Computer use is off by default. Tick **Let Coo use this computer** in the Computer use section of the Habits page, read the risks it shows and click **Turn on**; it takes effect at once. When you ask Coo to look at the screen or help with the computer, it may also offer to turn it on and take the settings window to that section.
+
+Once it is on, Coo looks at the screen without asking, and asks before it first uses the mouse and keyboard; after you say yes it does not ask again for 30 minutes. Installs from before this default keep asking every turn.
 
 - Change this under **When to ask you** in the Computer use section of the Habits page, from strictest to loosest:
   - `ask-each-turn`: ask every turn;
   - `ask-before-acting`: looking is not asked; ask every turn before using the mouse and keyboard;
   - `ask-once` (default): looking is not asked; ask once before acting, then not again for the time set in **A yes lasts** (30 minutes by default);
   - `never-ask`: never ask.
+- With several displays, Coo looks at one at a time and moves to another when it needs to.
 - When you touch the mouse or keyboard, Coo stops and waits for you.
 - Logins, passwords and payments are left to you.
 - One wake makes at most 40 model requests; at the limit the turn ends and you can tell Coo to continue. The limit is on the Cormini page in advanced mode and applies after a restart.

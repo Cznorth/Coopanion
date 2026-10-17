@@ -400,13 +400,23 @@ function loadingPage(text) {
   return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
 }
 
+/**
+ * Shows the window in front. Windows lets only the process that took the last input come to the
+ * front, and a click in the pet's bubble lands in the pet's own process: topmost for a moment brings it forward there.
+ */
+function bringForward(win) {
+  if (!MAC) win.setAlwaysOnTop(true);
+  win.show();
+  win.focus();
+  if (!MAC) win.setAlwaysOnTop(false);
+}
+
 function openSettings(path = '') {
   // a menu-bar app shows in the Dock only while it has a window to switch to
   if (MAC) void app.dock?.show();
   if (settings) {
     if (settings.isMinimized()) settings.restore();
-    settings.show();
-    settings.focus();
+    bringForward(settings);
     const url = settingsUrl(path);
     if (url && path) settings.loadURL(url);
     return;
@@ -419,7 +429,7 @@ function openSettings(path = '') {
     backgroundColor: '#f4f5f4',
     webPreferences: { partition: SETTINGS_PARTITION, preload: join(__dirname, 'settings-preload.cjs'), contextIsolation: true, sandbox: true, spellcheck: false },
   });
-  settings.once('ready-to-show', () => settings.show());
+  settings.once('ready-to-show', () => bringForward(settings));
   settings.on('page-title-updated', (e) => e.preventDefault());
   keepOnConsole(settings.webContents);
   settings.on('close', (e) => {

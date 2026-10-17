@@ -35,7 +35,9 @@
  * route, `{ type: 'companion:browse', url }` to open the ChatGPT sign-in page in the system browser,
  * `{ type: 'companion:hide' }` to put it away (the introduction runs again on the desktop)
  * and `{ type: 'companion:quit' }` to quit the whole app; it asks for a clean stop with
- * `{ type: 'companion:shutdown' }`.
+ * `{ type: 'companion:shutdown' }`. A start that cannot go on says why before it exits:
+ * `{ type: 'companion:locked', pid, file }` when another process holds the data directory, and
+ * `{ type: 'companion:ports-busy', from, to }` when every console port Cortico tried could not be listened on.
  */
 import { readdirSync } from 'node:fs';
 import { delimiter, join } from 'node:path';
@@ -567,8 +569,13 @@ export async function main(): Promise<void> {
   const keyMissing = !hasKey(loaded.config);
   if (keyMissing) bot.core.bus.setPaused(true);
   const { port } = await bot.start().catch(async (err: unknown) => {
-    // another process holds the data directory: the app says which, rather than restarting this Core
-    if (err instanceof InstanceLockedError) await new Promise<void>((done) => { if (!process.send?.({ type: 'companion:locked', pid: err.pid, file: err.file }, () => done())) done(); });
+    const tell = (msg: object) => new Promise<void>((done) => { if (!process.send?.(msg, () => done())) done(); });
+    // the app says why, rather than restarting this Core into the same wall: another process holds the data
+    // directory, or the console found no port to listen on (Cortico throws the last candidate's listen error)
+    if (err instanceof InstanceLockedError) await tell({ type: 'companion:locked', pid: err.pid, file: err.file });
+    const { code, port: last } = (err ?? {}) as { code?: string; port?: number };
+    const from = loaded.config.web.port;
+    if ((code === 'EADDRINUSE' || code === 'EACCES') && typeof last === 'number' && last >= from) await tell({ type: 'companion:ports-busy', from, to: last });
     throw err;
   });
   stats.start();

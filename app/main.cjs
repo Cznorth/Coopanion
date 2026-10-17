@@ -12,11 +12,14 @@
  *
  * A build is for one channel, `coopanion.channel` in the app's package.json (scripts/pack.ts): `github`
  * (the default) updates itself from the GitHub releases; `steam` is installed and updated by Steam, does
- * not run the updater, and reads figure packs from the Steam Workshop (`steam.cjs`).
+ * not run the updater, and reads figure packs from the Steam Workshop (`steam.cjs`); `portable` is the
+ * Windows zip, which runs from wherever it is unpacked, writes nothing outside its folder but its login item,
+ * and is updated by hand.
  *
  * Every file the app writes lives under one data directory: on Windows `data\` beside the program when
- * packaged, or the data an earlier start used when the program has none beside it (`data-dir.cjs`, whose
- * record in `%LOCALAPPDATA%\Coopanion` is the one file outside it); the uninstaller leaves it. The Steam build,
+ * packaged, or for the installed build the data an earlier start used when the program has none beside it
+ * (`data-dir.cjs`, whose record in `%LOCALAPPDATA%\Coopanion` is the one file outside it); the uninstaller
+ * leaves it. A portable folder copied whole is a second pet with its own data. The Steam build,
  * whose install directory Steam deletes on uninstall, uses `%APPDATA%\Coopanion`; on macOS
  * `~/Library/Application Support/Coopanion`, since the .app is not a place to write; on Linux
  * `~/.config/Coopanion` (an AppImage is mounted read-only, a deb installs under /opt); from
@@ -54,9 +57,10 @@ const ICONS = join(__dirname, 'icons');
 /** The build's channel and, for `steam`, its Steam app id (see the module header). */
 const BUILD = JSON.parse(readFileSync(join(APP_ROOT, 'package.json'), 'utf8')).coopanion ?? {};
 const STEAM = BUILD.channel === 'steam';
+const PORTABLE = BUILD.channel === 'portable';
 const PET_HOST = process.argv.includes('--pet-host');
 /** The Windows installed build, whose data directory data-dir.cjs finds from the program's directory. */
-const INSTALLED = app.isPackaged && process.platform === 'win32' && !STEAM && !process.env.CORTICO_COMPANION_DATA;
+const INSTALLED = app.isPackaged && process.platform === 'win32' && !STEAM && !PORTABLE && !process.env.CORTICO_COMPANION_DATA;
 const PROGRAM_DIR = dirname(process.execPath);
 const BESIDE = join(PROGRAM_DIR, 'data');
 const DATA_RECORD = process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'Coopanion', 'data-location.json') : null;
@@ -208,6 +212,8 @@ if (located) {
 const { CoreHost } = require('./core-host.cjs');
 const { configuredLanguage, systemLanguage, textOf } = require('./i18n/index.cjs');
 const { RELEASES_URL, canUpdate, startUpdater } = require('./updater.cjs');
+/** Steam updates its build, and the portable one is updated by hand: only the others run the updater. */
+const SELF_UPDATE = !STEAM && !PORTABLE && canUpdate();
 
 const userData = app.getPath('userData');
 const shimDir = join(__dirname, 'shims');
@@ -231,6 +237,9 @@ const core = new CoreHost({
     pnpm_config_store_dir: join(DATA, 'pnpm', 'store'),
     pnpm_config_cache_dir: join(DATA, 'pnpm', 'cache'),
     pnpm_config_state_dir: join(DATA, 'pnpm', 'state'),
+    // a portable folder is copied whole, which turns pnpm's links (absolute junctions on Windows) into plain folders an
+    // extension no longer finds its dependencies through; hoisted node_modules hold the packages themselves
+    ...PORTABLE ? { pnpm_config_node_linker: 'hoisted' } : {},
     // extension installs call `corepack pnpm`; the shim (corepack.cmd, or corepack on macOS) runs the bundled pnpm on this runtime.
     // The Windows build carries MinGit (scripts/pack.ts), ahead of any other git, for the history of Coo's workspace
     PATH: [shimDir, ...existsSync(MINGIT) ? [MINGIT] : [], process.env.PATH ?? ''].join(delimiter),
@@ -446,14 +455,18 @@ async function ensurePet() {
 /**
  * Start at login. Electron's login items cover Windows and macOS; on Linux it is an XDG autostart entry
  * (~/.config/autostart/coopanion.desktop) that runs the AppImage, or the installed executable.
- * Windows reads `openAtLogin` back only with the arguments it was set with.
+ * Windows reads `openAtLogin` back only for the value named after the app's id and with the same arguments;
+ * the portable build names its value after its folder, so each copy has its own, and reads it from `launchItems`.
  */
 const AUTOSTART = join(app.getPath('home'), '.config', 'autostart', 'coopanion.desktop');
 const LOGIN_ARGS = ['--background'];
+const LOGIN_NAME = PORTABLE ? `Coopanion ${PROGRAM_DIR}` : undefined;
 const loginItem = {
-  get: () => (LINUX ? existsSync(AUTOSTART) : app.getLoginItemSettings({ args: LOGIN_ARGS }).openAtLogin),
+  get: () => (LINUX ? existsSync(AUTOSTART)
+    : LOGIN_NAME ? app.getLoginItemSettings().launchItems.some((item) => item.name === LOGIN_NAME)
+      : app.getLoginItemSettings({ args: LOGIN_ARGS }).openAtLogin),
   set(on) {
-    if (!LINUX) { app.setLoginItemSettings({ openAtLogin: on, args: LOGIN_ARGS }); return; }
+    if (!LINUX) { app.setLoginItemSettings({ openAtLogin: on, args: LOGIN_ARGS, ...LOGIN_NAME ? { name: LOGIN_NAME } : {} }); return; }
     if (!on) { rmSync(AUTOSTART, { force: true }); return; }
     const exe = process.env.APPIMAGE || process.execPath;
     mkdirSync(dirname(AUTOSTART), { recursive: true });
@@ -567,7 +580,7 @@ function askRestoreStranded() {
 }
 
 ipcMain.on('settings:language', (e) => { e.returnValue = language; });
-ipcMain.on('settings:update', (e) => { e.returnValue = { auto: !STEAM && canUpdate(), step: updateLine() }; });
+ipcMain.on('settings:update', (e) => { e.returnValue = { auto: SELF_UPDATE, step: updateLine() }; });
 
 app.whenReady().then(() => {
   const settingsSession = session.fromPartition(SETTINGS_PARTITION);
@@ -583,7 +596,7 @@ app.whenReady().then(() => {
   buildTray();
   noteAutostart();
   void core.start();
-  if (!STEAM) updater = startUpdater({
+  if (SELF_UPDATE) updater = startUpdater({
     logDir: join(userData, 'logs'),
     tell: (step) => {
       updateStep = { type: 'companion:update', ...step };

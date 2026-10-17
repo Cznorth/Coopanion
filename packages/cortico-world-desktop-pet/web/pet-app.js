@@ -561,7 +561,7 @@ function showDialogInput(it) {
   if (input.kind === 'buttons') {
     if (input.keys) body.insertAdjacentHTML('beforeend', `<div class="d-keys"><kbd class="d-key${input.taps > 1 ? ' taps' : ''}">${esc(input.keys)}</kbd>${input.taps > 1 ? `<span class="d-taps">×${Number(input.taps)}</span>` : ''}</div>`);
     const row = Object.assign(document.createElement('div'), { className: 'd-row' });
-    input.options.forEach((o, i) => row.appendChild(pill(o.label, o.primary, () => settleDialog(it, { index: i }))));
+    input.options.forEach((o, i) => row.appendChild(pill(o.label, o.primary, () => settleDialog(it, { index: i }), o.hover)));
     body.appendChild(row);
   } else if (input.kind === 'choices') {
     const cards = Object.assign(document.createElement('div'), { className: input.list ? 'd-cards list' : 'd-cards' });
@@ -677,8 +677,14 @@ function showDialogInput(it) {
   body.querySelector('.d-send, .d-pill.primary')?.focus?.({ preventScroll: true });
 }
 
-function pill(label, primary, onClick) {
+/** A button; with `hover`, that label replaces `label` while the button is pointed at or focused, and names it to screen readers. */
+function pill(label, primary, onClick, hover) {
   const b = Object.assign(document.createElement('button'), { type: 'button', className: `d-pill${primary ? ' primary' : ''}`, textContent: label });
+  if (hover) {
+    b.classList.add('swap');
+    b.setAttribute('aria-label', hover);
+    b.innerHTML = `<span class="d-pill-rest">${esc(label)}</span><span class="d-pill-hover">${esc(hover)}</span>`;
+  }
   b.addEventListener('click', onClick);
   return b;
 }

@@ -208,6 +208,7 @@ body.desk .floor{display:none}
 .d-pill:hover{border-color:var(--skin-ink)}
 .d-pill.primary{background:var(--skin-ink); border-color:var(--skin-ink); color:var(--surface); font-weight:600}
 .d-pill.primary:hover{background:var(--skin-eye); border-color:var(--skin-eye)}
+.d-pill.swap:not(:hover):not(:focus-visible) .d-pill-hover, .d-pill.swap:is(:hover, :focus-visible) .d-pill-rest{display:none}
 .d-pill.chosen{animation:pill-pick .26s cubic-bezier(.3,1.5,.5,1)}
 @keyframes pill-pick{45%{transform:scale(1.1)}}
 .d-body button:disabled{cursor:default}

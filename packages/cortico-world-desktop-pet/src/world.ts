@@ -139,8 +139,9 @@ export interface PetDialog {
 }
 
 /**
- * - `buttons`: a row of buttons, answered with the index; `keys` shows a key cap above them, pressed
- *   `taps` times over and over, the last press held (a talk key tapped, then held).
+ * - `buttons`: a row of buttons, answered with the index; a button's `hover` is the label it shows while pointed at or
+ *   focused. `keys` shows a key cap above them, pressed `taps` times over and over, the last press held (a talk key
+ *   tapped, then held).
  * - `choices`: cards to try out before `confirm`, each with an optional level tag, a small `note` under its label, and icon (a web/ui.js
  *   `ICONS` name, or `image`, a `data:image/…` URL such as a service's logo); a card's `line` is typed when it is picked and
  *   its `motion` played (standing still, strolling, running about) until another is picked, and its `actions` (vocabulary
@@ -156,7 +157,7 @@ export interface PetDialog {
  * - `progress`: a bar the app moves with `update({ progress })`; it ends when the app closes it.
  */
 export type PetDialogInput =
-  | { kind: 'buttons'; options: Array<{ label: string; primary?: boolean }>; keys?: string; taps?: number }
+  | { kind: 'buttons'; options: Array<{ label: string; primary?: boolean; hover?: string }>; keys?: string; taps?: number }
   | { kind: 'choices'; options: PetDialogChoice[]; more?: { label: string; icon?: string; image?: string; options: PetDialogChoice[] }; value?: number; confirm: string; list?: boolean; hint?: { text: string; mark: string; icon: string } }
   | { kind: 'text'; submit: string; placeholder?: string; value?: string; secret?: boolean; maxLength?: number; suggestions?: string[]; link?: { label: string; url: string }; alt?: string }
   | { kind: 'progress'; label?: string };

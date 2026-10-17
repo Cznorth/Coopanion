@@ -514,7 +514,8 @@ core.on('browse', (url) => { if (url.startsWith('https://auth.openai.com/')) voi
 core.on('state', (state, exit) => {
   if (!exit) return;
   const detail = exit.kind === 'locked' ? T().coreLocked(exit.pid, exit.file)
-    : exit.kind === 'failed' ? T().coreFailed(exit.times, exit.code, exit.logFile) : T().coreRestarting(exit.code);
+    : exit.kind === 'ports-busy' ? T().corePortsBusy(exit.from, exit.to)
+      : exit.kind === 'failed' ? T().coreFailed(exit.times, exit.code, exit.logFile) : T().coreRestarting(exit.code);
   if (Notification.isSupported()) new Notification({ title: 'Coopanion', body: detail, icon: join(ICONS, 'icon.png') }).show();
   if (state === 'failed') dialog.showErrorBox('Coopanion', detail);
 });

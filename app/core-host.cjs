@@ -5,7 +5,8 @@
  * It reports `companion:ready` with the console port. It exits on purpose after asking for a
  * restart (`cortico:restart`, or `<dataDir>/.restart-request` written by the console), and is
  * started again; an unexpected exit is restarted after 3 s, at most 5 times in 5 minutes, except one that
- * said another process holds the data directory's lock (`companion:locked`), which is not restarted, and one
+ * said another process holds the data directory's lock (`companion:locked`) or every console port it tries
+ * (`companion:ports-busy`), which a restart would meet again and so is not restarted, and one
  * before `companion:ready` with ERR_MODULE_NOT_FOUND on stderr, which waits longer each time (MISSING_MODULE_DELAYS_MS).
  * A child that exits unasked before it is ready leaves the app's arguments, its parent PID and whether the entry
  * and tsx are on disk in the log. A start after the host gave up (`failed`) begins with a full budget. The next
@@ -15,7 +16,8 @@
  *
  * Events: `ready` ({ port, keyMissing, language }), `language` (the app language after a change),
  * `state` (the state, and for an unexpected exit `{ kind: 'restarting', code }` or, once it stops
- * retrying, `{ kind: 'failed', times, code, logFile }`, or for a lock held elsewhere `{ kind: 'locked', pid, file }`), and the Core's requests `open`, `hide`,
+ * retrying, `{ kind: 'failed', times, code, logFile }`, for a lock held elsewhere `{ kind: 'locked', pid, file }`, or for
+ * the console ports `{ kind: 'ports-busy', from, to }`), and the Core's requests `open`, `hide`,
  * `quit`, `update-install` and `releases`.
  */
 const { fork } = require('node:child_process');
@@ -61,8 +63,11 @@ class CoreHost extends EventEmitter {
     this.crashes = [];
     /** ERR_MODULE_NOT_FOUND exits before ready since the last ready child: the index into MISSING_MODULE_DELAYS_MS. */
     this.missingModuleExits = 0;
-    /** The child said another process holds the data directory's lock (`companion:locked`): its PID and the lock file. */
-    this.locked = null;
+    /**
+     * What the child said keeps it from starting, so its exit is not restarted: another process holds the data
+     * directory's lock (`companion:locked`, its PID and the lock file), or every console port is taken (`companion:ports-busy`).
+     */
+    this.blocked = null;
     /** Exit code or signal of the last child that exited unasked, not yet handed to a new one. */
     this.unexpectedExit = null;
     this.state = 'stopped';
@@ -115,7 +120,9 @@ class CoreHost extends EventEmitter {
       } else if (msg?.type === 'cortico:ready') {
         this.dataDir = msg.dataDir;
       } else if (msg?.type === 'companion:locked') {
-        this.locked = { pid: Number.isInteger(msg.pid) ? msg.pid : null, file: String(msg.file ?? '') };
+        this.blocked = { kind: 'locked', pid: Number.isInteger(msg.pid) ? msg.pid : null, file: String(msg.file ?? '') };
+      } else if (msg?.type === 'companion:ports-busy' && Number.isInteger(msg.from) && Number.isInteger(msg.to)) {
+        this.blocked = { kind: 'ports-busy', from: msg.from, to: msg.to };
       } else if (msg?.type === 'cortico:restart') {
         this.restartAsked = true;
       } else if (msg?.type === 'companion:open') {
@@ -146,12 +153,12 @@ class CoreHost extends EventEmitter {
         void this.start();
         return;
       }
-      if (this.locked) {
-        // starting again would meet the same lock: the person ends that process, then restarts from the tray
-        const { pid, file } = this.locked;
-        this.locked = null;
+      if (this.blocked) {
+        // starting again would meet the same lock or ports: the person frees them, then restarts from the tray
+        const blocked = this.blocked;
+        this.blocked = null;
         this.state = 'failed';
-        this.emit('state', this.state, { kind: 'locked', pid, file });
+        this.emit('state', this.state, blocked);
         return;
       }
       this.unexpectedExit = code ?? signal;

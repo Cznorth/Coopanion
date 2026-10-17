@@ -16,6 +16,8 @@ module.exports = {
   coreRestarting: (code) => `The Core exited unexpectedly (exit code ${code}); restarting in 3 seconds`,
   /** Another process holds the data directory's instance lock, so the Core did not start; shown as a notification and in an error box. */
   coreLocked: (pid, file) => `Another process${pid ? ` (PID ${pid})` : ''} is using Coopanion's data, so the Core did not start. Wait for it to exit or end it, then choose Restart in the tray menu. Lock file: ${file}`,
+  /** None of the console ports could be listened on, so the Core did not start; shown as a notification and in an error box. */
+  corePortsBusy: (from, to) => `The console ports ${from}–${to} are all taken, so the Core did not start. ${to - from + 1} copies of Coopanion may already be running, or other programs are using these ports. Quit one of them, then choose Restart in the tray menu.`,
 
   /** Asked once when an update moved the program and left the old data directory behind. */
   strandedMessage: 'Settings from before the update were found',

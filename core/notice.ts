@@ -58,6 +58,8 @@ export interface NoticeAssembly {
   petConnected: () => boolean;
   /** The introduction is running and makes its own changes. */
   guiding: () => boolean;
+  /** Rebuilds the session's system prefix when a World's tools no longer match it; resolves once they do. */
+  refreshTools: () => Promise<void>;
   /** The instance, once created, for the introduction to hand its record to. */
   onCreate?: (world: NoticeWorld) => void;
   /** Its name when Core assembles the Worlds, in the app language of that moment (core/i18n `noticeLabel`). */
@@ -440,8 +442,13 @@ export class NoticeWorld implements World {
     }
     if (JSON.stringify(now) === JSON.stringify(this.seen)) return;
     this.seen = now;
+    // the notice says the change is in effect, so a change to a World's tools (computer use, voice input) reaches the prefix first
+    void this.a.refreshTools().then(() => this.tellChanges(), () => this.tellChanges());
+  }
+
+  private tellChanges(): void {
     // each change pushes again so the debounce waits for the last; the first render tells them all, the rest render nothing
-    host.pushDeferred({
+    this.host?.pushDeferred({
       type: 'coopanion.settings-changed', origin: 'internal',
       render: () => {
         const current = look(this.a.read);

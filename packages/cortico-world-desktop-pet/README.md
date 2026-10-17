@@ -285,28 +285,33 @@ Windows 上经 koffi 轮询 Win32 `GetAsyncKeyState` 读取;macOS 上轮询 Core
 
 ## 电脑操作
 
-`worlds.desktop-pet.cua.enabled` 开着时(默认关),bot 还看得见这台电脑(Windows、macOS 或 Linux)的主屏幕,能移动和点击鼠标、滚动、打字、按组合键、
-列出和切换窗口;使用者一动鼠标键盘,操作就让位。代码在 `src/cua/`;关着时没有这些工具,环境提示词的 `{{pet.cua}}` 为空。
-开关和下面的配置都是热更新,下一轮起生效。
+`worlds.desktop-pet.cua.enabled` 开着时(默认关),bot 还看得见这台电脑(Windows、macOS 或 Linux)的屏幕,接了几块显示器都能看、能操作,能移动和点击鼠标、滚动、打字、按组合键、
+列出和切换窗口;使用者一动鼠标键盘,操作就让位。代码在 `src/cua/`;关着时没有这些工具,环境提示词的 `{{pet.cua}}` 只说明功能存在、在应用设置里打开;内嵌应用给了 `controls.openCuaSettings` 时,
+bot 还有 `pet_cua_open_settings`,在使用者同意后把设置窗口打开到这个开关。
+开关和下面的配置都是热更新,下一轮起生效;内嵌应用要在开关改动后重载 session 前缀,工具表才跟着变。
 
 ### 工具
 
-坐标一律是最近一张截图的像素;截图缩放到 `cua.screenshot.maxWidth`×`maxHeight`(默认 1280×800)以内,画上鼠标指针,JPEG 编码。
+截图一次截一块显示器,缩放到 `cua.screenshot.maxWidth`×`maxHeight`(默认 1280×800)以内,画上鼠标指针,JPEG 编码。
+显示器从左到右(再从上到下)编号,从 1 起。坐标一律是最近一张截图的像素,落在它那块显示器上;截图之后显示器变了
+(接上、拔掉、挪动或改了缩放),输入工具一律拒绝,回执要求重新截图。
 
 | 工具 | 作用 |
 |---|---|
-| `pet_cua_screenshot` | 截主屏幕;回执带屏幕与截图尺寸、指针位置、前台窗口标题 |
+| `pet_cua_screenshot(display)` | 截一块显示器:不带 `display` 时截上次看的那块,第一次截前台窗口所在的那块;回执带截图与显示器尺寸、其他显示器、指针位置、前台窗口标题 |
+| `pet_cua_zoom(x, y, width, height)` | 按原始分辨率重截最近一张截图里的一块,读缩小后看不清的小字;只用来看 |
 | `pet_cua_click(x, y, button, clicks)` | 左/右/中键,单击、双击、三击 |
 | `pet_cua_move(x, y)` | 只移动,用于悬停 |
-| `pet_cua_drag(from, to)` | 按住左键拖动 |
+| `pet_cua_drag(from, to)` | 按住左键拖动,两点在同一块显示器上 |
 | `pet_cua_scroll(x, y, down, right)` | 在某处转滚轮,单位是格 |
 | `pet_cua_type(text)` | 按 Unicode 字符打字,与键盘布局和输入法状态无关;`\n` 按回车 |
 | `pet_cua_key(keys)` | `"ctrl+s"`、`"alt+f4"`、`"ctrl+a delete"`:`+` 同时按,空格分先后 |
-| `pet_cua_windows` | 可见顶层窗口的标题、位置(截图坐标)、是否最小化、前台 |
-| `pet_cua_focus(window)` | 按句柄或标题片段切到前台,最小化的先还原 |
+| `pet_cua_windows` | 可见顶层窗口的标题、在哪块显示器(在最近一张截图那块上的给出截图坐标)、是否最小化、前台 |
+| `pet_cua_focus(window)` | 按句柄或标题片段切到前台,最小化的先还原;窗口在另一块显示器上时,附带的截图截那块 |
 | `pet_cua_wait(seconds)` | 等一会儿再截图 |
 
-操作类工具默认做完等 `cua.screenshot.settleMs`(500 ms)再附一张截图;参数 `screenshot: false` 可以省掉。
+操作类工具默认做完等 `cua.screenshot.settleMs`(500 ms)再附一张截图;参数 `screenshot: false` 可以省掉,这时等完同样的时间再读一次指针和前台窗口,
+没有窗口接收键盘输入时回执提醒先截图。
 
 ### 什么时候先问
 
@@ -339,7 +344,7 @@ macOS 上是 AppleScript 的 `display dialog`,Linux 上是 `zenity --question`)�
 
 ### 打断
 
-十个工具都声明为 `interruptible`。Core 投递 `interrupt` 事件时,执行中的调用停在下一个不留半截输入的地方,
+十一个工具都声明为 `interruptible`。Core 投递 `interrupt` 事件时,执行中的调用停在下一个不留半截输入的地方,
 回执写明停下前做了什么:
 
 | 停下时在做什么 | 结果 |
@@ -349,27 +354,29 @@ macOS 上是 AppleScript 的 `display dialog`,Linux 上是 `zenity --question`)�
 | `pet_cua_type` 打字途中 | 停在两段之间,回执报告打出了几个字符 |
 | 点击、移动、拖动、滚动、按键序列、切窗口 | 已开始的输入发完(拖动会松开左键),之后不等 `settleMs`、不附截图 |
 | `pet_cua_wait` 等待中 | 立即结束,回执报告等了几秒,不截图 |
-| `pet_cua_screenshot`、`pet_cua_windows` 已发出请求 | 照常完成 |
+| `pet_cua_screenshot`、`pet_cua_zoom`、`pet_cua_windows` 已发出请求 | 照常完成 |
 
 主进程在调用的 `signal` 触发时给引擎子进程发 `{ cancel: id }`,引擎只在等使用者停手和打字的段间响应它。
 
 ### 实现
 
-操作系统调用都在引擎子进程(`src/cua/engine-child.ts`)里,经 [koffi](https://koffi.dev/) 直接调系统接口,坐标都是主屏幕的物理像素。
+操作系统调用都在引擎子进程(`src/cua/engine-child.ts`)里,经 [koffi](https://koffi.dev/) 直接调系统接口。请求和结果里的坐标是某块显示器的物理像素,
+各系统自己的全局坐标只在子进程里换算(`src/cua/engine/display.ts`)。
 引擎在第一次要用时拉起;子进程崩溃只让在途的那次调用失败,下次调用重新拉起。World 页多一盏「操作引擎」灯。
 
-- Windows(`src/cua/engine/win32.ts`):GDI `BitBlt`(带 `CAPTUREBLT`,透明与分层窗口也截得到)、`SendInput`、`EnumWindows`、
-  `GetLastInputInfo`;子进程声明为 per-monitor DPI aware(v2)。
-- macOS(`src/cua/engine/darwin.ts`):系统自带的 `screencapture` 截图;鼠标键盘是 CoreGraphics 的 `CGEventPost`
-  (坐标按屏幕的缩放比从像素换成点,双击靠事件里的点击计数);窗口表来自 `CGWindowListCopyWindowInfo`;
+- Windows(`src/cua/engine/win32.ts`):`EnumDisplayMonitors` 列显示器,GDI `BitBlt` 按显示器矩形截图(带 `CAPTUREBLT`,透明与分层窗口也截得到)、
+  `SetCursorPos` 定位指针(`SendInput` 的绝对坐标要折算到 0–65535,在显示器接缝处会差一个像素)、`SendInput` 发按键和滚轮、`EnumWindows`、
+  `GetLastInputInfo`;子进程声明为 per-monitor DPI aware(v2),坐标是虚拟屏幕的物理像素,主显示器左上角为原点。
+- macOS(`src/cua/engine/darwin.ts`):`CGGetActiveDisplayList` 列显示器,系统自带的 `screencapture -R` 按显示器矩形截图;鼠标键盘是 CoreGraphics 的 `CGEventPost`
+  (坐标按每块显示器各自的缩放比从像素换成点,双击靠事件里的点击计数);窗口表来自 `CGWindowListCopyWindowInfo`;
   切到某个窗口所属的应用、弹确认框用 AppleScript。`pet_cua_key` 里的 `cmd` 是 Command 键。
   macOS 要在「系统设置 → 隐私与安全性」里给应用两项权限:「录屏与系统录音」(截图、读窗口标题)和「辅助功能」(鼠标键盘);
   第一次用时系统会问,没给之前工具回执写明去哪里打开。切换应用时 System Events 还会问一次能不能被控制。
-- Linux(`src/cua/engine/linux.ts`,X11 或 Wayland 下的 XWayland):根窗口的 `XGetImage` 截图(无根的 XWayland 给不出画面时,
+- Linux(`src/cua/engine/linux.ts`,X11 或 Wayland 下的 XWayland):XRandR 的 `XRRGetMonitors` 列显示器(没有 libXrandr 时整块 X 屏当一块),根窗口的 `XGetImage` 按显示器矩形截图(无根的 XWayland 给不出画面时,
   改用 `grim`、`spectacle`、`scrot` 或 ImageMagick 的 `import`);鼠标键盘是 XTest;窗口表和前台窗口来自窗口管理器的 EWMH 属性;
   打字和切窗口用 `xdotool`,确认框用 `zenity`。XWayland 下只看得到 X11 程序的窗口。
 
-只支持 Windows、macOS 和 Linux(X11)的主屏幕;在别的系统上、或 Linux 上没有 `DISPLAY` 时,开着也没有这些工具,灯显示原因。
+只支持 Windows、macOS 和 Linux(X11);多显示器在 macOS 和 Linux 上还没有真机验证过;在别的系统上、或 Linux 上没有 `DISPLAY` 时,开着也没有这些工具,灯显示原因。
 
 ### 端到端测试
 

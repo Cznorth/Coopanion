@@ -1,21 +1,50 @@
 /**
- * Tool declarations; `Cua.tools()` binds the handlers. Coordinates are screenshot pixels.
+ * Tool declarations; `Cua.tools()` binds the handlers. Coordinates are pixels of the latest screenshot,
+ * on the display it shows.
  * Descriptions are English whatever the model-text language.
  */
 import type { ToolDef } from 'cortico/core/types.ts';
 
-const shot = { type: 'boolean', description: 'Attach a screenshot afterwards; defaults to the configuration (attach). When doing several steps in a row, ask for one on the last step only.' };
+const shot = { type: 'boolean', description: 'Attach a screenshot afterwards; defaults to the configuration (attach). Leave it out only for a step whose result you do not need to see; after a step that may open a window or dialog, look before typing.' };
 const xy = {
   x: { type: 'integer', minimum: 0, description: 'Horizontal position, in pixels of the latest screenshot' },
   y: { type: 'integer', minimum: 0, description: 'Vertical position, in pixels of the latest screenshot' },
 };
 
+/** While computer use is off: the way to its switch. */
+export const CUA_OFF_TOOL_DECLS: ReadonlyArray<Omit<ToolDef, 'handler'>> = [
+  {
+    name: 'pet_cua_open_settings',
+    tags: ['act'],
+    description: 'Computer use is off. Open the settings window at its switch, where the person reads what turning it on risks and can turn it on. Only after the person has agreed to open it.',
+    parameters: { type: 'object', properties: {}, required: [] },
+  },
+];
+
 export const CUA_TOOL_DECLS: ReadonlyArray<Omit<ToolDef, 'handler'>> = [
   {
     name: 'pet_cua_screenshot',
     tags: ['read', 'snapshot'],
-    description: 'Capture the main screen. Returns the scaled image (with the mouse pointer drawn on it), the screen and screenshot sizes, the pointer position and the title of the foreground window.',
-    parameters: { type: 'object', properties: {}, required: [] },
+    description: 'Capture one display. Returns the scaled image (with the mouse pointer drawn on it), its size and the display\'s, the other displays, the pointer position and the title of the foreground window. Later coordinates are pixels of this screenshot.',
+    parameters: {
+      type: 'object',
+      properties: { display: { type: 'integer', minimum: 1, description: 'Display number, 1 = leftmost; omitted: the display looked at last, at first the one holding the foreground window' } },
+      required: [],
+    },
+  },
+  {
+    name: 'pet_cua_zoom',
+    tags: ['read', 'snapshot'],
+    description: 'Capture a region of the latest screenshot\'s display again at full resolution, for small text or icons the scaled screenshot blurs. The region is given in screenshot pixels; the zoomed image is for reading only.',
+    parameters: {
+      type: 'object',
+      properties: {
+        ...xy,
+        width: { type: 'integer', minimum: 1, description: 'Width in screenshot pixels' },
+        height: { type: 'integer', minimum: 1, description: 'Height in screenshot pixels' },
+      },
+      required: ['x', 'y', 'width', 'height'],
+    },
   },
   {
     name: 'pet_cua_click',
@@ -41,7 +70,7 @@ export const CUA_TOOL_DECLS: ReadonlyArray<Omit<ToolDef, 'handler'>> = [
   {
     name: 'pet_cua_drag',
     tags: ['act'],
-    description: 'Hold the left button down, drag from `from` to `to`, and release.',
+    description: 'Hold the left button down, drag from `from` to `to`, and release. Both points are on the display of the latest screenshot.',
     parameters: {
       type: 'object',
       properties: {
@@ -82,7 +111,7 @@ export const CUA_TOOL_DECLS: ReadonlyArray<Omit<ToolDef, 'handler'>> = [
   {
     name: 'pet_cua_windows',
     tags: ['read'],
-    description: 'List the visible top-level windows: title, position (screenshot coordinates), whether minimized, and which one is in the foreground.',
+    description: 'List the visible top-level windows: title, which display each is on (with its position in screenshot coordinates when that is the display of the latest screenshot), whether minimized, and which one is in the foreground.',
     parameters: { type: 'object', properties: {}, required: [] },
   },
   {

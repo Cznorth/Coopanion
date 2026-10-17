@@ -4,6 +4,7 @@ import { parseKeys } from '../../src/cua/engine/keys.ts';
 import { appleString, dialogAnswer, macKey, unicodeChunks } from '../../src/cua/engine/mac-keys.ts';
 import { linuxKeysym, zenityAnswer } from '../../src/cua/engine/linux-keys.ts';
 import { downscale, drawCursor, encodeJpeg, fit } from '../../src/cua/engine/image.ts';
+import { displayAt, ordered, toLocal, toNative } from '../../src/cua/engine/display.ts';
 import { CUA_DEFAULTS, type CuaConfig } from '../../src/cua/config.ts';
 import { Cua } from '../../src/cua/cua.ts';
 import { FakeHost } from '../helpers/fake-host.ts';
@@ -49,6 +50,11 @@ describe('image', () => {
     expect([out.width, out.height]).toEqual([40, 30]);
   });
 });
+
+/** What an engine reports about one 1920×1080 display, as every result carries it. */
+const ONE_DISPLAY = { displays: [{ index: 1, primary: true, width: 1920, height: 1080 }], layout: 'one', cursor: { display: 1, x: 0, y: 0 }, foreground: null, foregroundDisplay: 1 };
+/** A 10×10 screenshot of that display. */
+const SHOT = { ...ONE_DISPLAY, display: 1, jpeg: new Uint8Array(1), width: 10, height: 10, scale: 10 / 1920 };
 
 describe('computer use without the engine', () => {
   const world = () => {
@@ -115,8 +121,7 @@ describe('computer use without the engine', () => {
       inner.spawn = () => ({
         exitCode: null,
         send({ id, req }: { id: number; req: { op: string } }) {
-          const value = req.op === 'screenshot' ? { jpeg: new Uint8Array(1), width: 10, height: 10, screen: { width: 1920, height: 1080 }, cursor: { x: 0, y: 0 }, foreground: null }
-            : req.op === 'windows' ? [] : { yielded: false, waitedMs: 0, cursor: { x: 0, y: 0 }, foreground: null };
+          const value = req.op === 'screenshot' ? SHOT : req.op === 'windows' ? [] : { ...ONE_DISPLAY, yielded: false, waitedMs: 0 };
           const p = inner.pending.get(id)!;
           inner.pending.delete(id);
           clearTimeout(p.timer);
@@ -193,13 +198,14 @@ describe('computer use without the engine', () => {
         clearTimeout(p.timer);
         p.done(value);
       };
-      const at = { cursor: { x: 0, y: 0 }, foreground: null, screen: { width: 1920, height: 1080 } };
+      const at = ONE_DISPLAY;
       inner.spawn = () => ({
         exitCode: null,
         connected: true,
         send(msg: { id: number; req: { op: string } } | { cancel: number }) {
           if ('cancel' in msg) answer(msg.cancel, { ...at, yielded: false, cancelled: false, waitedMs: 0, typed: 16, stoppedBy: 'cancel' });
-          else if (msg.req.op === 'screenshot') answer(msg.id, { ...at, jpeg: new Uint8Array(1), width: 10, height: 10 });
+          else if (msg.req.op === 'screenshot') answer(msg.id, SHOT);
+          else if (msg.req.op === 'info') answer(msg.id, at);
         },
       });
       return w;
@@ -231,8 +237,8 @@ describe('computer use without the engine', () => {
     inner.spawn = () => ({
       exitCode: null,
       send({ id, req }: { id: number; req: { op: string } }) {
-        const at = { cursor: { x: 0, y: 0 }, foreground: 'Notes' };
-        const value = req.op === 'screenshot' ? { ...at, jpeg: new Uint8Array(1), width: 10, height: 10, screen: { width: 1920, height: 1080 } }
+        const at = { ...ONE_DISPLAY, foreground: 'Notes' };
+        const value = req.op === 'screenshot' ? { ...SHOT, foreground: 'Notes' }
           : req.op === 'windows' ? [] : { ...at, yielded: false, waitedMs: 500 };
         const p = inner.pending.get(id)!;
         inner.pending.delete(id);
@@ -306,5 +312,81 @@ describe('the Linux engine\'s pure parts', () => {
     expect(zenityAnswer(1)).toBe('no');
     expect(zenityAnswer(5)).toBe('timeout');
     expect(zenityAnswer(null)).toBe('no');
+  });
+});
+
+describe('displays', () => {
+  it('maps a display left of and above the primary, at twice the pixels per unit, both ways; a point in a gap is on none', () => {
+    const primary = { id: 'a', primary: true, x: 0, y: 0, width: 1920, height: 1080, scale: 1 };
+    const left = { id: 'b', primary: false, x: -1440, y: -900, width: 1440, height: 900, scale: 2 };
+    const list = ordered([primary, left]);
+    expect(list.map((d) => d.id)).toEqual(['b', 'a']);
+    const p = toNative(left, 100, 50);
+    expect(p).toEqual({ x: -1390, y: -875 });
+    expect(toLocal(left, p.x, p.y)).toEqual({ x: 100, y: 50 });
+    expect(displayAt(list, p.x, p.y)).toBe(0);
+    expect(displayAt(list, -10, 500)).toBe(-1);
+  });
+
+  it('aims input at the display the latest screenshot showed, in its physical pixels and arrangement', async () => {
+    const cfg = { ...structuredClone(CUA_DEFAULTS), permission: 'never-ask' as const };
+    cfg.screenshot.afterAction = false;
+    cfg.screenshot.settleMs = 0;
+    const w = new Cua({ cfg: () => cfg });
+    const two = { displays: [{ index: 1, primary: true, width: 2560, height: 1600 }, { index: 2, primary: false, width: 3840, height: 2160 }], layout: 'two', cursor: { display: 1, x: 5, y: 5 }, foreground: null, foregroundDisplay: 1 };
+    const sent: Array<Record<string, unknown>> = [];
+    const inner = w as unknown as { spawn: () => unknown; pending: Map<number, { done: (v: unknown) => void; timer: NodeJS.Timeout }> };
+    inner.spawn = () => ({
+      exitCode: null,
+      send({ id, req }: { id: number; req: Record<string, unknown> }) {
+        sent.push(req);
+        const value = req.op === 'screenshot' ? { ...two, display: req.display, jpeg: new Uint8Array(1), width: 1280, height: 720, scale: 1280 / 3840 }
+          : { ...two, yielded: false, cancelled: false, waitedMs: 0 };
+        const p = inner.pending.get(id)!;
+        inner.pending.delete(id);
+        clearTimeout(p.timer);
+        p.done(value);
+      },
+    });
+    const call = (name: string, args: Record<string, unknown>) =>
+      w.tools().find((t) => t.name === name)!.handler(args, { role: 'main', log: new FakeHost().log }) as Promise<{ text: string; failed?: true }>;
+    const shot = await call('pet_cua_screenshot', { display: 2 });
+    expect(shot.text).toContain('显示器 2/2');
+    expect(shot.text).toContain('鼠标在显示器 1 上');
+    await call('pet_cua_click', { x: 640, y: 360 });
+    expect(sent.find((r) => r.op === 'click')).toMatchObject({ at: { display: 2, layout: 'two' }, x: 1920, y: 1080 });
+    expect((await call('pet_cua_screenshot', { display: 3 })).text).toContain('没有显示器 3');
+  });
+
+  it('after an input brings a window forward on another display, the screenshot shows that display', async () => {
+    const cfg = { ...structuredClone(CUA_DEFAULTS), permission: 'never-ask' as const };
+    cfg.screenshot.settleMs = 0;
+    const w = new Cua({ cfg: () => cfg });
+    const two = { displays: [{ index: 1, primary: true, width: 2560, height: 1600 }, { index: 2, primary: false, width: 2560, height: 1440 }], layout: 'two', cursor: null };
+    // the Run box comes up on display 1 once the key has been pressed
+    let pressed = false;
+    const fg = () => (pressed ? { foreground: 'Run', foregroundDisplay: 1 } : { foreground: 'Browser', foregroundDisplay: 2 });
+    const shots: unknown[] = [];
+    const inner = w as unknown as { spawn: () => unknown; pending: Map<number, { done: (v: unknown) => void; timer: NodeJS.Timeout }> };
+    inner.spawn = () => ({
+      exitCode: null,
+      send({ id, req }: { id: number; req: Record<string, unknown> }) {
+        if (req.op === 'key') pressed = true;
+        if (req.op === 'screenshot') shots.push(req.display);
+        const display = req.op === 'screenshot' ? (req.display ?? fg().foregroundDisplay) : undefined;
+        const value = req.op === 'screenshot' ? { ...two, ...fg(), display, jpeg: new Uint8Array(1), width: 1280, height: 720, scale: 0.5 }
+          : { ...two, ...fg(), yielded: false, cancelled: false, waitedMs: 0 };
+        const p = inner.pending.get(id)!;
+        inner.pending.delete(id);
+        clearTimeout(p.timer);
+        p.done(value);
+      },
+    });
+    const call = (name: string, args: Record<string, unknown>) =>
+      w.tools().find((t) => t.name === name)!.handler(args, { role: 'main', log: new FakeHost().log }) as Promise<{ text: string }>;
+    await call('pet_cua_screenshot', { display: 2 });
+    const out = await call('pet_cua_key', { keys: 'win+r' });
+    expect(shots).toEqual([2, 1]);
+    expect(out.text).toContain('显示器 1/2');
   });
 });

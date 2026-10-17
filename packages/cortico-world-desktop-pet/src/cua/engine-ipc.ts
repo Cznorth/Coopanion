@@ -12,13 +12,22 @@ export interface Yield {
   maxWaitMs: number;
 }
 
+/**
+ * Where an input lands: physical pixels of display `display` (its index in `ScreenInfo.displays`), as the
+ * arrangement `layout` stood. The engine refuses a target whose `layout` is no longer the current one.
+ */
+export interface Target { display: number; layout: string }
+
 export type EngineRequest =
   | { op: 'info' }
-  | { op: 'screenshot'; maxWidth: number; maxHeight: number; quality: number }
-  | { op: 'click'; x: number; y: number; button: Button; count: number; yield: Yield }
-  | { op: 'move'; x: number; y: number; yield: Yield }
-  | { op: 'drag'; x1: number; y1: number; x2: number; y2: number; yield: Yield }
-  | { op: 'scroll'; x: number; y: number; down: number; right: number; yield: Yield }
+  /** `display` null: the display holding the foreground window, or the primary one. */
+  | { op: 'screenshot'; display: number | null; maxWidth: number; maxHeight: number; quality: number }
+  /** A region of the display in physical pixels, captured fresh and scaled down only to fit. */
+  | { op: 'zoom'; at: Target; x: number; y: number; width: number; height: number; maxWidth: number; maxHeight: number; quality: number }
+  | { op: 'click'; at: Target; x: number; y: number; button: Button; count: number; yield: Yield }
+  | { op: 'move'; at: Target; x: number; y: number; yield: Yield }
+  | { op: 'drag'; at: Target; x1: number; y1: number; x2: number; y2: number; yield: Yield }
+  | { op: 'scroll'; at: Target; x: number; y: number; down: number; right: number; yield: Yield }
   | { op: 'type'; text: string; chunkDelayMs: number; yield: Yield }
   | { op: 'key'; chords: KeyCode[][]; yield: Yield }
   | { op: 'windows' }
@@ -29,18 +38,38 @@ export type EngineRequest =
 /** How a yes/no question to the person ended. */
 export type Answer = 'yes' | 'no' | 'timeout';
 
+/** A display: `index` is its place in the list, 1-based, left to right and then top to bottom; sizes are physical pixels. */
+export interface DisplayInfo {
+  index: number;
+  primary: boolean;
+  width: number;
+  height: number;
+}
+
 export interface ScreenInfo {
-  screen: { width: number; height: number };
-  /** Physical pixels. */
-  cursor: { x: number; y: number };
+  displays: DisplayInfo[];
+  /** Names the arrangement of the displays; it changes when one is added, removed, moved or rescaled. */
+  layout: string;
+  /** Physical pixels of the display it is on; null while it is on none. */
+  cursor: { display: number; x: number; y: number } | null;
   foreground: string | null;
+  /** The display holding the middle of the foreground window. */
+  foregroundDisplay: number | null;
 }
 
 export interface ScreenshotResult extends ScreenInfo {
+  display: number;
   jpeg: Uint8Array;
   width: number;
   height: number;
+  /** Screenshot pixels per physical pixel of the display. */
   scale: number;
+}
+
+export interface ZoomResult {
+  jpeg: Uint8Array;
+  width: number;
+  height: number;
 }
 
 /** Every input op reports how long it waited for the user and where the pointer ended up. */
@@ -62,6 +91,8 @@ export interface WindowEntry {
   handle: string;
   title: string;
   pid: number;
+  /** The display holding the window's middle, null when none does; the rectangle is in that display's physical pixels. */
+  display: number | null;
   rect: { x: number; y: number; width: number; height: number };
   minimized: boolean;
   foreground: boolean;

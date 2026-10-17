@@ -26,7 +26,8 @@ const shot = (p: { x: number; y: number }) => ({ x: Math.round(p.x * scale), y: 
 const at = (r: Rect) => shot(center(r));
 
 beforeAll(async () => {
-  Object.assign(cfg, { enabled: true, userIdleMs: 300, maxYieldWaitMs: 8000 });
+  // a fixed script on its own window: nobody is there to answer a permission question
+  Object.assign(cfg, { enabled: true, permission: 'never-ask', userIdleMs: 300, maxYieldWaitMs: 8000 });
   cfg.screenshot.settleMs = 250;
   world = new Cua({ cfg: () => cfg });
   world.start(new FakeHost());
@@ -42,7 +43,8 @@ afterAll(async () => {
 describe.runIf(process.platform === 'win32')('desktop', () => {
   it('screenshot is a scaled JPEG of the real screen with the pointer position reported', async () => {
     const out = await call('pet_cua_screenshot');
-    const m = /截图 (\d+)×(\d+)\(屏幕 (\d+)×(\d+)\)/.exec(out.text)!;
+    // one display: (屏幕 W×H); several: (显示器 n/m,W×H…)
+    const m = /截图 (\d+)×(\d+)\((?:屏幕 |显示器 \d+\/\d+,)(\d+)×(\d+)/.exec(out.text)!;
     expect(m).not.toBeNull();
     const [w, h, sw] = [Number(m[1]), Number(m[2]), Number(m[3])];
     expect(w).toBeLessThanOrEqual(cfg.screenshot.maxWidth);
@@ -51,8 +53,8 @@ describe.runIf(process.platform === 'win32')('desktop', () => {
     expect(out.blobs?.[0].mime).toBe('image/jpeg');
     const img = jpeg.decode(out.blobs![0].bytes, { useTArray: true });
     expect([img.width, img.height]).toEqual([w, h]);
-    // the target's magenta block appears where the target says it is
-    const p = at(ready.swatch);
+    // the target's magenta block appears where the target says it is; its top-left quarter, clear of a pointer drawn at its middle
+    const p = shot({ x: ready.swatch.x + ready.swatch.width / 4, y: ready.swatch.y + ready.swatch.height / 4 });
     const i = (p.y * img.width + p.x) * 4;
     expect(img.data[i]).toBeGreaterThan(200);
     expect(img.data[i + 1]).toBeLessThan(70);

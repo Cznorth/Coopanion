@@ -100,10 +100,10 @@ export function toast(
   return layer;
 }
 
-/** 模态确认。resolve 之后 DOM 与监听都已清干净。 */
+/** 模态确认。resolve 之后 DOM 与监听都已清干净。`body` 是节点时原样挂入;`ok` 换掉确认键的字。 */
 export function confirm(
   env: OverlayEnv,
-  opts: { title: string; body?: string; danger?: boolean },
+  opts: { title: string; body?: string | HTMLElement; danger?: boolean; ok?: string },
 ): Promise<boolean> {
   // 面板已经卸了:不弹窗,直接按"没答应"收场
   if (env.signal.aborted) return Promise.resolve(false);
@@ -123,14 +123,15 @@ export function confirm(
     const head = h(doc, 'div', 'modalhead');
     head.appendChild(h(doc, 'span', 'modaltitle', opts.title));
     const body = h(doc, 'div', 'modalbody');
-    if (opts.body) body.appendChild(h(doc, 'div', null, opts.body));
+    if (typeof opts.body === 'string') body.appendChild(h(doc, 'div', null, opts.body));
+    else if (opts.body) body.appendChild(opts.body);
 
     const bar = rowbar(doc);
     bar.appendChild(h(doc, 'span', 'grow'));
     bar.appendChild(
       button(doc, modal.signal, S.cancel, { size: 'sm', onClick: () => settle(false) }),
     );
-    const ok = button(doc, modal.signal, opts.danger ? S.proceedAnyway : S.confirm, {
+    const ok = button(doc, modal.signal, opts.ok ?? (opts.danger ? S.proceedAnyway : S.confirm), {
       size: 'sm',
       variant: opts.danger ? 'danger' : 'primary',
       onClick: () => settle(true),

@@ -5,7 +5,8 @@
  * from the window manager's EWMH properties, the idle time from the MIT-SCREEN-SAVER extension,
  * `xdotool` for typing text and raising a window, and `zenity` for the yes/no dialog.
  *
- * X11 coordinates are physical pixels of the whole screen. Under a Wayland session this runs
+ * X11 coordinates are physical pixels of the whole screen; XRandR names the displays in it (without
+ * libXrandr the whole screen is one display). Under a Wayland session this runs
  * through XWayland and sees only X11 clients; a session without an X server (no DISPLAY) is not
  * supported. This module runs only inside the engine child.
  */
@@ -17,9 +18,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { linuxKeysym, zenityAnswer } from './linux-keys.ts';
 import { EngineFailure } from './fail.ts';
+import { crop, type NativeDisplay } from './display.ts';
 
 const x11 = koffi.load('libX11.so.6');
 const xtst = koffi.load('libXtst.so.6');
+const xrandr = (() => { try { return koffi.load('libXrandr.so.2'); } catch { return null; } })();
 const xss = (() => { try { return koffi.load('libXss.so.1'); } catch { return null; } })();
 
 const XImage = koffi.struct('XImage', {
@@ -27,6 +30,10 @@ const XImage = koffi.struct('XImage', {
   byte_order: 'int', bitmap_unit: 'int', bitmap_bit_order: 'int', bitmap_pad: 'int', depth: 'int',
   bytes_per_line: 'int', bits_per_pixel: 'int', red_mask: 'unsigned long', green_mask: 'unsigned long', blue_mask: 'unsigned long',
   obdata: 'void *', f: koffi.array('void *', 6),
+});
+const XRRMonitorInfo = koffi.struct('XRRMonitorInfo', {
+  name: 'unsigned long', primary: 'int', automatic: 'int', noutput: 'int',
+  x: 'int', y: 'int', width: 'int', height: 'int', mwidth: 'int', mheight: 'int', outputs: 'void *',
 });
 const XScreenSaverInfo = koffi.struct('XScreenSaverInfo', {
   window: 'unsigned long', state: 'int', kind: 'int', til_or_since: 'unsigned long', idle: 'unsigned long', eventMask: 'unsigned long',
@@ -53,6 +60,8 @@ const XSetErrorHandler = x11.func('void *XSetErrorHandler(XErrorHandler *handler
 const XTestFakeMotionEvent = xtst.func('int XTestFakeMotionEvent(void *dpy, int screen, int x, int y, unsigned long delay)');
 const XTestFakeButtonEvent = xtst.func('int XTestFakeButtonEvent(void *dpy, unsigned int button, int press, unsigned long delay)');
 const XTestFakeKeyEvent = xtst.func('int XTestFakeKeyEvent(void *dpy, unsigned int keycode, int press, unsigned long delay)');
+const XRRGetMonitors = xrandr?.func('void *XRRGetMonitors(void *dpy, unsigned long window, int getActive, _Out_ int *count)') ?? null;
+const XRRFreeMonitors = xrandr?.func('void XRRFreeMonitors(void *monitors)') ?? null;
 const XScreenSaverQueryExtension = xss?.func('int XScreenSaverQueryExtension(void *dpy, _Out_ int *event, _Out_ int *error)') ?? null;
 const XScreenSaverQueryInfo = xss?.func('int XScreenSaverQueryInfo(void *dpy, unsigned long d, _Out_ XScreenSaverInfo *info)') ?? null;
 
@@ -68,11 +77,26 @@ const screen = XDefaultScreen(dpy);
 const hasIdle = !!XScreenSaverQueryExtension && !!XScreenSaverQueryExtension(dpy, [0], [0]);
 const t0 = Date.now();
 
-export interface Size { width: number; height: number }
 export interface Rect { x: number; y: number; width: number; height: number }
 
-export function screenSize(): Size {
+function screenSize(): { width: number; height: number } {
   return { width: XDisplayWidth(dpy, screen), height: XDisplayHeight(dpy, screen) };
+}
+
+/** The monitors XRandR reports, named by their position; the whole screen when it reports none. */
+export function displays(): NativeDisplay[] {
+  const count = [0];
+  const ptr = XRRGetMonitors?.(dpy, root, 1, count) ?? null;
+  if (ptr && count[0] > 0) {
+    try {
+      const list = koffi.decode(ptr, koffi.array(XRRMonitorInfo, count[0])) as Array<{ primary: number; x: number; y: number; width: number; height: number }>;
+      return list.map((m) => ({ id: `${m.x},${m.y}`, primary: m.primary !== 0, x: m.x, y: m.y, width: m.width, height: m.height, scale: 1 }));
+    } finally {
+      XRRFreeMonitors?.(ptr);
+    }
+  }
+  const { width, height } = screenSize();
+  return [{ id: 'screen', primary: true, x: 0, y: 0, width, height, scale: 1 }];
 }
 
 /** Screenshot tools that write a JPEG, tried in order when the X server cannot give the picture. */
@@ -83,7 +107,8 @@ const TOOLS: Array<[string, (file: string) => string[]]> = [
   ['import', (f) => ['-window', 'root', f]],
 ];
 
-function captureWithTool(): { width: number; height: number; bgra: Buffer } {
+/** The whole screen from a screenshot tool. */
+function captureWithTool(): { width: number; height: number; bgra: Uint8Array } {
   const dir = mkdtempSync(join(tmpdir(), 'cua-shot-'));
   const file = join(dir, 'screen.jpg');
   try {
@@ -100,11 +125,17 @@ function captureWithTool(): { width: number; height: number; bgra: Buffer } {
   throw new EngineFailure('linuxNoScreenshot');
 }
 
-/** The whole screen as top-down BGRA. */
-export function capture(): { width: number; height: number; bgra: Buffer } {
-  const { width, height } = screenSize();
-  const ptr = XGetImage(dpy, root, 0, 0, width, height, ALL_PLANES, ZPIXMAP);
-  if (!ptr) return captureWithTool();
+/** Display `d` as top-down BGRA. */
+export function capture(d: NativeDisplay): { width: number; height: number; bgra: Uint8Array } {
+  const { width, height } = d;
+  const ptr = XGetImage(dpy, root, d.x, d.y, width, height, ALL_PLANES, ZPIXMAP);
+  if (!ptr) {
+    const whole = captureWithTool();
+    const full = screenSize();
+    // a tool that captured at another size (a scaled Wayland output) is returned whole
+    if (whole.width !== full.width || whole.height !== full.height) return whole;
+    return { width, height, bgra: crop(whole.bgra, whole.width, d.x, d.y, width, height) };
+  }
   try {
     const img = koffi.decode(ptr, XImage) as { data: unknown; bytes_per_line: number; bits_per_pixel: number; byte_order: number };
     if (img.bits_per_pixel !== 32 || img.byte_order !== 0) throw new EngineFailure('linuxPixelFormat', [img.bits_per_pixel]);

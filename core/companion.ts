@@ -400,6 +400,8 @@ export async function main(): Promise<void> {
   let pet: DesktopPetWorld | null = null;
   /** Set once the bot exists; the pet's menu reads it only after the pet page connects. */
   let bus: WakeBus | null = null;
+  /** Set once the bot exists. */
+  let core: Core<CoreConfig> | null = null;
   /** Set once the console listens. */
   let guide: GuideDeps | null = null;
   /** Set once the deployment is loaded. */
@@ -426,6 +428,7 @@ export async function main(): Promise<void> {
       openSettings: () => process.send?.({ type: 'companion:open', path: '' }),
       openChat: () => process.send?.({ type: 'companion:open', path: '#/chat' }),
       openDress: () => process.send?.({ type: 'companion:open', path: '#/dress' }),
+      openCuaSettings: () => process.send?.({ type: 'companion:open', path: '#/pet?cua=enable' }),
       quit: () => process.send?.({ type: 'companion:quit' }),
       quitLabel: () => coreText(language()).quit,
       guide: () => {
@@ -459,6 +462,7 @@ export async function main(): Promise<void> {
     read: (path) => (config ? getByPath(config as unknown as Record<string, unknown>, path) : undefined),
     petConnected: () => (pet as DesktopPetWorld | null)?.petState().connected === true,
     guiding: () => guiding,
+    refreshTools: async () => { if (core?.loop.modulePrefixDrift().length) await core.loop.reloadSystemPrefix(); },
     onCreate: (world) => { notice = world; },
     label: () => coreText(language()).noticeLabel,
   });
@@ -546,6 +550,7 @@ export async function main(): Promise<void> {
 
   const bot = createBot(loaded, definition, { extensions });
   bus = bot.core.bus;
+  core = bot.core;
   const stats = new Telemetry({
     dir: deployDir,
     version: APP_VERSION,

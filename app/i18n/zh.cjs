@@ -1,4 +1,4 @@
-// 主进程的文字:托盘菜单、设置窗口的启动页、Core 退出的通知,找回更新前数据的对话框,以及数据目录写不进去时的错误框。
+// 主进程的文字:托盘菜单、设置窗口的启动页、Core 退出的通知,找回更新前数据的对话框,程序旁边没有数据时询问用哪份数据的对话框,以及数据目录写不进去时的错误框。
 module.exports = {
   /** 设置窗口在 Core 起来之前显示的一行字 */
   starting: '正在启动…',
@@ -24,4 +24,20 @@ module.exports = {
 
   /** 数据目录写不进去(装在了需要管理员权限的目录),应用不启动;错误框里显示 */
   dataNotWritable: (dir, suggested) => `Coopanion 无法写入数据目录，没有启动：\n${dir}\n\n请重新运行安装器，安装到当前用户有权写入的目录，例如：\n${suggested}`,
+
+  /** 程序旁边没有数据、记录里有另一个程序目录用过的数据时问一次(app/data-dir.cjs) */
+  dataFoundMessage: '找到之前的 Coopanion 数据',
+  dataFoundDetail: (data, when, program) => `Coopanion 现在装在 ${program}，这里还没有数据。之前使用的数据在：\n${data}\n最后一次启动：${when}\n\n`
+    + '继承后，设置、API Key、提示词和记忆都接着用。新建一只会在现在的位置重新开始，之前的数据留在原处，不会删除。',
+  dataInherit: '继承这份数据',
+  dataNew: '新建一只',
+  /** 记录里的数据不在了;「重试」「选择文件夹」「新建一只」「退出」 */
+  dataMissingMessage: '找不到之前使用的数据',
+  dataMissingDetail: (data, when, beside) => `之前使用的数据在：\n${data}\n最后一次启动：${when}\n现在那里没有 Coopanion 的数据。\n\n`
+    + `数据在移动硬盘或网络位置上的话，连接后点击「重试」；挪到了别处的话，点击「选择文件夹」找到它。新建一只会在这里重新开始：\n${beside}`,
+  dataRetry: '重试',
+  dataChoose: '选择文件夹',
+  dataQuit: '退出',
+  dataChooseTitle: '选择 Coopanion 的数据文件夹',
+  dataChooseInvalid: (dir) => `这个文件夹里没有 Coopanion 的数据：\n${dir}\n\n请选择安装目录，或安装目录下的 data 文件夹。`,
 };

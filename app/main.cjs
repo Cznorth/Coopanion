@@ -14,9 +14,10 @@
  * (the default) updates itself from the GitHub releases; `steam` is installed and updated by Steam, does
  * not run the updater, and reads figure packs from the Steam Workshop (`steam.cjs`).
  *
- * Every file the app writes lives under one data directory: on Windows `<install dir>\data` when
- * packaged (the uninstaller leaves it, and nothing goes to AppData), except the Steam build, whose
- * install directory Steam deletes on uninstall: `%APPDATA%\Coopanion`; on macOS
+ * Every file the app writes lives under one data directory: on Windows `data\` beside the program when
+ * packaged, or the data an earlier start used when the program has none beside it (`data-dir.cjs`, whose
+ * record in `%LOCALAPPDATA%\Coopanion` is the one file outside it); the uninstaller leaves it. The Steam build,
+ * whose install directory Steam deletes on uninstall, uses `%APPDATA%\Coopanion`; on macOS
  * `~/Library/Application Support/Coopanion`, since the .app is not a place to write; on Linux
  * `~/.config/Coopanion` (an AppImage is mounted read-only, a deb installs under /opt); from
  * source `build/data`; or `CORTICO_COMPANION_DATA`. It holds `home/` (deployment, endpoint,
@@ -37,6 +38,7 @@ const http = require('node:http');
 const { Readable } = require('node:stream');
 const { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmdirSync, rmSync, writeFileSync } = require('node:fs');
 const { delimiter, dirname, extname, join, resolve, sep } = require('node:path');
+const { dataDirIn, locateData, readRecord, writeRecord } = require('./data-dir.cjs');
 
 const MAC = process.platform === 'darwin';
 const LINUX = process.platform === 'linux';
@@ -52,9 +54,62 @@ const ICONS = join(__dirname, 'icons');
 /** The build's channel and, for `steam`, its Steam app id (see the module header). */
 const BUILD = JSON.parse(readFileSync(join(APP_ROOT, 'package.json'), 'utf8')).coopanion ?? {};
 const STEAM = BUILD.channel === 'steam';
+const PET_HOST = process.argv.includes('--pet-host');
+/** The Windows installed build, whose data directory data-dir.cjs finds from the program's directory. */
+const INSTALLED = app.isPackaged && process.platform === 'win32' && !STEAM && !process.env.CORTICO_COMPANION_DATA;
+const PROGRAM_DIR = dirname(process.execPath);
+const BESIDE = join(PROGRAM_DIR, 'data');
+const DATA_RECORD = process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'Coopanion', 'data-location.json') : null;
+const located = INSTALLED && DATA_RECORD ? locateData({ programDir: PROGRAM_DIR, record: readRecord(DATA_RECORD) }) : null;
 const DATA = process.env.CORTICO_COMPANION_DATA
   || (!app.isPackaged ? join(APP_ROOT, 'build', 'data')
-    : MAC || LINUX || STEAM ? join(app.getPath('appData'), 'Coopanion') : join(dirname(process.execPath), 'data'));
+    : MAC || LINUX || STEAM ? join(app.getPath('appData'), 'Coopanion') : located?.use ?? BESIDE);
+
+/**
+ * Asks which data to use when none is beside the program (data-dir.cjs) and binds the record to this program
+ * directory with the answer. True when the app starts again to use it, false when it quits.
+ * @param {{ ask: 'inherit' | 'missing', record: import('./data-dir.cjs').DataRecord }} question
+ */
+function askDataLocation({ ask, record }) {
+  const { configuredLanguage, systemLanguage, textOf } = require('./i18n/index.cjs');
+  const language = configuredLanguage(join(record.data, 'home')) ?? systemLanguage(app);
+  const t = textOf(language);
+  const when = new Date(record.startedAt).toLocaleString(language);
+  const box = (options) => dialog.showMessageBoxSync({ title: 'Coopanion', noLink: true, defaultId: 0, ...options });
+  const bind = (data) => {
+    writeRecord(DATA_RECORD, { data, program: PROGRAM_DIR, startedAt: record.startedAt });
+    return true;
+  };
+  const startNew = () => {
+    mkdirSync(BESIDE, { recursive: true });
+    return bind(BESIDE);
+  };
+  if (ask === 'inherit') {
+    const answer = box({ type: 'question', message: t.dataFoundMessage, detail: t.dataFoundDetail(record.data, when, PROGRAM_DIR), buttons: [t.dataInherit, t.dataNew], cancelId: 0 });
+    return answer === 0 ? bind(record.data) : startNew();
+  }
+  for (;;) {
+    const answer = box({ type: 'warning', message: t.dataMissingMessage, detail: t.dataMissingDetail(record.data, when, BESIDE), buttons: [t.dataRetry, t.dataChoose, t.dataNew, t.dataQuit], cancelId: 3 });
+    if (answer === 0 && existsSync(join(record.data, 'home'))) return bind(record.data);
+    if (answer === 1) {
+      const folder = dialog.showOpenDialogSync({ title: t.dataChooseTitle, defaultPath: dirname(record.data), properties: ['openDirectory'] })?.[0];
+      const data = folder && dataDirIn(folder);
+      if (data) return bind(data);
+      if (folder) box({ type: 'warning', message: t.dataChooseInvalid(folder) });
+    }
+    if (answer === 2) return startNew();
+    if (answer === 3) return false;
+  }
+}
+if (located?.ask && !PET_HOST) {
+  // Chromium's own files for these dialogs go to the temp directory
+  app.setPath('userData', join(app.getPath('temp'), 'Coopanion'));
+  app.whenReady().then(() => {
+    if (askDataLocation(located)) app.relaunch();
+    app.exit(0);
+  });
+  return;
+}
 
 /**
  * data\ beside the program cannot be written when the program sits in a directory that needs administrator
@@ -71,7 +126,7 @@ function dataWritable() {
     return false;
   }
 }
-if (app.isPackaged && process.platform === 'win32' && !STEAM && !process.env.CORTICO_COMPANION_DATA && !dataWritable()) {
+if (INSTALLED && !dataWritable()) {
   // Chromium's own files for this one dialog go to the temp directory
   app.setPath('userData', join(app.getPath('temp'), 'Coopanion'));
   app.whenReady().then(() => {
@@ -121,8 +176,7 @@ function restoreStrandedData() {
   appendFileSync(join(DATA, 'logs', 'data-restore.log'), `${new Date().toISOString()} ${line}\n`);
   return false;
 }
-const askStranded = app.isPackaged && process.platform === 'win32' && !STEAM && !process.env.CORTICO_COMPANION_DATA
-  && !process.argv.includes('--pet-host') && restoreStrandedData();
+const askStranded = INSTALLED && !PET_HOST && DATA === BESIDE && restoreStrandedData();
 
 // before anything asks Electron for a path: the single-instance lock and the profile live in userData
 app.setPath('userData', DATA);
@@ -131,7 +185,7 @@ process.env.TEMP = process.env.TMP = process.env.TMPDIR = join(DATA, 'tmp');
 mkdirSync(process.env.TEMP, { recursive: true });
 
 /* ---------- pet window mode ---------- */
-if (process.argv.includes('--pet-host')) {
+if (PET_HOST) {
   const arg = (name) => { const hit = process.argv.find((a) => a.startsWith(`--${name}=`)); return hit ? hit.slice(name.length + 3) : ''; };
   app.setPath('userData', join(app.getPath('userData'), 'pet-window'));
   if (MAC) app.dock?.hide();
@@ -144,6 +198,11 @@ if (process.argv.includes('--pet-host')) {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
   return;
+}
+if (located) {
+  try {
+    writeRecord(DATA_RECORD, { data: DATA, program: PROGRAM_DIR, startedAt: new Date().toISOString() });
+  } catch { /* the app runs without the record; a later move of the program then finds no data to offer */ }
 }
 
 const { CoreHost } = require('./core-host.cjs');

@@ -19,4 +19,18 @@ module.exports = {
   strandedKeep: 'Garder les actuels',
 
   dataNotWritable: (dir, suggested) => `Coopanion ne peut pas écrire dans son dossier de données et n'a pas démarré :\n${dir}\n\nRelancez le programme d'installation et installez Coopanion dans un dossier où votre compte peut écrire, par exemple :\n${suggested}`,
+
+  dataFoundMessage: 'Des données Coopanion antérieures ont été trouvées',
+  dataFoundDetail: (data, when, program) => `Coopanion est maintenant installé dans ${program}, qui n'a pas encore de données. Les données utilisées jusqu'ici se trouvent dans :\n${data}\nDernier démarrage : ${when}\n\n`
+    + 'En les reprenant, vous gardez les paramètres, API Keys, prompts et la mémoire. En repartant de zéro, Coopanion recommence ici ; les anciennes données restent à leur place et ne sont pas supprimées.',
+  dataInherit: 'Reprendre ces données',
+  dataNew: 'Repartir de zéro',
+  dataMissingMessage: "Les données utilisées jusqu'ici sont introuvables",
+  dataMissingDetail: (data, when, beside) => `Les données utilisées jusqu'ici étaient dans :\n${data}\nDernier démarrage : ${when}\nIl n'y a plus de données Coopanion à cet endroit.\n\n`
+    + `Si elles sont sur un disque amovible ou un emplacement réseau, connectez-le puis cliquez sur Réessayer. Si elles ont été déplacées, cliquez sur Choisir un dossier pour les retrouver. Repartir de zéro recommence ici :\n${beside}`,
+  dataRetry: 'Réessayer',
+  dataChoose: 'Choisir un dossier',
+  dataQuit: 'Quitter',
+  dataChooseTitle: 'Choisir le dossier de données de Coopanion',
+  dataChooseInvalid: (dir) => `Ce dossier ne contient pas de données Coopanion :\n${dir}\n\nChoisissez le dossier d'installation, ou le dossier data qu'il contient.`,
 };

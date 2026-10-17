@@ -19,4 +19,18 @@ module.exports = {
   strandedKeep: 'Conservar la actual',
 
   dataNotWritable: (dir, suggested) => `Coopanion no puede escribir en su carpeta de datos y no se inició:\n${dir}\n\nVuelve a ejecutar el instalador e instala en una carpeta en la que tu cuenta pueda escribir, por ejemplo:\n${suggested}`,
+
+  dataFoundMessage: 'Se encontraron datos anteriores de Coopanion',
+  dataFoundDetail: (data, when, program) => `Coopanion ahora está instalado en ${program}, que todavía no tiene datos. Los datos que usabas están en:\n${data}\nÚltimo inicio: ${when}\n\n`
+    + 'Si los heredas, conservas la configuración, las API Keys, los prompts y la memoria. Si empiezas de nuevo, Coopanion comienza desde cero aquí; los datos anteriores se quedan donde están y no se borran.',
+  dataInherit: 'Heredar estos datos',
+  dataNew: 'Empezar de nuevo',
+  dataMissingMessage: 'No se encuentran los datos que usabas',
+  dataMissingDetail: (data, when, beside) => `Los datos que usabas estaban en:\n${data}\nÚltimo inicio: ${when}\nAhí ya no hay datos de Coopanion.\n\n`
+    + `Si están en una unidad extraíble o en la red, conéctala y haz clic en Reintentar. Si los moviste, haz clic en Elegir carpeta para encontrarlos. Empezar de nuevo comienza desde cero aquí:\n${beside}`,
+  dataRetry: 'Reintentar',
+  dataChoose: 'Elegir carpeta',
+  dataQuit: 'Salir',
+  dataChooseTitle: 'Elige la carpeta de datos de Coopanion',
+  dataChooseInvalid: (dir) => `Esta carpeta no tiene datos de Coopanion:\n${dir}\n\nElige la carpeta de instalación o la carpeta data que está dentro.`,
 };

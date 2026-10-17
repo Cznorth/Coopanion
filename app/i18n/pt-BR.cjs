@@ -19,4 +19,18 @@ module.exports = {
   strandedKeep: 'Manter as atuais',
 
   dataNotWritable: (dir, suggested) => `O Coopanion não consegue gravar na pasta de dados e não foi iniciado:\n${dir}\n\nExecute o instalador de novo e instale em uma pasta em que sua conta possa gravar, por exemplo:\n${suggested}`,
+
+  dataFoundMessage: 'Dados anteriores do Coopanion encontrados',
+  dataFoundDetail: (data, when, program) => `O Coopanion agora está instalado em ${program}, que ainda não tem dados. Os dados usados até agora estão em:\n${data}\nÚltima inicialização: ${when}\n\n`
+    + 'Ao herdá-los, você mantém as configurações, API Keys, prompts e a memória. Ao começar de novo, o Coopanion recomeça do zero aqui; os dados anteriores ficam onde estão e não são apagados.',
+  dataInherit: 'Herdar estes dados',
+  dataNew: 'Começar de novo',
+  dataMissingMessage: 'Os dados usados até agora não foram encontrados',
+  dataMissingDetail: (data, when, beside) => `Os dados usados até agora estavam em:\n${data}\nÚltima inicialização: ${when}\nNão há mais dados do Coopanion lá.\n\n`
+    + `Se estiverem em um drive removível ou na rede, conecte-o e clique em Tentar de novo. Se foram movidos, clique em Escolher pasta para encontrá-los. Começar de novo recomeça do zero aqui:\n${beside}`,
+  dataRetry: 'Tentar de novo',
+  dataChoose: 'Escolher pasta',
+  dataQuit: 'Sair',
+  dataChooseTitle: 'Escolha a pasta de dados do Coopanion',
+  dataChooseInvalid: (dir) => `Esta pasta não tem dados do Coopanion:\n${dir}\n\nEscolha a pasta de instalação ou a pasta data dentro dela.`,
 };

@@ -66,7 +66,7 @@ Coopanion 是一个桌宠。桌宠 **Coo** 待在屏幕底边，可以用气泡�
 3. 选安装位置（默认 `C:\Users\你的用户名\Coopanion`），点安装。装好后自动启动，桌面上有图标。
 
 > [!NOTE]
-> 程序和它的数据都在安装目录里，不写 AppData，所以开始菜单里没有它，从桌面图标打开。
+> 程序和它的数据都在安装目录里，开始菜单里没有它，从桌面图标打开。
 
 ### Windows：一行命令
 
@@ -268,6 +268,8 @@ irm https://raw.githubusercontent.com/Pal-AI-Lab/Coopanion/main/installer/instal
 | Linux   | `~/.config/Coopanion`                     | deb：`sudo apt remove coopanion`；AppImage：删除文件         |
 
 卸载不会删除数据，重装后记忆和设置还在。不再需要时，手动删掉数据目录（Windows 上删整个安装目录）。
+
+Windows 上，程序换了目录（比如重装到别处）、旁边没有数据时，Coopanion 启动时会询问：继承之前使用的数据，还是新建一只。之前使用的数据在哪，记在 `%LOCALAPPDATA%\Coopanion\data-location.json`。
 
 数据目录里，`home` 是记忆、对话记录、设置和 API Key，`extensions` 是扩展，`logs` 是日志，`home/models` 是语音模型。
 

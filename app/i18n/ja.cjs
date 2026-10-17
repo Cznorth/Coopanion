@@ -19,4 +19,18 @@ module.exports = {
   strandedKeep: '今の設定を使い続ける',
 
   dataNotWritable: (dir, suggested) => `Coopanion はデータフォルダーに書き込めないため、起動しませんでした：\n${dir}\n\nインストーラーをもう一度実行し、現在のユーザーが書き込めるフォルダーにインストールしてください。例：\n${suggested}`,
+
+  dataFoundMessage: '以前の Coopanion のデータが見つかりました',
+  dataFoundDetail: (data, when, program) => `Coopanion は現在 ${program} にインストールされていて、ここにはまだデータがありません。以前使っていたデータの場所：\n${data}\n最後の起動：${when}\n\n`
+    + '引き継ぐと、設定、API Key、プロンプト、記憶をそのまま使えます。新しく始めると、今の場所で最初からになります。以前のデータは元の場所に残り、削除されません。',
+  dataInherit: 'このデータを引き継ぐ',
+  dataNew: '新しく始める',
+  dataMissingMessage: '以前使っていたデータが見つかりません',
+  dataMissingDetail: (data, when, beside) => `以前使っていたデータの場所：\n${data}\n最後の起動：${when}\n今はそこに Coopanion のデータがありません。\n\n`
+    + `外付けドライブやネットワーク上にある場合は、接続してから「再試行」をクリックしてください。別の場所に移した場合は「フォルダーを選択」で指定してください。新しく始める場合は、ここで最初からになります：\n${beside}`,
+  dataRetry: '再試行',
+  dataChoose: 'フォルダーを選択',
+  dataQuit: '終了',
+  dataChooseTitle: 'Coopanion のデータフォルダーを選択',
+  dataChooseInvalid: (dir) => `このフォルダーには Coopanion のデータがありません：\n${dir}\n\nインストールフォルダー、またはその中の data フォルダーを選んでください。`,
 };

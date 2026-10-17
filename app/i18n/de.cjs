@@ -19,4 +19,18 @@ module.exports = {
   strandedKeep: 'Aktuelle behalten',
 
   dataNotWritable: (dir, suggested) => `Coopanion kann nicht in seinen Datenordner schreiben und wurde nicht gestartet:\n${dir}\n\nFühre das Installationsprogramm erneut aus und installiere in einen Ordner, in den dein Benutzerkonto schreiben darf, zum Beispiel:\n${suggested}`,
+
+  dataFoundMessage: 'Frühere Coopanion-Daten gefunden',
+  dataFoundDetail: (data, when, program) => `Coopanion ist jetzt in ${program} installiert, dort gibt es noch keine Daten. Die bisher verwendeten Daten liegen in:\n${data}\nZuletzt gestartet: ${when}\n\n`
+    + 'Wenn du sie übernimmst, bleiben Einstellungen, API Keys, Prompts und Gedächtnis erhalten. Neu anfangen startet hier von vorn; die bisherigen Daten bleiben, wo sie sind, und werden nicht gelöscht.',
+  dataInherit: 'Diese Daten übernehmen',
+  dataNew: 'Neu anfangen',
+  dataMissingMessage: 'Die bisher verwendeten Daten wurden nicht gefunden',
+  dataMissingDetail: (data, when, beside) => `Die bisher verwendeten Daten lagen in:\n${data}\nZuletzt gestartet: ${when}\nDort sind jetzt keine Coopanion-Daten.\n\n`
+    + `Liegen sie auf einem externen Laufwerk oder im Netzwerk, verbinde es und klicke auf „Erneut versuchen“. Wurden sie verschoben, klicke auf „Ordner auswählen“, um sie zu finden. Neu anfangen startet hier von vorn:\n${beside}`,
+  dataRetry: 'Erneut versuchen',
+  dataChoose: 'Ordner auswählen',
+  dataQuit: 'Beenden',
+  dataChooseTitle: 'Coopanion-Datenordner auswählen',
+  dataChooseInvalid: (dir) => `Dieser Ordner enthält keine Coopanion-Daten:\n${dir}\n\nWähle den Installationsordner oder den Ordner data darin.`,
 };

@@ -66,7 +66,7 @@ You also need an API key from one model service, which bills you for usage (see 
 3. Pick a folder (default `C:\Users\<you>\Coopanion`) and install. Coopanion starts when done, and a desktop icon is added.
 
 > [!NOTE]
-> The program and all its data stay in the install folder and nothing goes to AppData, so it has no Start menu entry. Open it from the desktop icon.
+> The program and all its data stay in the install folder, and it has no Start menu entry. Open it from the desktop icon.
 
 ### Windows: one command
 
@@ -270,6 +270,8 @@ After installing, click **Restart process** and enable it in **World Overview**.
 | Linux   | `~/.config/Coopanion`                     | deb: `sudo apt remove coopanion`; AppImage: delete the file |
 
 Uninstalling keeps the data, so memory and settings are still there after a reinstall. To remove everything, delete the data folder by hand (on Windows, the whole install folder).
+
+On Windows, when the program is in a new folder (a reinstall elsewhere, for example) with no data beside it, Coopanion asks at start whether to inherit the data used before or start a new one. Where that data is, is noted in `%LOCALAPPDATA%\Coopanion\data-location.json`.
 
 Inside the data folder, `home` holds memory, conversations, settings and API keys, `extensions` the extensions, `logs` the logs, and `home/models` the speech model.
 

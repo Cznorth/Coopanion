@@ -80,6 +80,17 @@ irm https://raw.githubusercontent.com/Pal-AI-Lab/Coopanion/main/installer/instal
 
 图形界面安装失败时（杀毒软件可能中途拦下安装），下载的安装包会保留并打印路径。可以用它静默重装：`Coopanion-Setup-版本号.exe /S`，或先把 Coopanion 加进杀毒软件的白名单。
 
+### Windows：便携版
+
+不想安装、要放在移动硬盘里，或者想同时养几只，用便携版：
+
+1. 在[最新发布](https://github.com/Pal-AI-Lab/Coopanion/releases/latest)下载 `Coopanion-版本号-win-x64-portable.zip`，解压到任意文件夹。
+2. 运行文件夹里的 `Coopanion.exe`。
+
+便携版的数据在这个文件夹的 `data` 里，除了你打开「开机自动启动」时写的启动项，不往系统里写东西。把整个文件夹复制一份就是另一只，记忆和设置各管各的。同时最多开 5 只（安装版和便携版加在一起），再开时会提示端口都被占用。
+
+便携版不会自动更新，有新版本时设置窗口的版本号下面会出现下载链接。升级时把新版解压到一个新文件夹，再把旧文件夹里的 `data` 整个复制过去。
+
 ### macOS
 
 1. 打开[最新发布](https://github.com/Pal-AI-Lab/Coopanion/releases/latest)。Apple 芯片下载 `Coopanion-版本号-mac-arm64.dmg`，Intel 下载 `…-mac-x64.dmg`。
@@ -263,7 +274,7 @@ irm https://raw.githubusercontent.com/Pal-AI-Lab/Coopanion/main/installer/instal
 
 | 系统    | 数据位置                                 | 卸载                                                         |
 | ------- | ---------------------------------------- | ------------------------------------------------------------ |
-| Windows | 安装目录下的 `data`                       | 「设置 → 应用」里卸载                                        |
+| Windows | 安装目录下的 `data`；便携版是它所在文件夹的 `data` | 「设置 → 应用」里卸载；便携版先关掉开机自动启动，再删文件夹 |
 | macOS   | `~/Library/Application Support/Coopanion` | 把「应用程序」里的 Coopanion 拖进废纸篓                      |
 | Linux   | `~/.config/Coopanion`                     | deb：`sudo apt remove coopanion`；AppImage：删除文件         |
 

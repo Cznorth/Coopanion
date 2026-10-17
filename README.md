@@ -82,6 +82,17 @@ If the graphical installer fails (antivirus software can stop it halfway), the d
 is kept and its path printed. Retry it silently with `Coopanion-Setup-<version>.exe /S`, or add
 Coopanion to your antivirus's allowed list first.
 
+### Windows: portable
+
+To run Coopanion without installing it, from a removable drive, or as several pets at once, use the portable version:
+
+1. Download `Coopanion-<version>-win-x64-portable.zip` from the [latest release](https://github.com/Pal-AI-Lab/Coopanion/releases/latest) and unpack it into any folder.
+2. Run `Coopanion.exe` in that folder.
+
+The portable version keeps its data in the folder's `data` and writes nothing else to the system, apart from the login item when you turn on Start at login. A copy of the whole folder is another pet with its own memory and settings. Up to 5 can run at once (installed and portable together); one more says that the ports are all taken.
+
+The portable version does not update itself; the settings window shows a download link under the version when a new one is out. To upgrade, unpack the new version into a new folder and copy the old folder's `data` into it.
+
 ### macOS
 
 1. Open the [latest release](https://github.com/Pal-AI-Lab/Coopanion/releases/latest). On Apple silicon download `Coopanion-<version>-mac-arm64.dmg`; on Intel download `…-mac-x64.dmg`.
@@ -265,7 +276,7 @@ After installing, click **Restart process** and enable it in **World Overview**.
 
 | System  | Data folder                               | Uninstall                                                   |
 | ------- | ----------------------------------------- | ----------------------------------------------------------- |
-| Windows | `data` inside the install folder          | Settings → Apps                                             |
+| Windows | `data` inside the install folder; for the portable version, inside its folder | Settings → Apps; for the portable version, turn off Start at login, then delete the folder |
 | macOS   | `~/Library/Application Support/Coopanion` | Drag Coopanion from Applications to the Trash               |
 | Linux   | `~/.config/Coopanion`                     | deb: `sudo apt remove coopanion`; AppImage: delete the file |
 

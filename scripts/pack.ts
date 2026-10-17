@@ -15,7 +15,9 @@
  * `COOPANION_CHANNEL=steam` with `STEAM_APP_ID` builds for Steam instead: the app directory without an
  * installer (`dist/win-unpacked`, `dist/linux-unpacked`), which Steam installs and updates, carrying
  * steamworks.js for the Workshop (app/steam.cjs) and without the whale pack, which goes out through the Workshop.
- * The channel and app id go into the app's package.json as `coopanion` (app/main.cjs).
+ * `COOPANION_CHANNEL=portable` (Windows) builds the portable zip, `dist/Coopanion-<version>-win-x64-portable.zip`:
+ * the app directory to unpack anywhere, without the updater. The channel and app id go into the app's package.json
+ * as `coopanion` (app/main.cjs).
  */
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -42,15 +44,20 @@ if (STEAM && process.platform !== 'win32' && process.platform !== 'linux') {
   console.error('Steam 版只在 Windows 和 Linux 上构建');
   process.exit(1);
 }
+const PORTABLE = process.env.COOPANION_CHANNEL === 'portable';
+if (PORTABLE && process.platform !== 'win32') {
+  console.error('便携版只在 Windows 上构建');
+  process.exit(1);
+}
 const rootPkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as Record<string, unknown> & { version: string };
 const WORKSPACE = ['cortico-world-desktop-pet', 'cortico-provider-coo'];
 /**
  * Runtime dependencies: Core (express, ws), the TypeScript loader, pnpm for extension installs, the updater
- * (app/updater.cjs) or for Steam steamworks.js (app/steam.cjs), and the workspace packages' own.
+ * (app/updater.cjs, not in the portable build) or for Steam steamworks.js (app/steam.cjs), and the workspace packages' own.
  */
 const DEPS: Record<string, string> = {
   express: '^4.22.3', ws: '^8.21.3', tsx: '^4.23.15', pnpm: '11.28.6',
-  ...STEAM ? { 'steamworks.js': '0.4.0' } : { 'electron-updater': '^6.8.9' },
+  ...STEAM ? { 'steamworks.js': '0.4.0' } : PORTABLE ? {} : { 'electron-updater': '^6.8.9' },
 };
 for (const name of WORKSPACE) {
   const pkg = JSON.parse(readFileSync(join(ROOT, 'packages', name, 'package.json'), 'utf8')) as { dependencies?: Record<string, string> };
@@ -112,7 +119,7 @@ writeFileSync(join(OUT, 'package.json'), JSON.stringify({
   name: rootPkg.name, productName: rootPkg.productName, version: rootPkg.version, description: rootPkg.description,
   license: rootPkg.license, author: rootPkg.author, homepage: rootPkg.homepage, type: 'module', main: 'app/main.cjs',
   dependencies: DEPS,
-  coopanion: STEAM ? { channel: 'steam', steamAppId: STEAM_APP_ID } : { channel: 'github' },
+  coopanion: STEAM ? { channel: 'steam', steamAppId: STEAM_APP_ID } : { channel: PORTABLE ? 'portable' : 'github' },
 }, null, 2));
 run('npm', ['install', '--omit=dev', '--no-package-lock', '--no-audit', '--no-fund', '--loglevel=error', `--os=${process.platform}`, `--cpu=${ARCH}`], OUT);
 if (STEAM) {
@@ -133,7 +140,7 @@ if (process.platform === 'win32') await addMinGit(join(OUT, 'mingit'));
 console.log(`app directory ready: ${relative(ROOT, OUT)}`);
 
 const target = process.platform === 'darwin' ? '--mac' : process.platform === 'linux' ? '--linux' : '--win';
-run(join(ROOT, 'node_modules', '.bin', process.platform === 'win32' ? 'electron-builder.cmd' : 'electron-builder'), [target, `--${ARCH}`, ...STEAM ? ['--dir'] : [], '--publish', 'never', ...process.argv.slice(2)], ROOT);
+run(join(ROOT, 'node_modules', '.bin', process.platform === 'win32' ? 'electron-builder.cmd' : 'electron-builder'), [target, ...PORTABLE ? ['zip'] : [], `--${ARCH}`, ...STEAM ? ['--dir'] : [], '--publish', 'never', ...process.argv.slice(2)], ROOT);
 
 if (STEAM) {
   // electron-builder takes node_modules from the pnpm workspace's dependency graph, which has no steamworks.js and

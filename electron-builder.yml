@@ -24,6 +24,8 @@ win:
     - target: nsis
       arch: [x64]
   icon: app/icons/icon.ico
+  # the portable zip (COOPANION_CHANNEL=portable, scripts/pack.ts asks for the zip target); the installer is named under nsis
+  artifactName: Coopanion-${version}-win-${arch}-portable.${ext}
 # Asks where to install. Every file the app writes stays under that directory (data in data\),
 # so the start-menu entry, which Windows keeps under AppData, is not created.
 nsis:

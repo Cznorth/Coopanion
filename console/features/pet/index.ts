@@ -42,6 +42,8 @@ const KEYS = {
   user: `${K}.user`,
   roam: `${K}.roam`,
   scale: `${K}.window.scale`,
+  bubbleSize: `${K}.window.bubbleSize`,
+  fontSize: `${K}.window.fontSize`,
   glow: `${K}.window.glow`,
   lockFps: `${K}.window.lockFrameRate`,
   frameRate: `${K}.window.frameRate`,
@@ -62,7 +64,7 @@ const WAKE_MODES = ['none', 'poke', 'all', 'custom'] as const;
 const TOUCH_KINDS = ['poke', 'pet', 'throw', 'drop'] as const;
 /** `selfAdjust` in the row's order, and `pet_set`'s items in the World's order (SELF_KEYS), the first four direct by default. */
 const SELF_MODES = ['off', 'default', 'any', 'custom'] as const;
-const SELF_KEYS = ['figure', 'scheme', 'roam', 'snoreSeconds', 'sound', 'scale', 'theme', 'hoverButtons', 'user'] as const;
+const SELF_KEYS = ['figure', 'scheme', 'roam', 'snoreSeconds', 'sound', 'scale', 'bubbleSize', 'fontSize', 'theme', 'hoverButtons', 'user'] as const;
 const SELF_DEFAULT: readonly string[] = ['figure', 'scheme', 'roam', 'snoreSeconds'];
 
 /** What the pet panel's state says of the two rows. */
@@ -86,6 +88,8 @@ interface ConfigEntry { group: { id: string }; values?: Record<string, unknown> 
 const SCALE_MIN = .5, SCALE_SOFT_MAX = 2, SCALE_MAX = 10;
 /** The halo's reach in pixels, as GLOW_MAX and GLOW_DEFAULT in the World's config.ts: 0 turns it off. */
 const GLOW_MAX = 16, GLOW_DEFAULT = 7;
+/** The range of the bubble and text sizes, as BUBBLE_SIZE_MIN and BUBBLE_SIZE_MAX in the World's config.ts; 1 is the bubbles as they were drawn. */
+const BUBBLE_SIZE_MIN = .8, BUBBLE_SIZE_MAX = 1.6;
 const FRAME_RATES = [60, 120, 144, 0];
 
 /** While the size slider moves, at most one save per this many milliseconds. */
@@ -138,6 +142,22 @@ async function mount(ctx: PageContext): Promise<void> {
   glowBox.append(glow.el, glowText);
   new ResizeObserver(() => glow.relayout()).observe(glowBox);
   const showGlow = () => { glowText.textContent = glowLabel(glow.value); };
+  // 气泡尺寸 and 字体尺寸: the same slider in steps of 5%, saved once a drag or a key press ends
+  const sizeSlider = (label: string, key: string) => {
+    const text = ui.h('span', 'companion-rangeval');
+    const box = ui.h('div', 'companion-rangebox');
+    const show = () => { text.textContent = `${Math.round(slider.value * 100)}%`; };
+    const slider = scaleSlider(root.ownerDocument, {
+      min: BUBBLE_SIZE_MIN, soft: BUBBLE_SIZE_MAX, max: BUBBLE_SIZE_MAX, step: .05, label,
+      room: () => box.clientWidth - text.offsetWidth - 12,
+      onInput: () => show(),
+      onChange: () => { show(); void save(key, slider.value, GROUP, displayMsg); },
+    });
+    box.append(slider.el, text);
+    new ResizeObserver(() => slider.relayout()).observe(box);
+    return { box, slider, show };
+  };
+  const bubbleSize = sizeSlider(S.bubbleSize, KEYS.bubbleSize), fontSize = sizeSlider(S.fontSize, KEYS.fontSize);
   const frameRate = ui.segmented(FRAME_RATES.map((n) => ({ value: String(n), label: n ? String(n) : S.frameUnlimited })),
     { size: 'sm', onSelect: (v) => void save(KEYS.frameRate, Number(v), GROUP, displayMsg) });
   const lockFps = ui.checkbox(S.lockFps, { onChange: (on) => void save(KEYS.lockFps, on, GROUP, displayMsg) });
@@ -299,6 +319,8 @@ async function mount(ctx: PageContext): Promise<void> {
   const display = ui.sheet({ title: S.groupDisplay });
   display.body.append(
     row(S.scale, scaleBox),
+    row(S.bubbleSize, bubbleSize.box, S.bubbleSizeHint),
+    row(S.fontSize, fontSize.box, S.fontSizeHint),
     row(S.glow, glowBox, S.glowHint),
     row(S.frameRate, frameRate.el, S.frameRateHint),
     row('', lockFps.el, S.lockFpsHint),
@@ -430,6 +452,9 @@ async function mount(ctx: PageContext): Promise<void> {
     if (typeof values[KEYS.roam] === 'string') roam.setValue(values[KEYS.roam] as string);
     if (typeof values[KEYS.scale] === 'number' && !scale.active && active !== scale.el) { scale.set(values[KEYS.scale] as number); showScale(); }
     if (!glow.active && active !== glow.el) { glow.set(typeof values[KEYS.glow] === 'number' ? values[KEYS.glow] as number : GLOW_DEFAULT); showGlow(); }
+    for (const [s, key] of [[bubbleSize, KEYS.bubbleSize], [fontSize, KEYS.fontSize]] as const) {
+      if (!s.slider.active && active !== s.slider.el) { s.slider.set(typeof values[key] === 'number' ? values[key] as number : 1); s.show(); }
+    }
     if (typeof values[KEYS.frameRate] === 'number') frameRate.setValue(String(values[KEYS.frameRate]));
     if (typeof soundValues[KEYS.sound] === 'boolean') sound.setChecked(soundValues[KEYS.sound] as boolean);
     for (const [kind, c] of kinds) {

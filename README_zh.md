@@ -222,7 +222,7 @@ irm https://raw.githubusercontent.com/Pal-AI-Lab/Coopanion/main/installer/instal
 <p align="center"><img src="image/README/habits-zh.png" alt="Habits" width="720"></p>
 <p align="center"><img src="image/README/dress-zh.png" alt="Dress up" width="720"></p>
 
-展开侧栏后，左上角显示当前版本，有新版本时下面会出现下载链接。Windows 版和 AppImage 会在后台自动下载新版本，下好后 Coo 会在气泡里问你要不要重启更新，不急的话下次退出时自动装上；下载卡住时可以去 GitHub 手动下载。Mac 版和 deb 仍需手动下载。更新之后，Coo 会告诉你新版本有什么变化；你在这里改了称呼、装扮、走动或电脑操作这些设置，它也会知道并回应。
+展开侧栏后，左上角显示当前版本。Windows 版和 AppImage 会在后台自动下载新版本，版本下面显示下载到了哪一步；下好后 Coo 会在气泡里问你要不要重启更新，不急的话下次退出时自动装上；下载失败时版本下面会出现手动下载的链接。Mac 版和 deb 在有新版本时，版本下面会出现下载链接，需要手动下载。更新之后，Coo 会告诉你新版本有什么变化；你在这里改了称呼、装扮、走动或电脑操作这些设置，它也会知道并回应。
 
 左栏底部的「**高级模式**」显示全部页面（World、模型、扩展、记忆、控制台与诊断），「回到普通模式」收起。普通模式折叠侧栏时隐藏「高级模式」按钮，展开后显示。
 
@@ -257,7 +257,7 @@ irm https://raw.githubusercontent.com/Pal-AI-Lab/Coopanion/main/installer/instal
 - **发给模型服务的内容**：你说的话、打的字、和 Coo 的互动，以及操作电脑时的截图。只发给你配置的那一家。
 - **留在本机的内容**：API Key 和 ChatGPT 的登录状态、记忆、对话记录、设置、日志。语音在本机识别，只把识别出的文字发出去。
 - **匿名使用统计**：发到 `survey.palailab.org`，只有使用次数、时长、设置和随机生成的安装编号，不含对话、截图、Key 和文件。字段见 [docs/TELEMETRY.md](docs/TELEMETRY.md)，可在「习惯」页关闭。
-- **其他联网**：打开设置窗口时向 GitHub 查询新版本；扩展页访问 npm 与 GitHub 上的官方扩展索引，投票和评论访问 GitHub；下载语音模型时访问 ModelScope（失败时用 Hugging Face）。
+- **其他联网**：向 GitHub 查询新版本（Windows 版和 AppImage 在后台定时查询，Mac 版和 deb 在打开设置窗口时查询）；扩展页访问 npm 与 GitHub 上的官方扩展索引，投票和评论访问 GitHub；下载语音模型时访问 ModelScope（失败时用 Hugging Face）。
 
 ## 数据与卸载
 

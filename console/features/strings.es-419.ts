@@ -10,4 +10,7 @@ export const S: Partial<typeof en> = {
   // release.ts
   repoHint: 'Abrir el proyecto Coopanion en GitHub',
   update: (latest: string) => `Salió Coopanion ${latest}: descarga la actualización`,
+  updateDownloading: (version: string) => `Coopanion ${version} se está descargando en segundo plano`,
+  updateReady: (version: string) => `Coopanion ${version} ya se descargó y se instala al salir`,
+  updateFailed: (version: string) => `Coopanion ${version} no se descargó: descárgalo a mano`,
 };

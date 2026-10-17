@@ -224,7 +224,7 @@ Click the tray icon, or right-click Coo and click the gear. The window opens in 
 <p align="center"><img src="image/README/habits-en.png" alt="Habits" width="720"></p>
 <p align="center"><img src="image/README/dress-en.png" alt="Dress up" width="720"></p>
 
-The expanded sidebar shows the current version at the top left, with a download link below it when a newer release is out. The Windows build and the AppImage download new versions in the background; Coo then asks in its bubble whether to restart and update, or the update installs the next time you quit. If a download stalls, get it from GitHub yourself. On Mac and with the deb, download new versions by hand. After an update, Coo tells you what the new version brings; when you change what it calls you, its dress, walking, computer use or similar settings here, it hears about it and responds.
+The expanded sidebar shows the current version at the top left. The Windows build and the AppImage download new versions in the background, and the line under the version says how far the download is; Coo then asks in its bubble whether to restart and update, or the update installs the next time you quit. If a download fails, that line links to the release for a download by hand. On Mac and with the deb, the line links to a newer release when one is out, to download by hand. After an update, Coo tells you what the new version brings; when you change what it calls you, its dress, walking, computer use or similar settings here, it hears about it and responds.
 
 **Advanced mode** at the bottom left shows every page (Worlds, models, extensions, memory, console and diagnostics); **Back to normal mode** hides them again. In normal mode, expand the sidebar to show the Advanced mode button.
 
@@ -259,7 +259,7 @@ After installing, click **Restart process** and enable it in **World Overview**.
 - **Sent to the model service**: what you say and type, your interactions with Coo, and screenshots during computer use. Only the service you configured receives them.
 - **Kept on your machine**: API keys and the ChatGPT sign-in, memory, conversation history, settings and logs. Speech is recognized locally and only the text is sent.
 - **Anonymous usage statistics**: sent to `survey.palailab.org`. Only counts, time used, settings and a random install ID; no conversations, screenshots, keys or files. Every field is listed in [docs/TELEMETRY.md](docs/TELEMETRY.md). Turn it off in Habits.
-- **Other network access**: a check for new releases on GitHub when the settings window opens; npm and the official extension index on GitHub on the Extensions page, and GitHub for votes and comments; ModelScope (or Hugging Face as a fallback) when downloading the speech model.
+- **Other network access**: checks for new releases on GitHub (in the background on Windows and with the AppImage, when the settings window opens on Mac and with the deb); npm and the official extension index on GitHub on the Extensions page, and GitHub for votes and comments; ModelScope (or Hugging Face as a fallback) when downloading the speech model.
 
 ## Data and uninstalling
 

@@ -10,4 +10,7 @@ export const S: Partial<typeof en> = {
   // release.ts
   repoHint: '在 GitHub 上開啟 Coopanion 專案',
   update: (latest: string) => `Coopanion ${latest} 已發布，點這裡下載更新`,
+  updateDownloading: (version: string) => `Coopanion ${version} 正在背景下載`,
+  updateReady: (version: string) => `Coopanion ${version} 已下載，結束時自動安裝`,
+  updateFailed: (version: string) => `Coopanion ${version} 沒能自動下載，點這裡手動下載`,
 };

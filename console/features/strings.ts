@@ -19,6 +19,9 @@ const zh = {
   // release.ts
   repoHint: '在 GitHub 上打开 Coopanion 项目',
   update: (latest: string) => `Coopanion ${latest} 已发布，点击下载更新`,
+  updateDownloading: (version: string) => `Coopanion ${version} 正在后台下载`,
+  updateReady: (version: string) => `Coopanion ${version} 已下载，退出时自动安装`,
+  updateFailed: (version: string) => `Coopanion ${version} 没能自动下载，点击手动下载`,
 };
 
 export const en: typeof zh = {
@@ -31,6 +34,9 @@ export const en: typeof zh = {
   // release.ts
   repoHint: 'Open the Coopanion project on GitHub',
   update: (latest: string) => `Coopanion ${latest} is out: download the update`,
+  updateDownloading: (version: string) => `Coopanion ${version} is downloading in the background`,
+  updateReady: (version: string) => `Coopanion ${version} is downloaded and installs when you quit`,
+  updateFailed: (version: string) => `Coopanion ${version} did not download: download it by hand`,
 };
 
 export const S = pick({

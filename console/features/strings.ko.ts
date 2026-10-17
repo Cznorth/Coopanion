@@ -10,4 +10,7 @@ export const S: Partial<typeof en> = {
   // release.ts
   repoHint: 'GitHub에서 Coopanion 프로젝트 열기',
   update: (latest: string) => `Coopanion ${latest} 출시: 업데이트 다운로드`,
+  updateDownloading: (version: string) => `Coopanion ${version} 백그라운드에서 다운로드 중`,
+  updateReady: (version: string) => `Coopanion ${version} 다운로드 완료, 종료할 때 자동 설치`,
+  updateFailed: (version: string) => `Coopanion ${version} 자동 다운로드 실패: 직접 다운로드`,
 };

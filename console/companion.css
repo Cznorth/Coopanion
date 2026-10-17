@@ -54,7 +54,9 @@ body.companion-sidebar { display: flex; height: 100dvh; overflow: hidden; }
   font-size: 11px; line-height: 1.4; text-decoration: none; text-wrap: balance; word-break: keep-all; overflow-wrap: anywhere;
   transition: background-color 120ms ease, border-color 120ms ease;
 }
-.companion-brand-meta .release-hint:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); border-color: var(--accent); }
+.companion-brand-meta a.release-hint:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); border-color: var(--accent); }
+/* the updater's progress (features/release.ts) is a line to read: muted, where a link is in the accent colour */
+.companion-brand-meta span.release-hint { color: var(--muted-foreground); border-color: color-mix(in srgb, var(--muted-foreground) 35%, transparent); }
 /* collapsed, the version only fades out of sight: its room stays, so the collapse button under it does not move
    (a new release's link under it does fold away, see .companion-release) */
 .is-collapsed .companion-brand-meta { visibility: hidden; opacity: 0; transition: opacity 140ms ease, visibility 0s linear 140ms; }

@@ -32,12 +32,6 @@ DeepSeek 女仆装二创参考 ZipZipPipe。围裙上的标志是 DeepSeek、Ope
 
 这些贴图不在本包的 AGPL 授权范围内。它们随 Coopanion 分发,想在别处使用请自行确认原设与各家标志的权利。
 
-## 表情包字体
-
-装扮页导出表情包时字幕默认用[站酷快乐体](https://github.com/googlefonts/zcool-kuaile)(ZCOOL KuaiLe),
-SIL Open Font License 1.1。npm 包里不带;Coopanion 构建时(`scripts/stage.ts`)从 google/fonts 的固定提交取
-`ZCOOLKuaiLe-Regular.ttf` 和许可原文 `OFL.txt` 到 `web/stickers/fonts/`,按 SHA-256 校验，随安装包分发。没有这个文件时字幕用系统字体。
-
 ## 其他运行时依赖
 
 - `ws`:MIT

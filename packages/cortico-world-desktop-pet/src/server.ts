@@ -44,7 +44,6 @@ const MIME: Record<string, string> = {
   '.ogg': 'audio/ogg',
   '.mp3': 'audio/mpeg',
   '.wav': 'audio/wav',
-  '.ttf': 'font/ttf',
 };
 const PAGES: Record<string, string> = { '/pet': 'pet.html', '/dress': 'dress.html' };
 const LOOPBACK = /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/i;

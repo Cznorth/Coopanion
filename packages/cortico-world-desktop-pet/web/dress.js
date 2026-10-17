@@ -22,7 +22,6 @@ import {
 } from './coo/coo.js';
 import { loadBody } from './body-host.js';
 import { announcePainted, dressFloor, glowColor, lightWall, modeButton, setGlow } from './stage.js';
-import { stickerExport } from './stickers/export.js';
 
 import { bindAppearance } from './appearance.js';
 bindAppearance(document, window);
@@ -414,9 +413,6 @@ const importDialog = (() => {
     },
   };
 })();
-
-const stickers = stickerExport($('#stickerDialog'), sfx);
-$('#stickerOpen').addEventListener('click', () => { sfx.tick(); stickers.open(); });
 
 // a zip or folders dragged onto the page
 const dropHint = $('#dropHint');

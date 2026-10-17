@@ -4,5 +4,3 @@ dist/
 scratch/
 *.log
 promo/assets/bgm.mp3
-# the stickers' font, fetched by scripts/stage.ts
-packages/cortico-world-desktop-pet/web/stickers/fonts/

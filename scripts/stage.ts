@@ -9,13 +9,10 @@
  *    with Tailwind;
  * 2. the desktop pet World's panel bundle, which the settings window loads the same way;
  * 3. `build/console/`: the settings window (`console/index.ts`, `console/index.html`), which the
- *    Electron main process serves under `/coopanion/` on Core's origin;
- * 4. the stickers' built-in font, ZCOOL KuaiLe (OFL), fetched into the desktop pet's `web/stickers/fonts/`,
- *    which git ignores and the installer copies with the package.
+ *    Electron main process serves under `/coopanion/` on Core's origin.
  *
  * Run: `pnpm run build:cortico`. Idempotent; the previous output is replaced.
  */
-import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -77,25 +74,6 @@ rmSync(entry);
 const pet = join(ROOT, 'packages', 'cortico-world-desktop-pet');
 const panel = spawnSync(process.execPath, [join(pet, 'scripts', 'build-webui.mjs')], { cwd: pet, stdio: 'inherit' });
 if (panel.status !== 0) process.exit(panel.status ?? 1);
-
-/** The stickers' caption font and its licence, pinned to a google/fonts commit and by SHA-256. */
-const FONT_BASE = 'https://raw.githubusercontent.com/google/fonts/a606d6f3181c62b792c8c1463d309c6a8abb8a12/ofl/zcoolkuaile/';
-const FONT_FILES = {
-  'ZCOOLKuaiLe-Regular.ttf': '812a6fc1fe54b6d73a419245c32dfeba8aa33104d5be90d1cf6af082007cb71d',
-  'OFL.txt': '9745d533650410a3ca74839d7ee8abf0c79cd98b36edd798e98b9a95eee82f3a',
-};
-const fontDir = join(pet, 'web', 'stickers', 'fonts');
-for (const [name, sha256] of Object.entries(FONT_FILES)) {
-  const file = join(fontDir, name);
-  const sum = (b: Buffer) => createHash('sha256').update(b).digest('hex');
-  if (existsSync(file) && sum(readFileSync(file)) === sha256) continue;
-  const res = await fetch(FONT_BASE + name);
-  if (!res.ok) throw new Error(`表情包字体下载失败:HTTP ${res.status} ${FONT_BASE + name}`);
-  const data = Buffer.from(await res.arrayBuffer());
-  if (sum(data) !== sha256) throw new Error(`表情包字体校验不符:${name} 得到 ${sum(data)},应为 ${sha256}`);
-  mkdirSync(fontDir, { recursive: true });
-  writeFileSync(file, data);
-}
 
 // the settings window: one ES module bundle (the CSS it imports becomes index.css), its stylesheet, the page.
 // The version and the build's channel (COOPANION_CHANNEL as scripts/pack.ts writes it into the app, github

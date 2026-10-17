@@ -446,12 +446,14 @@ async function ensurePet() {
 /**
  * Start at login. Electron's login items cover Windows and macOS; on Linux it is an XDG autostart entry
  * (~/.config/autostart/coopanion.desktop) that runs the AppImage, or the installed executable.
+ * Windows reads `openAtLogin` back only with the arguments it was set with.
  */
 const AUTOSTART = join(app.getPath('home'), '.config', 'autostart', 'coopanion.desktop');
+const LOGIN_ARGS = ['--background'];
 const loginItem = {
-  get: () => (LINUX ? existsSync(AUTOSTART) : app.getLoginItemSettings().openAtLogin),
+  get: () => (LINUX ? existsSync(AUTOSTART) : app.getLoginItemSettings({ args: LOGIN_ARGS }).openAtLogin),
   set(on) {
-    if (!LINUX) { app.setLoginItemSettings({ openAtLogin: on, args: ['--background'] }); return; }
+    if (!LINUX) { app.setLoginItemSettings({ openAtLogin: on, args: LOGIN_ARGS }); return; }
     if (!on) { rmSync(AUTOSTART, { force: true }); return; }
     const exe = process.env.APPIMAGE || process.execPath;
     mkdirSync(dirname(AUTOSTART), { recursive: true });

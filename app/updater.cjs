@@ -1,13 +1,14 @@
 /**
  * Updates from the GitHub releases (electron-updater), where they can install themselves: the Windows
  * installer and the Linux AppImage. A macOS build is signed ad hoc, which Squirrel.Mac refuses to
- * install, and a deb belongs to the package manager; there the settings window's version line still
- * says when a release is out.
+ * install, and a deb belongs to the package manager; there the settings window's version line links
+ * to a newer release.
  *
  * A newer release downloads in the background. Each step is handed to the Core (`tell`), which says
- * it in Coo's bubble with a way to the releases page, since a download from GitHub can crawl: found
- * and downloading, downloaded (restart now, or it installs when the app quits), or failed. What the
- * updater does is written to `updater.log` in the logs directory.
+ * it in Coo's bubble, and to the settings window's version line: found and downloading, downloaded
+ * (restart now, or it installs when the app quits), or failed. Only a failed download points to the
+ * releases page outright; while downloading, the bubble's second button shows that way on hover. What
+ * the updater does is written to `updater.log` in the logs directory.
  */
 const { app } = require('electron');
 const { createWriteStream, mkdirSync } = require('node:fs');
@@ -80,4 +81,4 @@ function startUpdater({ logDir, tell }) {
   };
 }
 
-module.exports = { startUpdater, RELEASES_URL };
+module.exports = { canUpdate, startUpdater, RELEASES_URL };

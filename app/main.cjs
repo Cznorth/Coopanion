@@ -148,7 +148,7 @@ if (!app.requestSingleInstanceLock()) {
 
 const { CoreHost } = require('./core-host.cjs');
 const { configuredLanguage, systemLanguage, textOf } = require('./i18n/index.cjs');
-const { RELEASES_URL, startUpdater } = require('./updater.cjs');
+const { RELEASES_URL, canUpdate, startUpdater } = require('./updater.cjs');
 
 const userData = app.getPath('userData');
 const shimDir = join(__dirname, 'shims');
@@ -190,6 +190,8 @@ let quitting = false;
 let updater = null;
 /** The updater's last step, told again to a Core that starts after it (`core/companion.ts` says it in the bubble). */
 let updateStep = null;
+/** What the settings window's version line shows of the updater (`settings-preload.cjs`). */
+const updateLine = () => updateStep && { phase: updateStep.phase, version: updateStep.version };
 
 /** The app language, set once the app is ready (see the module header). */
 let language = 'en';
@@ -503,6 +505,7 @@ function askRestoreStranded() {
 }
 
 ipcMain.on('settings:language', (e) => { e.returnValue = language; });
+ipcMain.on('settings:update', (e) => { e.returnValue = { auto: !STEAM && canUpdate(), step: updateLine() }; });
 
 app.whenReady().then(() => {
   const settingsSession = session.fromPartition(SETTINGS_PARTITION);
@@ -520,6 +523,10 @@ app.whenReady().then(() => {
   void core.start();
   if (!STEAM) updater = startUpdater({
     logDir: join(userData, 'logs'),
-    tell: (step) => { updateStep = { type: 'companion:update', ...step }; core.send(updateStep); },
+    tell: (step) => {
+      updateStep = { type: 'companion:update', ...step };
+      core.send(updateStep);
+      settings?.webContents.send('settings:update', updateLine());
+    },
   });
 });

@@ -25,6 +25,8 @@ async function mount(ctx: PageContext): Promise<void> {
   root.classList.add('home');
 
   const frame = ui.h('iframe', 'companion-dressframe');
+  // the sticker export lists installed fonts (queryLocalFonts), which a cross-origin frame may only with this
+  frame.allow = 'local-fonts';
   const reveal = revealWhenPainted(frame, signal);
   frame.title = S.nav;
   // shown only while the pet is not ready

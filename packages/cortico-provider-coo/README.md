@@ -21,6 +21,7 @@ Coo Pet Provider:[Cortico](https://github.com/Pal-AI-Lab/Cortico) 的一个 prov
 | `doubao` | 豆包(火山方舟) | `https://ark.cn-beijing.volces.com/api/v3` | responses | `doubao-seed-2-1-lite-260915` |
 | `minimax` | MiniMax | 国内 `api.minimax.cn/v1`,国际 `api.minimax.io/v1` | responses | `MiniMax-M3` |
 | `stepfun` | 阶跃星辰 | `https://api.stepfun.com/v1` | responses | `step-3.7-flash` |
+| `stepfun-plan` | 阶跃 Step Plan | `https://api.stepfun.com/step_plan/v1` | chat | `step-5-preview` |
 | `qianfan` | 百度千帆 | `https://qianfan.baidubce.com/v2` | chat | `glm-5.3-flash` |
 | `openrouter` | OpenRouter | `https://openrouter.ai/api/v1` | responses | `deepseek/deepseek-v4.1-flash` |
 | `openai` | OpenAI | `https://api.openai.com/v1` | responses | `gpt-6-luna` |
@@ -29,7 +30,7 @@ Coo Pet Provider:[Cortico](https://github.com/Pal-AI-Lab/Cortico) 的一个 prov
 | `xai` | xAI | `https://api.x.ai/v1` | responses | `grok-4.3` |
 
 表在 `src/vendors.ts`,数据取自各家文档(国内平台 2026-09-24,其余 2026-10-08,默认模型和智谱、OpenRouter 的思考档位 2026-10-09 复核)。默认模型取每家快、便宜、能看图的那档;
-`Vendor.models` 是另外几个推荐的模型名,任何那一家接受的模型名都能填。**拿真实 Key 跑过的只有 DeepSeek 和 Anthropic**。
+`Vendor.models` 是另外几个推荐的模型名,任何那一家接受的模型名都能填。**拿真实 Key 跑过的只有 DeepSeek、Anthropic 和阶跃 Step Plan**。
 
 - **哪一家、哪个平台**:按 `baseUrl` 认(`locate` / `vendorOf`),端点里不另存字段。有国内、国际两个平台的服务账号和 Key 不通用,
   各自一个端点:国内用服务 id 作端点名,国际加 `-intl`(`endpointName`)。智谱国内的 Responses 端点在 `/api/v1` 下,不是对话接口的 `/api/paas/v4`。
@@ -38,7 +39,7 @@ Coo Pet Provider:[Cortico](https://github.com/Pal-AI-Lab/Cortico) 的一个 prov
   等完整响应校验成功后再执行工具,避免空参数调用和已回复后的协议错误重试。工具开始执行前需等待整条响应返回。
 - **思考档位**:不思考 / 快 / 标准 / 最深,Responses 发 `reasoning.effort`、Chat 发 `reasoning_effort` = `none` / `low` / `high` / `max`;
   某家文档写明只收别的值时按 `effortOf` 换算(`Vendor.effort`、平台的 `Site.effort`、个别模型的 `Vendor.modelEffort`):千问 `high→medium`、`max→xhigh`;
-  Kimi、智谱两个平台的 GLM-5.3 系列、OpenRouter 的 `z-ai/glm-5.3-flash` 没有 `none`,换成 `low`;MiniMax、阶跃星辰没有 `max`,换成 `high`;千帆、智谱的 GLM-4.6V 没写 effort,不发;
+  Kimi、智谱两个平台的 GLM-5.3 系列、OpenRouter 的 `z-ai/glm-5.3-flash` 没有 `none`,换成 `low`;MiniMax、阶跃星辰(两种计费)没有 `max`,换成 `high`;千帆、智谱的 GLM-4.6V 没写 effort,不发;
   OpenAI 的 `gpt-6.1-sol`、`gpt-6-astra` 没有 `none`;xAI 没有 `max`,换成 `xhigh`,`grok-4.7` 也没有 `none`。
   Anthropic 按 `src/anthropic/wire.ts` 的 `thinkingParams`(Haiku 5.5 关思考发 `disabled`,Sonnet 5.5 发 `between_tools`,Opus 5.5 关不掉,改发 low);
   Gemini 按 `src/gemini/wire.ts` 的 `thinkingConfig`(Gemini 3 关不掉,不思考时 Flash-Lite 发 `minimal`、其余发 `low`)。
@@ -55,7 +56,7 @@ Coo Pet Provider:[Cortico](https://github.com/Pal-AI-Lab/Cortico) 的一个 prov
 - **标志**:`src/icons.ts`,取自 [@lobehub/icons-static-svg](https://github.com/lobehub/lobe-icons)(MIT)。标志归各自的公司所有,只用来标明是哪一家。
 - **语言**:控制台里的说明、思考档位与协议设置项在 `src/strings.ts`(`zh`、`en`)与 `src/strings.<语言>.ts`(只写译好的顶层键);
   `names` / `keyHint` 按语言给(`localized`);两处都是繁体中文回落简体,其余回落英文;`vendorsFor(language)` 给推荐顺序,
-  非中文时豆包、百度千帆、阶跃星辰(只收中国大陆账号)放在 `more` 里;`defaultRegion`:中文用国内平台,其余用国际平台。
+  非中文时豆包、百度千帆、阶跃星辰和阶跃 Step Plan(只收中国大陆账号)放在 `more` 里;`defaultRegion`:中文用国内平台,其余用国际平台。
 - **接入流程**:`src/connect.ts` 的 `connectVendor` 经 Cortico WebUI 的 provider 路由给某一家的某个平台建端点
   (密钥存在该端点 `.env` 的 `Vendor.secret` 下,模型按传入的名字,留空用默认)、测试,通过后设为当前端点并恢复运行;
   已有端点留空 Key 时沿用存着的。Coopanion 的桌面引导和「开始」页都用它。

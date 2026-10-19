@@ -168,6 +168,26 @@ describe('Coo Pet Provider', () => {
     }
   });
 
+  it('sends Step Plan over Chat under /step_plan with the thinking level it takes, and reads its reasoning', async () => {
+    const sent: Array<{ url: string; body: Record<string, unknown> }> = [];
+    const reply = { id: 'c', model: 'step-5-preview', choices: [{ index: 0, message: { role: 'assistant', content: 'ok', reasoning_content: '想' }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 } };
+    vi.stubGlobal('fetch', async (url: string, init: { body: string }) => {
+      sent.push({ url: String(url), body: JSON.parse(init.body) as Record<string, unknown> });
+      return new Response(JSON.stringify(reply), { status: 200, headers: { 'content-type': 'application/json' } });
+    });
+    const v = VENDORS.find((x) => x.id === 'stepfun-plan')!;
+    const instance = COO.create(v.id, entry({ baseUrl: siteOf(v, 'cn').baseUrl, spec: { model: v.model, thinking: true, reasoningEffort: 'max' } }), host() as never);
+    try {
+      const out = await instance.client.respond({ model: v.model, input: [message('user', '在吗').item], reasoning: { effort: 'max' } } as unknown as Request, {});
+      expect(sent[0].url).toBe('https://api.stepfun.com/step_plan/v1/chat/completions');
+      expect(sent[0].body).toMatchObject({ model: 'step-5-preview', reasoning_effort: 'high' });
+      expect(out.response.output[0]).toMatchObject({ type: 'reasoning', content: [{ text: '想' }] });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('moves tool result images into a user message after them for a service whose tool output takes text only', async () => {
     const bodies: Array<Record<string, unknown>> = [];
     const reply = { id: 'r', object: 'response', model: 'm', status: 'completed', created_at: 1, output: [], usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 } };

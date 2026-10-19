@@ -23,3 +23,6 @@ export const VENDOR_ICONS: Record<string, string> = {
 
 /** ChatGPT is OpenAI's and takes the same mark. */
 VENDOR_ICONS.chatgpt = VENDOR_ICONS.openai!;
+
+/** Step Plan is StepFun's and takes the same mark. */
+VENDOR_ICONS['stepfun-plan'] = VENDOR_ICONS.stepfun!;

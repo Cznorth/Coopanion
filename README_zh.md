@@ -152,6 +152,7 @@ irm https://raw.githubusercontent.com/Pal-AI-Lab/Coopanion/main/installer/instal
 | 豆包（火山方舟）       | [ark.volcengine.com](https://ark.volcengine.com/region:cn-beijing/apikey)                                                                                                        | `doubao-seed-2-1-lite-260915`（要先在方舟控制台「开通管理」里开通）        |
 | MiniMax                | 国内 [platform.minimax.cn](https://platform.minimax.cn/user-center/basic-information/interface-key)，国际 [platform.minimax.io](https://platform.minimax.io/user-center/basic-information/interface-key) | `MiniMax-M3`                                                               |
 | 阶跃星辰               | [platform.stepfun.com](https://platform.stepfun.com/interface-key)                                                                                                               | `step-3.7-flash`                                                           |
+| 阶跃 Step Plan         | [platform.stepfun.com](https://platform.stepfun.com/interface-key)                                                                                                               | `step-5-preview`（扣 Step Plan 套餐额度）                                  |
 | 百度千帆               | [console.bce.baidu.com](https://console.bce.baidu.com/iam/#/iam/apikey/list)                                                                                                     | `glm-5.3-flash`                                                            |
 | OpenRouter             | [openrouter.ai](https://openrouter.ai/settings/keys)                                                                                                                             | `deepseek/deepseek-v4.1-flash`                                             |
 | OpenAI                 | [platform.openai.com](https://platform.openai.com/settings/organization/api-keys)                                                                                                | `gpt-6-luna`                                                               |
@@ -161,9 +162,9 @@ irm https://raw.githubusercontent.com/Pal-AI-Lab/Coopanion/main/installer/instal
 
 默认模型是每家快、便宜且能看图的一档。要换，在引导里改模型名，或在「开始」页的「模型」框里填。
 
-通义千问、Kimi、智谱 GLM、MiniMax 各有国内和国际两个平台，账号和 Key 不通用。新建连接时，应用语言是简体中文用国内平台，其他语言用国际平台；「开始」页可以切换。豆包、百度千帆、阶跃星辰只收中国大陆账号，简体中文以外的语言把它们收在「更多」里。
+通义千问、Kimi、智谱 GLM、MiniMax 各有国内和国际两个平台，账号和 Key 不通用。新建连接时，应用语言是简体中文用国内平台，其他语言用国际平台；「开始」页可以切换。豆包、百度千帆、阶跃星辰、阶跃 Step Plan 只收中国大陆账号，简体中文以外的语言把它们收在「更多」里。
 
-拿真实 Key 测过的只有 DeepSeek 和 Anthropic，其他几家是照文档接入的。连不上请开 issue。
+拿真实 Key 测过的只有 DeepSeek、Anthropic 和阶跃 Step Plan，其他几家是照文档接入的。连不上请开 issue。
 
 **ChatGPT** 不用 Key：选它，点「使用 ChatGPT 继续」，在打开的浏览器里登录（Sign in with ChatGPT）。Coo 的请求计入这个账号的 ChatGPT 套餐用量，受套餐的用量上限约束，请在 ChatGPT 的设置里留意额度。到了上限，Coo 不再说话，每隔几分钟再试，直到套餐恢复额度。连接先用套餐列出的第一个模型；登录状态存在这个连接的目录里，到期自动续。高级模式「模型」页这个连接的「ChatGPT 账号」一节可以重新登录或退出登录；删除这个连接会先退出登录，这个连接不能复制。
 

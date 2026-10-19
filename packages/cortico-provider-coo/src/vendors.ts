@@ -5,7 +5,8 @@
  * with its own accounts, keys and base URL. Base URLs, protocols, starting models, key pages, image
  * input, context windows and thinking levels are from each service's own documentation (Chinese
  * services' mainland platforms read 2026-09-24, everything else 2026-10-08, starting models and GLM's
- * and OpenRouter's thinking levels checked again 2026-10-09); only DeepSeek and Anthropic have been tried with a key.
+ * and OpenRouter's thinking levels checked again 2026-10-09, StepFun's Step Plan read 2026-10-20);
+ * only DeepSeek, Anthropic and StepFun's Step Plan have been tried with a key.
  *
  * This file imports nothing, so the browser console and the app's first-run seed can use it.
  */
@@ -196,6 +197,15 @@ export const VENDORS: readonly Vendor[] = [
     toolOutputText: true,
   },
   {
+    // StepFun's subscription, billed to its Step Plan Credit: Chat and the Messages API only, under
+    // /step_plan, with keys from the same page
+    id: 'stepfun-plan', names: { zh: '阶跃 Step Plan', 'zh-Hant': '階躍 Step Plan', en: 'StepFun Step Plan', ja: 'StepFun Step Plan', ko: 'StepFun Step Plan' }, keyHint: PASTE_KEY, secret: 'STEPFUN_PLAN_API_KEY',
+    sites: { global: { baseUrl: 'https://api.stepfun.com/step_plan/v1', protocol: 'chat', keyUrl: 'https://platform.stepfun.com/interface-key' } },
+    model: 'step-5-preview', models: ['step-3.7-flash'],
+    vision: ['step-5-preview', 'step-3.7-flash'], contextWindows: { 'step-5-preview': 1_000_000 },
+    effort: { none: 'low', max: 'high' },
+  },
+  {
     // Qianfan's Responses endpoint takes text input only and lists no model that reads images, so the
     // platform uses Chat, where its vision models are served. Neither documents an effort.
     id: 'qianfan', names: { zh: '百度千帆', 'zh-Hant': '百度千帆', en: 'Baidu Qianfan', ja: 'Baidu Qianfan', ko: 'Baidu Qianfan' }, keyHint: hint('bce-v3/'), secret: 'QIANFAN_API_KEY',
@@ -300,10 +310,10 @@ export const vendorOf = (baseUrl: string | undefined): Vendor | null => locate(b
 /** Mainland China for Chinese, the international platforms for every other language. */
 export const defaultRegion = (language: Language): Region => (language === 'zh' ? 'cn' : 'intl');
 
-const ORDER_ZH = ['deepseek', 'qwen', 'kimi', 'glm', 'doubao', 'minimax', 'stepfun', 'qianfan', 'openrouter', 'openai', 'chatgpt', 'anthropic', 'gemini', 'xai'];
+const ORDER_ZH = ['deepseek', 'qwen', 'kimi', 'glm', 'doubao', 'minimax', 'stepfun', 'stepfun-plan', 'qianfan', 'openrouter', 'openai', 'chatgpt', 'anthropic', 'gemini', 'xai'];
 const ORDER_OTHER = ['openai', 'chatgpt', 'anthropic', 'gemini', 'xai', 'openrouter', 'deepseek', 'kimi', 'qwen', 'minimax', 'glm'];
 /** Services that take mainland China accounts only. */
-const MAINLAND_ONLY = ['doubao', 'qianfan', 'stepfun'];
+const MAINLAND_ONLY = ['doubao', 'qianfan', 'stepfun', 'stepfun-plan'];
 
 /** The services in the order recommended for `language`; `more` are listed behind a toggle. */
 export function vendorsFor(language: Language): { shown: Vendor[]; more: Vendor[] } {

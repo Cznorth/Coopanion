@@ -16,7 +16,8 @@
  * - When the introduction ends, walked through or closed, its record: Coo's lines and the
  *   person's answers (`guide.ts`), with what is Coo's to settle with the person after it.
  *
- * - Wake-ups Coo sets for itself (`alarms.ts`): its tools, and the event when one is due.
+ * - Wake-ups Coo sets for itself (`alarms.ts`): its tools, the event when one is due, and the `alarms`
+ *   panel (`webui/client.ts`), which lists them and cancels one; a cancel there is told to Coo.
  *
  * Every event is in the model-text language of the app language (`language.ts`), read when it is rendered.
  *
@@ -30,12 +31,16 @@ import type { ToolDef, World, WorldWebUiDecl, WorldHost } from 'cortico/core/typ
 import type { Language } from 'cortico/core/language.ts';
 import { describeTools, type WorldDefinition, type WorldDescribe, type WorldSection } from 'cortico/world.ts';
 import { SELF_KEYS, selfAdjustMode } from 'cortico-world-desktop-pet';
-import { ALARM_TOOL_DECLS, Alarms } from './alarms.ts';
+import { ALARM_TOOL_DECLS, Alarms, type Alarm } from './alarms.ts';
 import type { GuideEnd } from './guide.ts';
 import { coreText } from './i18n/index.ts';
 import { modelLanguage, type ModelLanguage } from './language.ts';
+import { panelText } from './webui/strings.ts';
 
 export const NOTICE_ID = 'coopanion';
+
+/** What the `alarms` panel's `list` and `cancel` return: the alarms set, soonest first, and the time zone their times are in. */
+export interface AlarmsState { timezone: string; alarms: Alarm[] }
 /** How often the watched settings are compared with the last look. */
 const LOOK_EVERY_MS = 1000;
 /** Where the release notes stop being about the app: the download list that ends each file, by the file's language. */
@@ -354,7 +359,7 @@ export class NoticeWorld implements World {
 
   private readonly alarms: Alarms;
 
-  constructor(private readonly a: NoticeAssembly, timezone: string) {
+  constructor(private readonly a: NoticeAssembly, private readonly timezone: string) {
     this.alarms = new Alarms(a.alarmsFile, timezone, () => this.language);
   }
 
@@ -367,7 +372,21 @@ export class NoticeWorld implements World {
 
   /** Its name in the console's rail in the language of each request, so it follows a language change without a restart. */
   webUi(language: Language = 'zh'): WorldWebUiDecl {
-    return { label: coreText(language).noticeLabel };
+    return {
+      label: coreText(language).noticeLabel,
+      panels: [{ id: 'alarms', title: panelText(language).title, getMethods: ['list'] }],
+      invoke: async (panel, method, args) => this.invoke(panel, method, args),
+    };
+  }
+
+  private invoke(panel: string, method: string, args: unknown[]): AlarmsState {
+    if (panel !== 'alarms') throw new Error(`no panel ${panel}`);
+    if (method === 'cancel') {
+      const alarm = this.alarms.cancel(args[0]);
+      if (!alarm) throw new Error(`no alarm ${JSON.stringify(args[0])}`);
+      this.host?.pushDeferred({ type: 'coopanion.alarm-cancelled', origin: 'internal', render: () => this.alarms.cancelledText(alarm) }, { trigger: 'debounce' });
+    } else if (method !== 'list') throw new Error(`no method ${method}`);
+    return { timezone: this.timezone, alarms: this.alarms.list() };
   }
   tools(): ToolDef[] { return this.alarms.tools(); }
 
@@ -469,6 +488,7 @@ const DESCRIBE: WorldDescribe = {
   events: [
     { type: 'coopanion.guide', description: { zh: '使用向导结束,附向导里发生的事。', en: 'The introduction ended, with what happened in it.' }, trigger: 'flush' },
     { type: 'coopanion.alarm', description: { zh: '自己定的唤醒到时间了。', en: 'A wake-up it set is due.' }, trigger: 'flush' },
+    { type: 'coopanion.alarm-cancelled', description: { zh: '使用者在设置窗口取消了它定的一个唤醒。', en: 'The person cancelled one of its wake-ups in the settings window.' }, trigger: 'debounce' },
     { type: 'coopanion.updated', description: { zh: '应用升级了,附新版本的更新说明。', en: 'The app was updated, with the release notes of the new version.' }, trigger: 'flush' },
     { type: 'coopanion.settings-changed', description: { zh: '使用者改了桌宠的外观或习惯。', en: "The person changed the pet's looks or habits." }, trigger: 'debounce' },
   ],

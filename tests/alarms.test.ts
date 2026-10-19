@@ -21,7 +21,7 @@ describe('dueTime', () => {
 });
 
 describe('Alarms', () => {
-  it('gives an English bot no Chinese: tool declarations, receipts, the due event', async () => {
+  it('gives an English bot no Chinese: tool declarations, receipts, the cancel and due events', async () => {
     const HAN = /\p{Script=Han}/u;
     const now = Date.UTC(2026, 9, 5, 6, 0);
     const alarms = new Alarms(join(mkdtempSync(join(tmpdir(), 'coo-alarms-')), 'alarms.json'), 'Asia/Shanghai', () => 'en');
@@ -33,9 +33,10 @@ describe('Alarms', () => {
       (await run('alarm_set', { note: 'tea', at: '25:00' })).text,
       (await run('alarm_list', {})).text,
       (await run('alarm_cancel', { id: 'a9' })).text,
+      alarms.cancelledText(alarms.list()[0]!),
       ...alarms.takeDue(now + 2 * 3_600_000).map(({ alarm, missed }) => alarms.dueText(alarm, missed)),
     ];
-    expect(texts).toHaveLength(5);
+    expect(texts).toHaveLength(6);
     for (const text of texts) expect(text).not.toMatch(HAN);
   });
 });

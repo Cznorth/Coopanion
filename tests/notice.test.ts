@@ -2,7 +2,8 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { releaseNotes } from '../core/notice.ts';
+import type { WorldHost } from 'cortico/core/types.ts';
+import { noticeDefinition, releaseNotes, type AlarmsState } from '../core/notice.ts';
 
 /** A releases directory with one file per version, each `## 下载` section after its body. */
 function releases(versions: string[]): string {
@@ -37,5 +38,33 @@ describe('releaseNotes', () => {
     const [note] = releaseNotes(releases(['0.1.13']), null, '0.1.13');
     expect(note!.text).toContain('本版 0.1.13');
     expect(note!.text).not.toContain('安装包');
+  });
+});
+
+describe('alarms panel', () => {
+  it('deletes an alarm from Coo\'s list and tells Coo which one', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'coo-notice-'));
+    const world = noticeDefinition({
+      version: 'dev', notesDir: dir, stateFile: join(dir, 'notice.json'), alarmsFile: join(dir, 'alarms.json'),
+      newInstall: () => true, read: () => undefined, petConnected: () => false, guiding: () => false,
+      refreshTools: async () => {}, label: () => 'notice',
+    }).create({ timezone: 'Asia/Shanghai' } as never);
+    const pushed: Array<{ type: string; render: () => string | null }> = [];
+    await world.start({ pushDeferred: (e: { type: string; render: () => string | null }) => pushed.push(e) } as unknown as WorldHost);
+    try {
+      const run = (name: string, args: Record<string, unknown>) => world.tools().find((t) => t.name === name)!.handler(args, {} as never) as Promise<{ text: string }>;
+      await run('alarm_set', { note: '提醒喝水', in_minutes: 30 });
+      await run('alarm_set', { note: '提醒睡觉', in_minutes: 90 });
+      const panel = world.webUi!('zh');
+      const [first] = ((await panel.invoke!('alarms', 'list', [])) as AlarmsState).alarms;
+      const after = (await panel.invoke!('alarms', 'cancel', [first!.id])) as AlarmsState;
+      expect(after.alarms.map((a) => a.note)).toEqual(['提醒睡觉']);
+      expect((await run('alarm_list', {})).text).not.toContain('提醒喝水');
+      expect(pushed.map((e) => e.type)).toEqual(['coopanion.alarm-cancelled']);
+      expect(pushed[0]!.render()).toContain('提醒喝水');
+      await expect(panel.invoke!('alarms', 'cancel', [first!.id])).rejects.toThrow();
+    } finally {
+      await world.stop();
+    }
   });
 });

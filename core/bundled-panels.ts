@@ -1,10 +1,11 @@
 /**
- * Panel bundles of the World packages bundled with the app. They are assembled as definitions,
- * so the extension loader never reads their `cortico.webUiClient`; these entries join the
- * extension asset table, which is where the WebUI server serves page bundles from.
+ * Panel bundles of the World packages bundled with the app, and of the coopanion World in core/.
+ * They are assembled as definitions, so the extension loader never reads their
+ * `cortico.webUiClient`; these entries join the extension asset table, which is where the WebUI
+ * server serves page bundles from.
  */
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extensionPackageFile } from 'cortico/extensions.ts';
@@ -31,4 +32,18 @@ export function bundledWebUiAssets(worlds: ReadonlyArray<{ id: string; packageNa
     out.push({ pageId: pageIdFor('world', id), packageName, version, jsFile, ...(cssFile ? { cssFile } : {}) });
   }
   return out;
+}
+
+/**
+ * The panel bundle of a World in core/, `webui.js` and `webui.css` in `dir` as scripts/stage.ts
+ * builds them; none when the bundle is not built. `version` with the bundle's hash names its URL.
+ */
+export function appWebUiAsset(id: string, dir: string, version: string): ExtensionWebUiAsset[] {
+  const jsFile = join(dir, 'webui.js');
+  if (!existsSync(jsFile)) return [];
+  const cssFile = join(dir, 'webui.css');
+  const css = existsSync(cssFile);
+  const hash = createHash('sha256').update(readFileSync(jsFile));
+  if (css) hash.update(readFileSync(cssFile));
+  return [{ pageId: pageIdFor('world', id), packageName: id, version: `${version}-${hash.digest('hex').slice(0, 10)}`, jsFile, ...(css ? { cssFile } : {}) }];
 }

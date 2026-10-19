@@ -1,7 +1,8 @@
 /**
  * Wake-ups Coo sets for itself (`alarm_set`, `alarm_list`, `alarm_cancel` of the `coopanion` World).
- * Nothing in the app shows them: when one is due Coo gets an internal event and is woken, as if it
- * had remembered on its own. They are kept in `alarms.json` in the deployment directory, so they
+ * When one is due Coo gets an internal event and is woken, as if it had remembered on its own. The
+ * coopanion World's page in the settings window lists them, and an alarm the person cancels there is
+ * told to Coo. They are kept in `alarms.json` in the deployment directory, so they
  * outlive a restart; one that fell due while the app was closed is delivered at the next start,
  * saying when it was meant for. A daily one is then set for its next day.
  *
@@ -41,6 +42,7 @@ const zh = {
   none: '没有设着的唤醒器。',
   missing: (id: string) => `[alarm_cancel 没执行] 没有 ${id} 这个唤醒器。`,
   cancelled: (id: string) => `已取消 ${id}。`,
+  cancelledByPerson: (id: string, when: string, daily: boolean, note: string) => `[唤醒器] 使用者在设置窗口取消了你设的唤醒 ${id}(${when}${daily ? ',每天' : ''}):${note}`,
 };
 
 const en: typeof zh = {
@@ -57,6 +59,7 @@ const en: typeof zh = {
   none: 'No alarms set.',
   missing: (id) => `[alarm_cancel not run] There is no alarm ${id}.`,
   cancelled: (id) => `Cancelled ${id}.`,
+  cancelledByPerson: (id, when, daily, note) => `[alarm] The person cancelled your alarm ${id} in the settings window (${when}${daily ? ', daily' : ''}): ${note}`,
 };
 
 const ALARM_TEXT: Record<ModelLanguage, typeof zh> = { zh, en };
@@ -115,7 +118,7 @@ export const ALARM_TOOL_DECLS: ReadonlyArray<Omit<ToolDef, 'handler'>> = [
   {
     name: 'alarm_set',
     tags: ['write'],
-    description: 'Set an alarm for yourself: when it is due you are woken by an event carrying the note as you wrote it. The person does not see alarms. Use one to remind the person on time, to do something at a set time, or to come back and check after a while. One that falls due while the app is closed arrives at the next start, with the time it was meant for.',
+    description: 'Set an alarm for yourself: when it is due you are woken by an event carrying the note as you wrote it. The person sees them in the settings window and can cancel one there; you are told when they do. Use one to remind the person on time, to do something at a set time, or to come back and check after a while. One that falls due while the app is closed arrives at the next start, with the time it was meant for.',
     parameters: {
       type: 'object',
       properties: {
@@ -172,6 +175,24 @@ export class Alarms {
     return due.map((alarm) => ({ alarm, missed: now - alarm.at > MISSED_AFTER_MS }));
   }
 
+  /** The alarms set, soonest first. */
+  list(): Alarm[] {
+    return this.saved.alarms.slice().sort((a, b) => a.at - b.at);
+  }
+
+  /** Takes the alarm `id` off the list; null when there is none. */
+  cancel(id: unknown): Alarm | null {
+    const alarm = this.saved.alarms.find((a) => a.id === id);
+    if (!alarm) return null;
+    this.saved.alarms = this.saved.alarms.filter((a) => a !== alarm);
+    this.save();
+    return alarm;
+  }
+
+  cancelledText(alarm: Alarm): string {
+    return this.t.cancelledByPerson(alarm.id, localLabel(this.timezone, alarm.at), alarm.daily, alarm.note);
+  }
+
   dueText(alarm: Alarm, missed: boolean): string {
     const t = this.t;
     return [
@@ -182,8 +203,7 @@ export class Alarms {
 
   tools(now: () => number = Date.now): ToolDef[] {
     const tz = this.timezone;
-    const list = () => this.saved.alarms.slice().sort((a, b) => a.at - b.at)
-      .map((a) => this.t.listLine(a.id, localLabel(tz, a.at), a.daily, a.note)).join('\n');
+    const list = () => this.list().map((a) => this.t.listLine(a.id, localLabel(tz, a.at), a.daily, a.note)).join('\n');
     const handlers: Record<string, ToolDef['handler']> = {
       alarm_set: async (args) => {
         const t = this.t;
@@ -199,10 +219,7 @@ export class Alarms {
       },
       alarm_list: async () => ({ text: this.saved.alarms.length ? list() : this.t.none }),
       alarm_cancel: async (args) => {
-        const before = this.saved.alarms.length;
-        this.saved.alarms = this.saved.alarms.filter((a) => a.id !== args.id);
-        if (this.saved.alarms.length === before) return { text: this.t.missing(JSON.stringify(args.id)), failed: true };
-        this.save();
+        if (!this.cancel(args.id)) return { text: this.t.missing(JSON.stringify(args.id)), failed: true };
         return { text: this.t.cancelled(String(args.id)) };
       },
     };

@@ -115,6 +115,8 @@ cpSync(join(ROOT, 'docs', 'releases'), join(OUT, 'docs', 'releases'), { recursiv
 cpSync(join(ROOT, 'build', 'cortico'), join(OUT, 'build', 'cortico'), { recursive: true, filter: skip(join(ROOT, 'build', 'cortico')) });
 // the settings window (app/main.cjs serves it)
 cpSync(join(ROOT, 'build', 'console'), join(OUT, 'build', 'console'), { recursive: true, filter: (src) => !src.endsWith('.map') });
+// the coopanion World's panel bundle (core/companion.ts registers it)
+cpSync(join(ROOT, 'build', 'panels'), join(OUT, 'build', 'panels'), { recursive: true, filter: (src) => !src.endsWith('.map') });
 writeFileSync(join(OUT, 'package.json'), JSON.stringify({
   name: rootPkg.name, productName: rootPkg.productName, version: rootPkg.version, description: rootPkg.description,
   license: rootPkg.license, author: rootPkg.author, homepage: rootPkg.homepage, type: 'module', main: 'app/main.cjs',

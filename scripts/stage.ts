@@ -8,7 +8,8 @@
  *    built-in Worlds, which the settings window loads through the manifest; its stylesheet is built
  *    with Tailwind;
  * 2. the desktop pet World's panel bundle, which the settings window loads the same way;
- * 3. `build/console/`: the settings window (`console/index.ts`, `console/index.html`), which the
+ * 3. `build/panels/coopanion/`: the coopanion World's panel bundle (`core/webui/client.ts`), loaded the same way;
+ * 4. `build/console/`: the settings window (`console/index.ts`, `console/index.html`), which the
  *    Electron main process serves under `/coopanion/` on Core's origin.
  *
  * Run: `pnpm run build:cortico`. Idempotent; the previous output is replaced.
@@ -75,13 +76,27 @@ const pet = join(ROOT, 'packages', 'cortico-world-desktop-pet');
 const panel = spawnSync(process.execPath, [join(pet, 'scripts', 'build-webui.mjs')], { cwd: pet, stdio: 'inherit' });
 if (panel.status !== 0) process.exit(panel.status ?? 1);
 
+const esbuild = await import('esbuild');
+const PANELS_OUT = join(ROOT, 'build', 'panels', 'coopanion');
+rmSync(PANELS_OUT, { recursive: true, force: true });
+await esbuild.build({
+  entryPoints: [{ in: join(ROOT, 'core', 'webui', 'client.ts'), out: 'webui' }],
+  outdir: PANELS_OUT,
+  bundle: true,
+  format: 'esm',
+  target: 'es2022',
+  platform: 'browser',
+  minify: true,
+  sourcemap: true,
+  logLevel: 'warning',
+});
+
 // the settings window: one ES module bundle (the CSS it imports becomes index.css), its stylesheet, the page.
 // The version and the build's channel (COOPANION_CHANNEL as scripts/pack.ts writes it into the app, github
 // by default) go in for the release check under the wordmark.
 const { version } = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { version: string };
 rmSync(WINDOW_OUT, { recursive: true, force: true });
 mkdirSync(WINDOW_OUT, { recursive: true });
-const esbuild = await import('esbuild');
 await esbuild.build({
   entryPoints: [join(WINDOW, 'index.ts')],
   outdir: WINDOW_OUT,

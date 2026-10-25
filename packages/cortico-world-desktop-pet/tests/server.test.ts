@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { request } from 'node:http';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -122,6 +123,82 @@ describe('local access', () => {
     const other = await serve();
     expect(windowKey(other)).not.toBe(windowKey(server));
     expect(await refused(other, { role: 'pet', ...params }, other.origin)).toBe(403);
+  });
+});
+
+/** A request to `server` as a LAN client would send it: Host is a LAN address. */
+function lanGet(server: PetServer, path: string, headers: Record<string, string> = {}, method = 'GET', host = `192.168.1.5:${server.port}`) {
+  return new Promise<{ status: number; headers: Record<string, string | string[] | undefined> }>((done, fail) => {
+    const req = request({ host: '127.0.0.1', port: server.port, path, method, headers: { host, ...headers } }, (res) => {
+      res.resume();
+      done({ status: res.statusCode!, headers: res.headers });
+    });
+    req.on('error', fail);
+    req.end(method === 'POST' ? '{}' : undefined);
+  });
+}
+
+function lanSocket(server: PetServer, cookie: string, origin: string, host = `192.168.1.5:${server.port}`): Promise<number> {
+  return new Promise((done, fail) => {
+    const ws = new WebSocket(`ws://127.0.0.1:${server.port}/socket?role=pet&host=tab`, { origin, headers: { host, cookie } });
+    ws.once('open', () => { ws.close(); done(101); });
+    ws.once('error', fail);
+    ws.once('unexpected-response', (_req, res) => { res.resume(); done(res.statusCode!); ws.terminate(); });
+  });
+}
+
+describe('local network access', () => {
+  const KEY = 'lan-key-for-tests';
+
+  it('is off without a key: a non-loopback Host is refused and /pair is not served', async () => {
+    const server = await serve();
+    expect(server.lan).toBe(false);
+    expect((await lanGet(server, '/pet')).status).toBe(421);
+    expect((await lanGet(server, `/pair?key=${KEY}`)).status).toBe(421);
+  });
+
+  it('pairs with the right key only, and the cookie it sets opens the pages and the socket', async () => {
+    const server = await serve(undefined, { lan: () => KEY });
+    expect(server.lan).toBe(true);
+    for (const key of ['', 'wrong', `${KEY}x`]) expect((await lanGet(server, `/pair?key=${key}`)).status).toBe(403);
+    expect((await lanGet(server, '/pet')).status).toBe(421);
+    const paired = await lanGet(server, `/pair?key=${KEY}`);
+    expect(paired.status).toBe(302);
+    expect(paired.headers.location).toBe('/pet');
+    const cookie = String(paired.headers['set-cookie']).split(';')[0]!;
+    expect(String(paired.headers['set-cookie'])).toContain('HttpOnly');
+    const origin = `http://192.168.1.5:${server.port}`;
+    expect((await lanGet(server, '/pet', { cookie })).status).toBe(200);
+    expect((await lanGet(server, '/api/state', { cookie })).status).toBe(200);
+    expect((await lanGet(server, '/api/prefs', { cookie, origin }, 'POST')).status).toBe(200);
+    expect(await lanSocket(server, cookie, origin)).toBe(101);
+    expect(await lanSocket(server, 'coo-lan=wrong', origin)).toBe(421);
+  });
+
+  it('refuses a paired cookie under another origin, and a rebinding name that has no cookie', async () => {
+    const server = await serve(undefined, { lan: () => KEY });
+    const cookie = `coo-lan=${KEY}`;
+    for (const origin of ['http://example.test', 'null', `http://192.168.1.6:${server.port}`]) {
+      expect((await lanGet(server, '/api/prefs', { cookie, origin }, 'POST')).status, origin).toBe(421);
+      expect(await lanSocket(server, cookie, origin), origin).toBe(421);
+    }
+    expect((await lanGet(server, '/api/state', {}, 'GET', `evil.test:${server.port}`)).status).toBe(421);
+  });
+
+  it('serves the figure frame its files without the cookie, and nothing else', async () => {
+    const server = await serve(undefined, { lan: () => KEY });
+    for (const path of ['/figure-frame', '/web/figure-frame.js']) {
+      expect((await lanGet(server, path, { origin: 'null' })).status, path).toBe(200);
+      expect((await lanGet(server, path)).status, path).toBe(200);
+    }
+    for (const path of ['/pet', '/dress', '/api/state', '/api/figures', '/overlay']) expect((await lanGet(server, path)).status, path).toBe(421);
+    expect((await lanGet(server, '/api/prefs', { origin: 'null' }, 'POST')).status).toBe(421);
+  });
+
+  it('keeps loopback access as it is', async () => {
+    const server = await serve(undefined, { lan: () => KEY });
+    expect((await fetch(`${server.origin}/pet`)).status).toBe(200);
+    expect((await fetch(`${server.origin}/api/prefs`, { method: 'POST', headers: { origin: 'http://example.test' }, body: '{}' })).status).toBe(421);
   });
 });
 

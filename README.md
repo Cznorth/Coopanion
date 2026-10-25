@@ -51,6 +51,7 @@ Coopanion is a desktop pet. **Coo** lives on the bottom edge of your screen: it 
 - **Alarms**: ask Coo to set one at a local time or after a number of minutes.
 - **Extensions**: Worlds such as a QQ bot, a drawing room and small games, installed from the Extensions page.
 - **OBS overlay**: Coo and its bubbles as an OBS Browser source on a transparent background.
+- **On a phone**: turn on **Local network access** in the desktop pet World's settings (advanced mode, Worlds) and restart; then open the World's **View on a phone** address once on a phone on the same network to pair it. Coo stays on the computer; the phone shows the pet page. On Windows, allow Coopanion through the firewall on private networks.
 
 What changed in each version is in [Releases](https://github.com/Pal-AI-Lab/Coopanion/releases).
 
@@ -176,7 +177,7 @@ The Model page in advanced mode changes the model and reasoning effort, adds an 
 - **Cost**: Coopanion is free. The model service you choose bills you for usage; see the Usage & cost page (built-in prices exist for DeepSeek, OpenAI, Anthropic, Gemini's paid tier and xAI). Signed in with ChatGPT, requests count toward the ChatGPT plan instead and show no cost.
 - **Sent to the model service**: what you say and type, your interactions with Coo, and screenshots during computer use. Only the service you configured receives them.
 - **Kept on your machine**: API keys and the ChatGPT sign-in, memory, conversation history, settings and logs. Speech is recognized locally and only the text is sent, unless a transcription service is chosen on the Voice input page: then the recording of each sentence goes to that service.
-- **Local pet service**: browser writes and WebSocket connections require the pet service's own HTTP origin, including its port. The desktop window authenticates with a random credential passed to its host at startup.
+- **Local pet service**: browser writes and WebSocket connections require the pet service's own HTTP origin, including its port. The desktop window authenticates with a random credential passed to its host at startup. With Local network access on, the service also listens on the local network: a device has to open the pairing address (it carries a random key, stored as the secret `DESKTOP_PET_LAN_KEY`) to get a cookie before it can open pages or connect; only the figure files are served without one. Delete the secret and restart to unpair every device.
 - **Anonymous usage statistics**: sent to `survey.palailab.org`. Only counts, time used, settings and a random install ID; no conversations, screenshots, keys or files. Every field is listed in [docs/TELEMETRY.md](docs/TELEMETRY.md). Turn it off in Habits.
 - **Other network access**: checks for new releases on GitHub (in the background on Windows and with the AppImage, when the settings window opens on Mac and with the deb); npm and the official extension index on GitHub on the Extensions page, and GitHub for votes and comments; ModelScope (or Hugging Face as a fallback) when downloading the speech model.
 

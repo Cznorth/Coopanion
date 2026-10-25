@@ -194,6 +194,7 @@ const ja: Translation<PetText> = {
     voice: '音声認識',
     notStarted: '未起動',
     viewInBrowser: 'ブラウザーでペットを見る',
+    viewOnLan: (ip: string) => `スマートフォンで見る（${ip}）`,
     dress: '着せ替え',
     panels: {
       pet: { title: 'デスクトップペット', description: 'ウィンドウ、着せ替え、ウィンドウのランタイム。' },
@@ -239,6 +240,7 @@ const ja: Translation<PetText> = {
     lockFrameRate: { title: 'フレームレート固定', description: '静止中もフレームレートでペットを描画します。オフのときは、立っている、座っている、眠っているあいだは 1 秒 30 フレームに下がります。' },
     hideWhenFullscreen: { title: '全画面表示中は隠れる', description: 'オンのときは、手前のウィンドウがペットのいる画面いっぱいに表示されているあいだ（ゲーム、全画面の動画、全画面表示のブラウザー）ペットが隠れ、全画面表示が終わると戻ってきます。最大化したウィンドウは対象外です。オフのときは常に最前面に表示されます。' },
     exportOverlay: { title: 'OBS オーバーレイ', description: 'ペットのウィンドウの画面を透明な背景で /overlay に出し、OBS の「ブラウザ」ソースで使えるようにします。オフのときは出しません。' },
+    lanAccess: { title: "LAN アクセス", description: "同じネットワークの端末からペットのページを開けます。パネルの「スマートフォンで見る」のアドレスを端末で一度開くとペアリングされます。シークレット DESKTOP_PET_LAN_KEY を削除して再起動すると、すべての端末のペアリングが解除されます。再起動後に反映されます。" },
     electronFile: { title: 'Electron 実行ファイル', description: '空欄なら CORTICO_DESKTOP_PET_HOST、次にパネルからインストールしたランタイムを使います。' },
     port: { title: 'ページのポート', description: '使用中のときは次の空きポートに繰り上げます。' },
     touchEnabled: { title: 'ふれあいをイベントにする', description: 'つつく、なでる、持ち上げて投げる。' },

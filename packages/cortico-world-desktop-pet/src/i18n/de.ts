@@ -194,6 +194,7 @@ const de: Translation<PetText> = {
     voice: 'Spracherkennung',
     notStarted: 'Nicht gestartet',
     viewInBrowser: 'Haustier im Browser ansehen',
+    viewOnLan: (ip: string) => `Auf dem Handy ansehen (${ip})`,
     dress: 'Einkleiden',
     panels: {
       pet: { title: 'Desktop-Haustier', description: 'Das Fenster, das Outfit und die Fenster-Laufzeit.' },
@@ -239,6 +240,7 @@ const de: Translation<PetText> = {
     lockFrameRate: { title: 'Bildrate fixieren', description: 'Zeichnet das Haustier auch im Ruhezustand mit der Bildrate. Wenn aus, sinkt sie im Stehen, Sitzen oder Schlafen auf 30 Bilder pro Sekunde.' },
     hideWhenFullscreen: { title: 'Bei Vollbild ausblenden', description: 'Wenn an, versteckt sich das Haustier, solange das Fenster im Vordergrund Coos Bildschirm füllt (ein Spiel, ein Vollbildvideo, ein Browser im Vollbild), und kommt zurück, wenn das Vollbild endet; ein maximiertes Fenster zählt nicht. Wenn aus, bleibt Coo immer im Vordergrund.' },
     exportOverlay: { title: 'OBS-Overlay', description: 'Stellt das Bild des Haustierfensters mit transparentem Hintergrund unter /overlay für eine OBS-„Browser“-Quelle bereit; aus, wird nichts bereitgestellt.' },
+    lanAccess: { title: "Zugriff im lokalen Netzwerk", description: "Geräte im selben Netzwerk können die Seite des Haustiers öffnen: Die Adresse „Auf dem Handy ansehen“ aus dem Panel einmal auf dem Handy öffnen, um es zu koppeln. Wird das Geheimnis DESKTOP_PET_LAN_KEY gelöscht und neu gestartet, sind alle Geräte entkoppelt. Wirkt nach einem Neustart." },
     electronFile: { title: 'Electron-Programmdatei', description: 'Leer verwendet CORTICO_DESKTOP_PET_HOST, dann die im Panel installierte Laufzeit.' },
     port: { title: 'Seiten-Port', description: 'Weicht auf den nächsten freien Port aus, wenn er belegt ist.' },
     touchEnabled: { title: 'Berührungen werden zu Ereignissen', description: 'Anstupsen, Streicheln, Hochheben und Werfen.' },

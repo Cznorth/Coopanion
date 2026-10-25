@@ -220,6 +220,7 @@ export default {
     voice: '语音识别',
     notStarted: '未启动',
     viewInBrowser: '在浏览器中查看桌宠',
+    viewOnLan: (ip: string) => `在手机上查看（${ip}）`,
     dress: '装扮',
     panels: {
       pet: { title: '桌宠', description: '窗口、装扮与窗口运行时。' },
@@ -266,6 +267,7 @@ export default {
     lockFrameRate: { title: '帧率锁定', description: '静止时也按「帧率」画桌宠。关着时站着、坐着、睡着降到每秒 30 帧。' },
     hideWhenFullscreen: { title: '全屏时自动隐藏', description: '开着时，前台窗口全屏铺满桌宠所在的那块屏（游戏、全屏视频、浏览器全屏）就把 Coo 藏起来，退出全屏放回来；最大化的窗口不算。关着时一直浮在上面。' },
     exportOverlay: { title: 'OBS 画面', description: '在 /overlay 提供桌宠窗口的透明画面，供 OBS「浏览器」来源使用；关闭时不提供。' },
+    lanAccess: { title: "局域网访问", description: "同一局域网的设备可打开桌宠页面：在手机上打开面板里「在手机上查看」的地址，打开一次后即完成配对。删除密钥 DESKTOP_PET_LAN_KEY 并重启后，所有已配对的设备都需要重新配对。重启后生效。" },
     electronFile: { title: 'Electron 程序', description: '留空时依次用 CORTICO_DESKTOP_PET_HOST 和面板里安装的运行时。' },
     port: { title: '页面端口', description: '被占用时向上顺延。' },
     touchEnabled: { title: '互动发成事件', description: '戳、摸、拎起来甩出去。' },

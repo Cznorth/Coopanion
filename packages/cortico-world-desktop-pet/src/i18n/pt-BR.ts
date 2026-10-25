@@ -194,6 +194,7 @@ const ptBR: Translation<PetText> = {
     voice: 'Reconhecimento de voz',
     notStarted: 'Não iniciado',
     viewInBrowser: 'Ver o pet no navegador',
+    viewOnLan: (ip: string) => `Ver no celular (${ip})`,
     dress: 'Guarda-roupa',
     panels: {
       pet: { title: 'Pet de área de trabalho', description: 'A janela, o visual e o ambiente de execução da janela.' },
@@ -239,6 +240,7 @@ const ptBR: Translation<PetText> = {
     lockFrameRate: { title: 'Travar taxa de quadros', description: 'Desenha o pet nessa taxa também em repouso. Desligado, cai para 30 quadros por segundo quando está em pé, na posição sentada ou dormindo.' },
     hideWhenFullscreen: { title: 'Ocultar em tela cheia', description: 'Ligado, o pet se esconde enquanto a janela em primeiro plano ocupa toda a tela onde o pet está (um jogo, um vídeo em tela cheia, um navegador em tela cheia) e volta quando a tela cheia termina; uma janela maximizada não conta. Desligado, fica sempre por cima.' },
     exportOverlay: { title: 'Overlay do OBS', description: 'Serve a imagem da janela do pet com fundo transparente em /overlay para uma fonte “Navegador” do OBS; desligado, nada é servido.' },
+    lanAccess: { title: "Acesso pela rede local", description: "Dispositivos da mesma rede podem abrir a página do pet: abra uma vez no celular o endereço “Ver no celular” do painel para pareá-lo. Apagar o segredo DESKTOP_PET_LAN_KEY e reiniciar desfaz o pareamento de todos os dispositivos. Vale após reiniciar." },
     electronFile: { title: 'Executável do Electron', description: 'Vazio usa CORTICO_DESKTOP_PET_HOST e depois o ambiente instalado pelo painel.' },
     port: { title: 'Porta da página', description: 'Se estiver ocupada, passa para a próxima porta livre.' },
     touchEnabled: { title: 'Toques viram eventos', description: 'Cutucadas, carinho, e pegar e arremessar o pet.' },

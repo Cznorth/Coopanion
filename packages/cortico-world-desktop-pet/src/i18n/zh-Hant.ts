@@ -194,6 +194,7 @@ const zhHant: Translation<PetText> = {
     voice: '語音辨識',
     notStarted: '未啟動',
     viewInBrowser: '在瀏覽器中查看桌寵',
+    viewOnLan: (ip: string) => `在手機上查看（${ip}）`,
     dress: '裝扮',
     panels: {
       pet: { title: '桌寵', description: '視窗、裝扮與視窗執行環境。' },
@@ -239,6 +240,7 @@ const zhHant: Translation<PetText> = {
     lockFrameRate: { title: '幀率鎖定', description: '靜止時也依「幀率」繪製桌寵。關閉時站著、坐著、睡著會降到每秒 30 幀。' },
     hideWhenFullscreen: { title: '全螢幕時自動隱藏', description: '開啟時，前景視窗以全螢幕鋪滿桌寵所在的那個螢幕（遊戲、全螢幕影片、瀏覽器全螢幕）就把 Coo 藏起來，離開全螢幕後再放回來；最大化的視窗不算。關閉時一律浮在最上層。' },
     exportOverlay: { title: 'OBS 畫面', description: '在 /overlay 提供桌寵視窗的透明畫面，供 OBS「瀏覽器」來源使用；關閉時不提供。' },
+    lanAccess: { title: "區域網路存取", description: "同一區域網路的裝置可開啟桌寵頁面：在手機上開啟面板中「在手機上查看」的網址，開啟一次即完成配對。刪除金鑰 DESKTOP_PET_LAN_KEY 並重新啟動後，所有已配對的裝置都需要重新配對。重新啟動後生效。" },
     electronFile: { title: 'Electron 程式', description: '留空時依序使用 CORTICO_DESKTOP_PET_HOST 和面板裡安裝的執行環境。' },
     port: { title: '頁面連接埠', description: '被佔用時往上順延到下一個空的連接埠。' },
     touchEnabled: { title: '互動送成事件', description: '戳、摸、拎起來甩出去。' },

@@ -194,6 +194,7 @@ const es419: Translation<PetText> = {
     voice: 'Reconocimiento de voz',
     notStarted: 'Sin iniciar',
     viewInBrowser: 'Ver la mascota en el navegador',
+    viewOnLan: (ip: string) => `Ver en un teléfono (${ip})`,
     dress: 'Vestuario',
     panels: {
       pet: { title: 'Mascota de escritorio', description: 'La ventana, el vestuario y el entorno de ejecución de la ventana.' },
@@ -239,6 +240,7 @@ const es419: Translation<PetText> = {
     lockFrameRate: { title: 'Fijar velocidad de fotogramas', description: 'También dibuja la mascota a esa velocidad en reposo. Si está desactivado, baja a 30 fotogramas por segundo mientras está de pie, se sienta o duerme.' },
     hideWhenFullscreen: { title: 'Ocultar en pantalla completa', description: 'Si está activado, la mascota se oculta mientras la ventana del frente ocupa toda la pantalla donde está (un juego, un video en pantalla completa, un navegador en pantalla completa) y vuelve cuando termina la pantalla completa; una ventana maximizada no cuenta. Si está desactivado, siempre queda encima.' },
     exportOverlay: { title: 'Overlay de OBS', description: 'Sirve la imagen de la ventana de la mascota con fondo transparente en /overlay para una fuente «Navegador» de OBS; si está desactivado, no se sirve nada.' },
+    lanAccess: { title: "Acceso en la red local", description: "Los dispositivos de la misma red pueden abrir la página de la mascota: abre una vez en el teléfono la dirección «Ver en un teléfono» del panel para vincularlo. Al borrar el secreto DESKTOP_PET_LAN_KEY y reiniciar se desvinculan todos los dispositivos. Se aplica tras reiniciar." },
     electronFile: { title: 'Ejecutable de Electron', description: 'Si está vacío, se usa CORTICO_DESKTOP_PET_HOST y luego el entorno instalado desde el panel.' },
     port: { title: 'Puerto de la página', description: 'Si está ocupado, pasa al siguiente puerto libre.' },
     touchEnabled: { title: 'Los toques se vuelven eventos', description: 'Toquecitos, caricias, levantadas y lanzamientos.' },

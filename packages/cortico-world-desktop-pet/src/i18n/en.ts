@@ -223,6 +223,7 @@ const en: PetText = {
     voice: 'Speech recognition',
     notStarted: 'Not started',
     viewInBrowser: 'View the pet in the browser',
+    viewOnLan: (ip: string) => `View on a phone (${ip})`,
     dress: 'Dress up',
     panels: {
       pet: { title: 'Desktop pet', description: 'The window, the dress and the window runtime.' },
@@ -269,6 +270,7 @@ const en: PetText = {
     lockFrameRate: { title: 'Lock frame rate', description: 'Draws the pet at the frame rate at rest too. When off, it drops to 30 frames a second while standing, sitting or asleep.' },
     hideWhenFullscreen: { title: 'Hide during full screen', description: 'When on, the pet hides while the window in front fills the screen Coo is on (a game, a full-screen video, a browser in full screen) and comes back when full screen ends; a maximized window does not count. When off, Coo always stays on top.' },
     exportOverlay: { title: 'OBS overlay', description: "Serves the pet window's picture on a transparent background at /overlay for an OBS Browser source; off, nothing is served." },
+    lanAccess: { title: "Local network access", description: "Devices on the same network can open the pet page: open the panel's \"View on a phone\" address on the phone once to pair it. Deleting the secret DESKTOP_PET_LAN_KEY and restarting unpairs every device. Takes effect after a restart." },
     electronFile: { title: 'Electron executable', description: 'Empty uses CORTICO_DESKTOP_PET_HOST, then the runtime installed from the panel.' },
     port: { title: 'Page port', description: 'Moves up to the next free port when taken.' },
     touchEnabled: { title: 'Touches become events', description: 'Pokes, petting, and being picked up and thrown.' },

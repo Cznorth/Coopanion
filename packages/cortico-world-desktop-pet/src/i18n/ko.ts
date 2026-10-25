@@ -194,6 +194,7 @@ const ko: Translation<PetText> = {
     voice: '음성 인식',
     notStarted: '시작 안 됨',
     viewInBrowser: '브라우저에서 펫 보기',
+    viewOnLan: (ip: string) => `휴대폰에서 보기 (${ip})`,
     dress: '꾸미기',
     panels: {
       pet: { title: '데스크톱 펫', description: '창, 꾸미기, 창 런타임.' },
@@ -239,6 +240,7 @@ const ko: Translation<PetText> = {
     lockFrameRate: { title: '프레임 레이트 고정', description: '가만히 있을 때도 프레임 레이트대로 펫을 그립니다. 끄면 서 있거나, 앉아 있거나, 잠든 동안 초당 30프레임으로 낮춥니다.' },
     hideWhenFullscreen: { title: '전체 화면일 때 숨기기', description: '켜면 앞에 있는 창이 펫이 있는 화면을 가득 채우는 동안(게임, 전체 화면 동영상, 전체 화면 브라우저) 펫을 숨기고, 전체 화면이 끝나면 다시 보여 줍니다. 최대화된 창은 해당하지 않습니다. 끄면 항상 맨 위에 떠 있습니다.' },
     exportOverlay: { title: 'OBS 오버레이', description: '펫 창의 화면을 투명 배경으로 /overlay에 제공해 OBS의 「브라우저」 소스에서 쓸 수 있게 합니다. 끄면 제공하지 않습니다.' },
+    lanAccess: { title: "로컬 네트워크 접근", description: "같은 네트워크의 기기에서 펫 페이지를 열 수 있습니다. 패널의 「휴대폰에서 보기」 주소를 기기에서 한 번 열면 페어링됩니다. 시크릿 DESKTOP_PET_LAN_KEY를 삭제하고 다시 시작하면 모든 기기의 페어링이 해제됩니다. 다시 시작한 뒤 적용됩니다." },
     electronFile: { title: 'Electron 실행 파일', description: '비워 두면 CORTICO_DESKTOP_PET_HOST를 쓰고, 없으면 패널에서 설치한 런타임을 씁니다.' },
     port: { title: '페이지 포트', description: '사용 중이면 다음 빈 포트로 올라갑니다.' },
     touchEnabled: { title: '터치를 이벤트로 전달', description: '찌르기, 쓰다듬기, 들어 올려 던지기.' },

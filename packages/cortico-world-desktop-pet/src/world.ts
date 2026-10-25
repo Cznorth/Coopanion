@@ -20,6 +20,8 @@
  */
 import type { spawn } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import { networkInterfaces } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import type {
@@ -217,6 +219,9 @@ export interface DesktopPetWorldOptions {
   /** The transcription service's API Key, read at each request, and where the voice panel saves a new one; absent, there is none. */
   asrApiKey?: () => string;
   storeAsrApiKey?: (key: string) => void;
+  /** The LAN pairing key (secret `DESKTOP_PET_SECRETS.lanKey`); without these `window.lanAccess` has no effect. */
+  lanKey?: () => string;
+  storeLanKey?: (key: string) => void;
   /** The bot's name for the menu header, the chat page and computer use's question; read at each use. */
   botName?: () => string;
   /** PNG shown as the avatar in the menu header, when it exists. */
@@ -442,6 +447,7 @@ export class DesktopPetWorld implements World {
       text: () => this.ui,
       overlay: () => this.cfg.window.exportOverlay,
       speech: (text) => this.speechText.units(text, this.appLanguage),
+      lan: () => this.lanKey(),
     });
   }
 
@@ -859,6 +865,24 @@ export class DesktopPetWorld implements World {
 
   get petUrl(): string {
     return `${this.server.origin}/pet`;
+  }
+
+  /** The LAN pairing key while `window.lanAccess` is on, created and stored the first time. */
+  private lanKey(): string | null {
+    if (!this.cfg.window.lanAccess || !this.opts.lanKey || !this.opts.storeLanKey) return null;
+    let key = this.opts.lanKey();
+    if (!key) {
+      key = randomBytes(18).toString('base64url');
+      this.opts.storeLanKey(key);
+    }
+    return key;
+  }
+
+  /** The pairing addresses on this machine's private IPv4 networks while the pages are served to them. */
+  get lanUrls(): string[] {
+    const key = this.server.lan && this.server.port ? this.opts.lanKey?.() : '';
+    if (!key) return [];
+    return lanAddresses().map((ip) => `http://${ip}:${this.server.port}/pair?key=${key}`);
   }
 
   openWindow(): void {
@@ -1955,7 +1979,10 @@ export class DesktopPetWorld implements World {
         this.voiceSockets.add(socket);
         socket.onClose(() => this.voiceSockets.delete(socket));
       },
-      links: this.server.port ? [{ label: c.viewInBrowser, href: this.petUrl }, { label: c.dress, href: `${this.server.origin}/dress` }] : [],
+      links: this.server.port ? [
+        { label: c.viewInBrowser, href: this.petUrl }, { label: c.dress, href: `${this.server.origin}/dress` },
+        ...this.lanUrls.map((href) => ({ label: c.viewOnLan(new URL(href).hostname), href })),
+      ] : [],
       config: desktopPetConfigGroups(language),
       promptDocs: [{
         key: `worlds.${DESKTOP_PET_ID}.envPrompt`,
@@ -2064,6 +2091,8 @@ export class DesktopPetWorld implements World {
       dressUrl: this.server.port ? `${this.server.origin}/dress` : null,
       /** The OBS overlay page while `window.exportOverlay` is on. */
       overlayUrl: this.server.port && this.cfg.window.exportOverlay ? `${this.server.origin}/overlay` : null,
+      /** The pairing addresses a phone on the same network opens, one per private IPv4 address, while `window.lanAccess` is on. */
+      lanUrls: this.lanUrls,
       skin: this.cfg.skin,
       /** What the person is called while `user` is empty, in the app language. */
       defaultUser: this.ui.defaultUser,
@@ -2116,3 +2145,14 @@ export class DesktopPetWorld implements World {
 }
 
 export const modelsDirFor = (root: string) => join(root, DESKTOP_PET_ID);
+
+/** This machine's private (RFC 1918) IPv4 addresses. */
+function lanAddresses(): string[] {
+  const out: string[] = [];
+  for (const list of Object.values(networkInterfaces())) {
+    for (const a of list ?? []) {
+      if (a.family === 'IPv4' && !a.internal && /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a.address)) out.push(a.address);
+    }
+  }
+  return out;
+}

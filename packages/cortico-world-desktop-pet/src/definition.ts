@@ -113,6 +113,8 @@ export function desktopPetDefinition(assembly: DesktopPetAssembly = {}): WorldDe
         modelsDir: () => modelsDirFor(modelsRoot()),
         asrApiKey: () => ctx.secret(DESKTOP_PET_SECRETS.asrApiKey),
         storeAsrApiKey: (key) => ctx.storeSecret(DESKTOP_PET_SECRETS.asrApiKey, key),
+        lanKey: () => ctx.secret(DESKTOP_PET_SECRETS.lanKey),
+        storeLanKey: (key) => ctx.storeSecret(DESKTOP_PET_SECRETS.lanKey, key),
         botName: () => assembly.botName?.() ?? ctx.botName,
         avatarFile: join(ctx.botDir, AVATAR_FILE),
         controls: assembly.controls,

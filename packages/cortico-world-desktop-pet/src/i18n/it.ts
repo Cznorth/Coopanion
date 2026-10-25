@@ -194,6 +194,7 @@ const it: Translation<PetText> = {
     voice: 'Riconoscimento vocale',
     notStarted: 'Non avviato',
     viewInBrowser: "Guarda l'animaletto nel browser",
+    viewOnLan: (ip: string) => `Guarda sul telefono (${ip})`,
     dress: 'Guardaroba',
     panels: {
       pet: { title: 'Animaletto da desktop', description: 'La finestra, il guardaroba e il runtime della finestra.' },
@@ -239,6 +240,7 @@ const it: Translation<PetText> = {
     lockFrameRate: { title: 'Blocca la frequenza', description: "Disegna l'animaletto a questa frequenza anche quando non si muove. Se disattivato, scende a 30 fotogrammi al secondo quando sta in piedi, sta a sedere o dorme." },
     hideWhenFullscreen: { title: 'Nascondi a schermo intero', description: "Se attivo, l'animaletto si nasconde mentre la finestra in primo piano riempie lo schermo di Coo (un gioco, un video a schermo intero, un browser a schermo intero) e torna quando lo schermo intero finisce; una finestra ingrandita non conta. Se disattivato, resta sempre in primo piano." },
     exportOverlay: { title: 'Overlay OBS', description: "Fornisce l'immagine della finestra dell'animaletto su sfondo trasparente in /overlay per una sorgente «Browser» di OBS; se disattivato non fornisce nulla." },
+    lanAccess: { title: "Accesso dalla rete locale", description: "I dispositivi della stessa rete possono aprire la pagina dell'animaletto: apri una volta sul telefono l'indirizzo «Guarda sul telefono» del pannello per abbinarlo. Eliminando il segreto DESKTOP_PET_LAN_KEY e riavviando, tutti i dispositivi vengono disabbinati. Ha effetto dopo il riavvio." },
     electronFile: { title: 'Eseguibile Electron', description: 'Vuoto usa CORTICO_DESKTOP_PET_HOST, poi il runtime installato dal pannello.' },
     port: { title: 'Porta della pagina', description: 'Passa alla porta libera successiva se è occupata.' },
     touchEnabled: { title: 'I tocchi diventano eventi', description: 'Colpetti, carezze, sollevamenti e lanci.' },

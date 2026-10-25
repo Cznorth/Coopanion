@@ -194,6 +194,7 @@ const fr: Translation<PetText> = {
     voice: 'Reconnaissance vocale',
     notStarted: 'Non démarrée',
     viewInBrowser: 'Voir le compagnon dans le navigateur',
+    viewOnLan: (ip: string) => `Voir sur un téléphone (${ip})`,
     dress: 'Habiller',
     panels: {
       pet: { title: 'Compagnon de bureau', description: "La fenêtre, la tenue et l'environnement d'exécution de la fenêtre." },
@@ -239,6 +240,7 @@ const fr: Translation<PetText> = {
     lockFrameRate: { title: 'Verrouiller la fréquence', description: "Dessine aussi le compagnon à cette fréquence au repos. Désactivé, elle descend à 30 images par seconde quand le compagnon se tient debout, s'assoit ou dort." },
     hideWhenFullscreen: { title: 'Masquer en plein écran', description: 'Activé, le compagnon se cache quand la fenêtre au premier plan remplit l\'écran de Coo (un jeu, une vidéo en plein écran, un navigateur en plein écran) et revient à la fin du plein écran ; une fenêtre agrandie ne compte pas. Désactivé, le compagnon reste toujours au premier plan.' },
     exportOverlay: { title: 'Overlay OBS', description: "Sert l'image de la fenêtre du compagnon sur fond transparent à /overlay pour une source « Navigateur » d'OBS ; désactivé, rien n'est servi." },
+    lanAccess: { title: "Accès au réseau local", description: "Les appareils du même réseau peuvent ouvrir la page du compagnon : ouvrez une fois sur le téléphone l'adresse « Voir sur un téléphone » du panneau pour l'appairer. Supprimer le secret DESKTOP_PET_LAN_KEY puis redémarrer désappaire tous les appareils. Prend effet après un redémarrage." },
     electronFile: { title: 'Exécutable Electron', description: "Vide : CORTICO_DESKTOP_PET_HOST, puis l'environnement d'exécution installé depuis le panneau." },
     port: { title: 'Port de la page', description: "Passe au port libre suivant s'il est occupé." },
     touchEnabled: { title: 'Les contacts deviennent des événements', description: 'Petits coups, caresses, se faire soulever et lancer.' },

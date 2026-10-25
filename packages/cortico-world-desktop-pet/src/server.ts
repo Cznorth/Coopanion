@@ -1,6 +1,11 @@
 /**
- * Local HTTP + WebSocket server for the pet's pages. Binds 127.0.0.1 only and answers only
+ * Local HTTP + WebSocket server for the pet's pages. Binds 127.0.0.1 and answers only
  * requests whose Host is a loopback name, so a web page cannot reach it through DNS rebinding.
+ *
+ * With `lan()` it binds every interface so a phone on the same network can open the pet page.
+ * A request whose Host is not a loopback name then needs the `coo-lan` cookie, which
+ * `/pair?key=<lan key>` sets; without it only the static files a sandboxed figure frame loads
+ * (`/web/`, `/packs/`, `/figure-frame`) are served, since that frame sends no cookies.
  *
  * - `/pet`: the pet itself. In the pet window it is transparent and click-through outside
  *   the figure; in a browser tab it draws a floor.
@@ -12,6 +17,7 @@
  *   `/web/`). `/api/figures/status`: the installed packs that did not load and why, and whether packs can be
  *   imported here; `POST /api/figures/import` (a zip, or the page's framing of folders), `…/import/install`
  *   and `…/import/cancel` import them, `POST /api/figures/remove` (`{ id }`) uninstalls one (src/pack-import.ts).
+ * - `/pair?key=…`: with `lan()`, sets the LAN cookie and redirects to `/pet`; 403 for a wrong key.
  * - `/figure-frame`: the sandbox a pack's code runs in. Its own CSP sandboxes it (an opaque
  *   origin) and denies it every connection; scripts and images come from this server only. Files
  *   under `/web/` and `/packs/` answer that opaque origin's CORS requests; nothing else does,
@@ -28,7 +34,7 @@
  *   (host/overlay.cjs) go to every overlay page as they are; when it goes, the pages are sent a frame that clears them.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { basename, extname, join, normalize, sep } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
@@ -52,6 +58,9 @@ const MIME: Record<string, string> = {
 const PAGES: Record<string, string> = { '/pet': 'pet.html', '/dress': 'dress.html' };
 const LOOPBACK = /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/i;
 const PORT_ATTEMPTS = 10;
+const LAN_COOKIE = 'coo-lan';
+/** What a LAN client without the cookie may read: the files the figure frame loads, which carry no cookie. */
+const LAN_OPEN = /^\/(web\/|packs\/|figure-frame$)/;
 /**
  * A pack's files: the figure frame imports its scripts and loads its images, which this does not
  * restrict; a pack's HTML or SVG opened as a page runs in an opaque origin with no network.
@@ -92,6 +101,8 @@ export interface PetServerOptions {
   overlay?(): boolean;
   /** The syllables `text` is spoken as; `POST /api/speech` answers 404 without it. */
   speech?(text: string): SpeechUnit[];
+  /** The key `/pair` takes while the pages are served to the local network; null or absent serves loopback only. Read on `start()`. */
+  lan?(): string | null;
 }
 
 export class PetServer {
@@ -108,6 +119,7 @@ export class PetServer {
   private overlayTold: boolean | null = null;
   private boundPort = 0;
   private readonly windowKey = randomUUID();
+  private lanKey: string | null = null;
 
   constructor(private readonly opts: PetServerOptions) {}
 
@@ -137,15 +149,21 @@ export class PetServer {
     return this.petConnected && this.petIsWindow;
   }
 
+  /** Whether the pages are served to the local network. */
+  get lan(): boolean {
+    return this.lanKey !== null;
+  }
+
   async start(): Promise<number> {
     const base = this.opts.port();
+    this.lanKey = this.opts.lan?.() || null;
     let lastErr: Error | null = null;
     for (let i = 0; i < PORT_ATTEMPTS; i++) {
       const server = createServer((req, res) => { void this.handle(req, res); });
       try {
         await new Promise<void>((done, fail) => {
           server.once('error', fail);
-          server.listen(base === 0 ? 0 : base + i, '127.0.0.1', () => { server.off('error', fail); done(); });
+          server.listen(base === 0 ? 0 : base + i, this.lanKey ? '0.0.0.0' : '127.0.0.1', () => { server.off('error', fail); done(); });
         });
       } catch (err) {
         lastErr = err as Error;
@@ -217,9 +235,13 @@ export class PetServer {
     return this.opts.overlay?.() ?? false;
   }
 
-  /** Browser writes require this service's HTTP origin; local clients may omit Origin. Reads also allow loopback and opaque origins. */
+  /**
+   * Browser writes require this service's HTTP origin; local clients may omit Origin. Reads also allow loopback and opaque origins.
+   * A LAN request (non-loopback Host while `lan`) needs the LAN cookie, and its browser origin is `http://<its Host>`.
+   */
   private allowed(req: IncomingMessage, write: boolean): boolean {
-    if (!LOOPBACK.test(req.headers.host ?? '')) return false;
+    const host = req.headers.host ?? '';
+    if (!LOOPBACK.test(host)) return this.lanAllowed(req, host, write);
     const origin = req.headers.origin;
     if (origin === 'null') return !write;
     if (!origin) return true;
@@ -229,6 +251,25 @@ export class PetServer {
     } catch {
       return false;
     }
+  }
+
+  private lanAllowed(req: IncomingMessage, host: string, write: boolean): boolean {
+    if (!this.lanKey || !host) return false;
+    const origin = req.headers.origin;
+    if (!write && LAN_OPEN.test(new URL(req.url ?? '/', 'http://x').pathname) && (!origin || origin === 'null' || origin === `http://${host}`)) return true;
+    if (!sameKey(cookie(req, LAN_COOKIE), this.lanKey)) return false;
+    return !origin || origin === `http://${host}`;
+  }
+
+  /** `/pair`: a right key gets the LAN cookie and the pet page. */
+  private pair(res: ServerResponse, url: URL): void {
+    if (!this.lanKey || !sameKey(url.searchParams.get('key'), this.lanKey)) { res.writeHead(403).end(); return; }
+    res.writeHead(302, {
+      'set-cookie': `${LAN_COOKIE}=${this.lanKey}; Path=/; HttpOnly; SameSite=Strict; Max-Age=31536000`,
+      'cache-control': 'no-store',
+      'referrer-policy': 'no-referrer',
+      location: '/pet',
+    }).end();
   }
 
   private accept(ws: WebSocket, req: IncomingMessage): void {
@@ -299,6 +340,7 @@ export class PetServer {
   }
 
   private async handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    if (req.method === 'GET' && this.lanKey && (req.url ?? '').startsWith('/pair?')) return this.pair(res, new URL(req.url!, 'http://x'));
     if (!this.allowed(req, req.method !== 'GET' && req.method !== 'HEAD')) { res.writeHead(421).end(); return; }
     const url = new URL(req.url ?? '/', 'http://x');
     const path = url.pathname;
@@ -427,6 +469,20 @@ export class PetServer {
       res.writeHead(404).end();
     }
   }
+}
+
+function cookie(req: IncomingMessage, name: string): string | null {
+  for (const part of (req.headers.cookie ?? '').split(';')) {
+    const at = part.indexOf('=');
+    if (at > 0 && part.slice(0, at).trim() === name) return part.slice(at + 1).trim();
+  }
+  return null;
+}
+
+function sameKey(given: string | null, key: string): boolean {
+  if (given === null) return false;
+  const a = Buffer.from(given), b = Buffer.from(key);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 function parse(text: string): PageMessage | null {

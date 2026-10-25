@@ -138,7 +138,8 @@ export type MicMode = 'hold' | 'toggle' | 'always';
 export type AsrEngine = 'funasr' | 'whisper' | 'system' | 'api';
 
 /** The deployment secrets this World reads, by what they are for. */
-export const DESKTOP_PET_SECRETS = { asrApiKey: 'DESKTOP_PET_ASR_API_KEY' } as const;
+/** `lanKey` is written on the first start with `window.lanAccess` on; deleting it unpairs every LAN client at the next start. */
+export const DESKTOP_PET_SECRETS = { asrApiKey: 'DESKTOP_PET_ASR_API_KEY', lanKey: 'DESKTOP_PET_LAN_KEY' } as const;
 
 /** Languages SenseVoiceSmall hears, by the app language that speaks them; it also takes `yue` and `auto`. */
 export const SENSEVOICE_LANGUAGES: Readonly<Record<string, string>> = { zh: 'zh', 'zh-Hant': 'zh', en: 'en', ja: 'ja', ko: 'ko' };
@@ -182,6 +183,8 @@ export interface DesktopPetConfigSection extends WorldSection {
     hideWhenFullscreen: boolean;
     /** Serve `/overlay`, the pet window's picture for an OBS browser source. */
     exportOverlay: boolean;
+    /** Serve the pet's pages to the local network too; clients pair with the secret `DESKTOP_PET_SECRETS.lanKey` (src/server.ts). */
+    lanAccess: boolean;
   };
   roam: RoamMode;
   /** All of the pet's sounds; `sounds` picks among them while this is on. */
@@ -261,7 +264,7 @@ export const DESKTOP_PET_DEFAULTS: DesktopPetConfigSection = {
   enabled: false,
   port: 7797,
   user: '',
-  window: { enabled: true, electronFile: '', scale: 1, bubbleSize: 1, fontSize: 1, bubbleSpeed: 1, glow: GLOW_DEFAULT, frameRate: 60, lockFrameRate: false, hideWhenFullscreen: false, exportOverlay: false },
+  window: { enabled: true, electronFile: '', scale: 1, bubbleSize: 1, fontSize: 1, bubbleSpeed: 1, glow: GLOW_DEFAULT, frameRate: 60, lockFrameRate: false, hideWhenFullscreen: false, exportOverlay: false, lanAccess: false },
   roam: 'calm',
   sound: true,
   sounds: { move: true, touch: true, face: true, snore: true, talk: true, ui: true, snoreSeconds: 0 },
@@ -330,6 +333,7 @@ export function desktopPetConfigGroups(language: Language = 'zh'): ConfigGroup[]
           [`${K}.window.hideWhenFullscreen`]: { type: 'boolean', title: c.hideWhenFullscreen.title, description: c.hideWhenFullscreen.description, 'x-hot': true },
         } : {}),
         [`${K}.window.exportOverlay`]: { type: 'boolean', title: c.exportOverlay.title, description: c.exportOverlay.description, 'x-hot': true },
+        [`${K}.window.lanAccess`]: { type: 'boolean', title: c.lanAccess.title, description: c.lanAccess.description, 'x-hot': false },
         [`${K}.window.electronFile`]: { type: 'string', title: c.electronFile.title, description: c.electronFile.description, 'x-path': { kind: 'file' }, 'x-hot': false },
         [`${K}.port`]: { type: 'integer', title: c.port.title, minimum: 1024, maximum: 65535, description: c.port.description, 'x-hot': false },
         [`${K}.touch.enabled`]: { type: 'boolean', title: c.touchEnabled.title, description: c.touchEnabled.description, 'x-hot': true },

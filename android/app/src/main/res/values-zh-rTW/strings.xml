@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dress">裝扮</string>
+    <string name="intro">Coo 平時住在電腦上。配對後，這個 App 執行時 Coo 會來到手機螢幕上；鎖定螢幕或停止後回到電腦上。</string>
+    <string name="address_hint">配對位址（http://…/pair?key=…）</string>
+    <string name="pair">配對</string>
+    <string name="grant_overlay">允許顯示在其他應用程式上層</string>
+    <string name="grant_mic">允許使用麥克風</string>
+    <string name="start">讓 Coo 過來</string>
+    <string name="stop">讓 Coo 回電腦</string>
+    <string name="show">顯示</string>
+    <string name="hide">隱藏</string>
+    <string name="channel">Coo 在手機上</string>
+    <string name="status_connecting">正在連線電腦…</string>
+    <string name="status_on_phone">Coo 在手機上</string>
+    <string name="status_unreachable">連不上電腦，正在重試</string>
+    <string name="status_away">螢幕已關閉：Coo 回到了電腦上</string>
+    <string name="pair_refused">電腦拒絕了這個配對位址。請從桌寵面板重新開啟一個。</string>
+    <string name="bad_address">這不是配對位址。</string>
+    <string name="need_overlay">請先允許顯示在其他應用程式上層。</string>
+    <string name="not_paired">還沒配對。在電腦上開啟桌寵 World 的「區域網路存取」並重新啟動，然後用這個 App 開啟「在手機上查看」的位址。</string>
+    <string name="paired_with">已配對：%1$s</string>
+</resources>

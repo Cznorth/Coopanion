@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dress">装扮</string>
+    <string name="intro">Coo 平时住在电脑上。配对后，这个 App 运行时 Coo 会来到手机屏幕上；锁屏或停止后回到电脑上。</string>
+    <string name="address_hint">配对地址（http://…/pair?key=…）</string>
+    <string name="pair">配对</string>
+    <string name="grant_overlay">允许显示在其他应用上层</string>
+    <string name="grant_mic">允许使用麦克风</string>
+    <string name="start">让 Coo 过来</string>
+    <string name="stop">让 Coo 回电脑</string>
+    <string name="show">显示</string>
+    <string name="hide">隐藏</string>
+    <string name="channel">Coo 在手机上</string>
+    <string name="status_connecting">正在连接电脑…</string>
+    <string name="status_on_phone">Coo 在手机上</string>
+    <string name="status_unreachable">连不上电脑，正在重试</string>
+    <string name="status_away">屏幕已关闭：Coo 回到了电脑上</string>
+    <string name="pair_refused">电脑拒绝了这个配对地址。请从桌宠面板重新打开一个。</string>
+    <string name="bad_address">这不是配对地址。</string>
+    <string name="need_overlay">请先允许显示在其他应用上层。</string>
+    <string name="not_paired">还没配对。在电脑上打开桌宠 World 的「局域网访问」并重启，然后用这个 App 打开「在手机上查看」的地址。</string>
+    <string name="paired_with">已配对：%1$s</string>
+</resources>

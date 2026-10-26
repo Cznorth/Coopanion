@@ -51,7 +51,7 @@ Coopanion is a desktop pet. **Coo** lives on the bottom edge of your screen: it 
 - **Alarms**: ask Coo to set one at a local time or after a number of minutes.
 - **Extensions**: Worlds such as a QQ bot, a drawing room and small games, installed from the Extensions page.
 - **OBS overlay**: Coo and its bubbles as an OBS Browser source on a transparent background.
-- **On a phone**: turn on **Local network access** in the desktop pet World's settings (advanced mode, Worlds) and restart; then open the World's **View on a phone** address once on a phone on the same network to pair it. Coo stays on the computer; the phone shows the pet page. On Windows, allow Coopanion through the firewall on private networks.
+- **On a phone**: turn on **Local network access** in the desktop pet World's settings (advanced mode, Worlds) and restart; then open the World's **View on a phone** address once on a phone on the same network to pair it. Coo stays on the computer; the phone shows the pet page. On Windows, allow Coopanion through the firewall on private networks. With the Android app in [`android/`](android/README.md), Coo comes over to the phone instead and walks on its screen over other apps; it goes back to the computer when the phone locks.
 
 What changed in each version is in [Releases](https://github.com/Pal-AI-Lab/Coopanion/releases).
 

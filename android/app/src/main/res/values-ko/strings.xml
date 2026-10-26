@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dress">꾸미기</string>
+    <string name="intro">Coo는 평소 컴퓨터에 살아요. 페어링하면 이 앱이 실행되는 동안 Coo가 휴대폰 화면으로 오고, 화면이 잠기거나 중지하면 컴퓨터로 돌아가요.</string>
+    <string name="address_hint">페어링 주소(http://…/pair?key=…)</string>
+    <string name="pair">페어링</string>
+    <string name="grant_overlay">다른 앱 위에 표시 허용</string>
+    <string name="grant_mic">마이크 허용</string>
+    <string name="start">Coo 부르기</string>
+    <string name="stop">Coo를 컴퓨터로 보내기</string>
+    <string name="show">표시</string>
+    <string name="hide">숨기기</string>
+    <string name="channel">휴대폰의 Coo</string>
+    <string name="status_connecting">컴퓨터에 연결 중…</string>
+    <string name="status_on_phone">Coo가 휴대폰에 있어요</string>
+    <string name="status_unreachable">컴퓨터에 연결할 수 없어 다시 시도하는 중</string>
+    <string name="status_away">화면 꺼짐: Coo가 컴퓨터로 돌아갔어요</string>
+    <string name="pair_refused">컴퓨터가 이 페어링 주소를 거부했어요. 데스크톱 펫 패널에서 새 주소를 여세요.</string>
+    <string name="bad_address">페어링 주소가 아니에요.</string>
+    <string name="need_overlay">먼저 다른 앱 위에 표시를 허용하세요.</string>
+    <string name="not_paired">아직 페어링하지 않았어요. 컴퓨터에서 데스크톱 펫 World의 \"로컬 네트워크 액세스\"를 켜고 다시 시작한 뒤, \"휴대폰에서 보기\" 주소를 이 앱으로 여세요.</string>
+    <string name="paired_with">페어링됨: %1$s</string>
+</resources>

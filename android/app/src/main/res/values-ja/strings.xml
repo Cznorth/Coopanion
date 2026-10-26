@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dress">着せ替え</string>
+    <string name="intro">Coo はふだんパソコンにいます。ペアリングすると、このアプリの実行中は Coo がスマホの画面に来て、画面ロックや停止でパソコンに戻ります。</string>
+    <string name="address_hint">ペアリングアドレス（http://…/pair?key=…）</string>
+    <string name="pair">ペアリング</string>
+    <string name="grant_overlay">他のアプリの上に表示を許可</string>
+    <string name="grant_mic">マイクを許可</string>
+    <string name="start">Coo を呼ぶ</string>
+    <string name="stop">Coo をパソコンに戻す</string>
+    <string name="show">表示</string>
+    <string name="hide">隠す</string>
+    <string name="channel">スマホの Coo</string>
+    <string name="status_connecting">パソコンに接続中…</string>
+    <string name="status_on_phone">Coo はスマホにいます</string>
+    <string name="status_unreachable">パソコンに接続できません。再試行しています</string>
+    <string name="status_away">画面オフ：Coo はパソコンに戻りました</string>
+    <string name="pair_refused">パソコンがこのペアリングアドレスを拒否しました。デスクトップペットのパネルから新しいアドレスを開いてください。</string>
+    <string name="bad_address">ペアリングアドレスではありません。</string>
+    <string name="need_overlay">先に他のアプリの上への表示を許可してください。</string>
+    <string name="not_paired">まだペアリングしていません。パソコンでデスクトップペット World の「LAN アクセス」をオンにして再起動し、「スマートフォンで見る」のアドレスをこのアプリで開いてください。</string>
+    <string name="paired_with">ペアリング済み：%1$s</string>
+</resources>

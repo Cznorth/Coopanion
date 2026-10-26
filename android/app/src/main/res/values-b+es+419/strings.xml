@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dress">Vestir</string>
+    <string name="intro">Coo vive en tu computadora. Una vez vinculado, Coo viene a la pantalla del teléfono mientras la app está abierta y vuelve a la computadora cuando se bloquea la pantalla o la detienes.</string>
+    <string name="address_hint">Dirección de vinculación (http://…/pair?key=…)</string>
+    <string name="pair">Vincular</string>
+    <string name="grant_overlay">Permitir mostrar sobre otras apps</string>
+    <string name="grant_mic">Permitir el micrófono</string>
+    <string name="start">Traer a Coo</string>
+    <string name="stop">Devolver a Coo a la computadora</string>
+    <string name="show">Mostrar</string>
+    <string name="hide">Ocultar</string>
+    <string name="channel">Coo en el teléfono</string>
+    <string name="status_connecting">Conectando con la computadora…</string>
+    <string name="status_on_phone">Coo está en el teléfono</string>
+    <string name="status_unreachable">No se puede llegar a la computadora; reintentando</string>
+    <string name="status_away">Pantalla apagada: Coo volvió a la computadora</string>
+    <string name="pair_refused">La computadora rechazó esta dirección de vinculación. Abre una nueva desde el panel de la mascota de escritorio.</string>
+    <string name="bad_address">Esta no es una dirección de vinculación.</string>
+    <string name="need_overlay">Primero permite mostrar sobre otras apps.</string>
+    <string name="not_paired">Aún no está vinculado. En la computadora, activa Acceso en la red local en el World de la mascota de escritorio y reinicia; luego abre su dirección «Ver en un teléfono» con esta app.</string>
+    <string name="paired_with">Vinculado con %1$s</string>
+</resources>

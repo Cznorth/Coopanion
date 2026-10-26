@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dress">Anziehen</string>
+    <string name="intro">Coo wohnt auf deinem Computer. Nach dem Koppeln kommt Coo auf den Bildschirm des Handys, solange die App läuft, und geht zurück zum Computer, wenn der Bildschirm sperrt oder du sie beendest.</string>
+    <string name="address_hint">Kopplungsadresse (http://…/pair?key=…)</string>
+    <string name="pair">Koppeln</string>
+    <string name="grant_overlay">Über anderen Apps anzeigen erlauben</string>
+    <string name="grant_mic">Mikrofon erlauben</string>
+    <string name="start">Coo herholen</string>
+    <string name="stop">Coo zum Computer zurückschicken</string>
+    <string name="show">Anzeigen</string>
+    <string name="hide">Ausblenden</string>
+    <string name="channel">Coo auf dem Handy</string>
+    <string name="status_connecting">Verbinde mit dem Computer…</string>
+    <string name="status_on_phone">Coo ist auf dem Handy</string>
+    <string name="status_unreachable">Computer nicht erreichbar; neuer Versuch läuft</string>
+    <string name="status_away">Bildschirm aus: Coo ist zurück auf dem Computer</string>
+    <string name="pair_refused">Der Computer hat diese Kopplungsadresse abgelehnt. Öffne eine neue im Panel des Desktop-Haustiers.</string>
+    <string name="bad_address">Das ist keine Kopplungsadresse.</string>
+    <string name="need_overlay">Erlaube zuerst das Anzeigen über anderen Apps.</string>
+    <string name="not_paired">Noch nicht gekoppelt. Schalte am Computer im Desktop-Haustier-World „Zugriff im lokalen Netzwerk“ ein und starte neu, dann öffne die Adresse „Auf dem Handy ansehen“ mit dieser App.</string>
+    <string name="paired_with">Gekoppelt mit %1$s</string>
+</resources>

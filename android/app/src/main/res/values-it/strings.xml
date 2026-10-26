@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dress">Vestiti</string>
+    <string name="intro">Coo vive sul tuo computer. Dopo l’associazione, Coo viene sullo schermo del telefono finché l’app è attiva e torna sul computer quando lo schermo si blocca o la fermi.</string>
+    <string name="address_hint">Indirizzo di associazione (http://…/pair?key=…)</string>
+    <string name="pair">Associa</string>
+    <string name="grant_overlay">Consenti la sovrapposizione ad altre app</string>
+    <string name="grant_mic">Consenti il microfono</string>
+    <string name="start">Chiama Coo</string>
+    <string name="stop">Rimanda Coo al computer</string>
+    <string name="show">Mostra</string>
+    <string name="hide">Nascondi</string>
+    <string name="channel">Coo sul telefono</string>
+    <string name="status_connecting">Connessione al computer…</string>
+    <string name="status_on_phone">Coo è sul telefono</string>
+    <string name="status_unreachable">Computer non raggiungibile; nuovo tentativo</string>
+    <string name="status_away">Schermo spento: Coo è tornato sul computer</string>
+    <string name="pair_refused">Il computer ha rifiutato questo indirizzo di associazione. Aprine uno nuovo dal pannello dell’animaletto.</string>
+    <string name="bad_address">Questo non è un indirizzo di associazione.</string>
+    <string name="need_overlay">Consenti prima la sovrapposizione ad altre app.</string>
+    <string name="not_paired">Non ancora associato. Sul computer attiva Accesso dalla rete locale nel World dell’animaletto e riavvia, poi apri il suo indirizzo «Guarda sul telefono» con questa app.</string>
+    <string name="paired_with">Associato a %1$s</string>
+</resources>

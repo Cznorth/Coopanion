@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dress">Habillage</string>
+    <string name="intro">Coo vit sur votre ordinateur. Une fois l\'appareil associé, Coo vient sur l\'écran du téléphone tant que l\'app tourne, et retourne sur l\'ordinateur quand l\'écran se verrouille ou que vous l\'arrêtez.</string>
+    <string name="address_hint">Adresse d\'association (http://…/pair?key=…)</string>
+    <string name="pair">Associer</string>
+    <string name="grant_overlay">Autoriser l\'affichage par-dessus les autres apps</string>
+    <string name="grant_mic">Autoriser le micro</string>
+    <string name="start">Faire venir Coo</string>
+    <string name="stop">Renvoyer Coo sur l\'ordinateur</string>
+    <string name="show">Afficher</string>
+    <string name="hide">Masquer</string>
+    <string name="channel">Coo sur le téléphone</string>
+    <string name="status_connecting">Connexion à l\'ordinateur…</string>
+    <string name="status_on_phone">Coo est sur le téléphone</string>
+    <string name="status_unreachable">Ordinateur injoignable ; nouvel essai en cours</string>
+    <string name="status_away">Écran éteint : Coo est retourné sur l\'ordinateur</string>
+    <string name="pair_refused">L\'ordinateur a refusé cette adresse d\'association. Ouvrez-en une nouvelle depuis le panneau de l\'animal de bureau.</string>
+    <string name="bad_address">Ce n\'est pas une adresse d\'association.</string>
+    <string name="need_overlay">Autorisez d\'abord l\'affichage par-dessus les autres apps.</string>
+    <string name="not_paired">Pas encore associé. Sur l\'ordinateur, activez Accès au réseau local du World animal de bureau et redémarrez, puis ouvrez son adresse « Voir sur un téléphone » avec cette app.</string>
+    <string name="paired_with">Associé à %1$s</string>
+</resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dress">Наряды</string>
+    <string name="intro">Coo живёт на вашем компьютере. После сопряжения, пока приложение работает, Coo приходит на экран телефона, а когда экран блокируется или вы его останавливаете, возвращается на компьютер.</string>
+    <string name="address_hint">Адрес сопряжения (http://…/pair?key=…)</string>
+    <string name="pair">Сопрячь</string>
+    <string name="grant_overlay">Разрешить показ поверх других приложений</string>
+    <string name="grant_mic">Разрешить микрофон</string>
+    <string name="start">Позвать Coo</string>
+    <string name="stop">Вернуть Coo на компьютер</string>
+    <string name="show">Показать</string>
+    <string name="hide">Скрыть</string>
+    <string name="channel">Coo на телефоне</string>
+    <string name="status_connecting">Подключение к компьютеру…</string>
+    <string name="status_on_phone">Coo на телефоне</string>
+    <string name="status_unreachable">Компьютер недоступен; повторная попытка</string>
+    <string name="status_away">Экран выключен: Coo вернулся на компьютер</string>
+    <string name="pair_refused">Компьютер отклонил этот адрес сопряжения. Откройте новый на панели настольного питомца.</string>
+    <string name="bad_address">Это не адрес сопряжения.</string>
+    <string name="need_overlay">Сначала разрешите показ поверх других приложений.</string>
+    <string name="not_paired">Сопряжения ещё нет. На компьютере включите «Доступ из локальной сети» в World настольного питомца и перезапустите, затем откройте его адрес «Открыть на телефоне» в этом приложении.</string>
+    <string name="paired_with">Сопряжено с %1$s</string>
+</resources>

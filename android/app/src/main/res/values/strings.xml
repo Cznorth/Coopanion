@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Coopanion</string>
+    <string name="dress">Dress up</string>
+    <string name="intro">Coo lives on your computer. Once paired, Coo comes over to this phone\'s screen while the app runs, and goes back to the computer when the screen locks or you stop it.</string>
+    <string name="address_hint">Pairing address (http://…/pair?key=…)</string>
+    <string name="pair">Pair</string>
+    <string name="grant_overlay">Allow display over other apps</string>
+    <string name="grant_mic">Allow the microphone</string>
+    <string name="start">Bring Coo over</string>
+    <string name="stop">Send Coo back</string>
+    <string name="show">Show</string>
+    <string name="hide">Hide</string>
+    <string name="channel">Coo on the phone</string>
+    <string name="status_connecting">Connecting to the computer…</string>
+    <string name="status_on_phone">Coo is on the phone</string>
+    <string name="status_unreachable">Cannot reach the computer; trying again</string>
+    <string name="status_away">Screen off: Coo is back on the computer</string>
+    <string name="pair_refused">The computer refused the pairing address. Open a new one from the desktop pet panel.</string>
+    <string name="bad_address">This is not a pairing address.</string>
+    <string name="need_overlay">Allow display over other apps first.</string>
+    <string name="not_paired">Not paired. On the computer, turn on Local network access for the desktop pet World and restart, then open its \"View on a phone\" address with this app.</string>
+    <string name="paired_with">Paired with %1$s</string>
+</resources>

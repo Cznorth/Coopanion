@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dress">Vestir</string>
+    <string name="intro">O Coo mora no seu computador. Depois de parear, o Coo vem para a tela do celular enquanto o app está aberto e volta para o computador quando a tela bloqueia ou você o para.</string>
+    <string name="address_hint">Endereço de pareamento (http://…/pair?key=…)</string>
+    <string name="pair">Parear</string>
+    <string name="grant_overlay">Permitir sobreposição a outros apps</string>
+    <string name="grant_mic">Permitir o microfone</string>
+    <string name="start">Chamar o Coo</string>
+    <string name="stop">Mandar o Coo de volta ao computador</string>
+    <string name="show">Mostrar</string>
+    <string name="hide">Ocultar</string>
+    <string name="channel">Coo no celular</string>
+    <string name="status_connecting">Conectando ao computador…</string>
+    <string name="status_on_phone">O Coo está no celular</string>
+    <string name="status_unreachable">Não foi possível alcançar o computador; tentando de novo</string>
+    <string name="status_away">Tela desligada: o Coo voltou para o computador</string>
+    <string name="pair_refused">O computador recusou este endereço de pareamento. Abra um novo no painel do pet de mesa.</string>
+    <string name="bad_address">Este não é um endereço de pareamento.</string>
+    <string name="need_overlay">Permita primeiro a sobreposição a outros apps.</string>
+    <string name="not_paired">Ainda não pareado. No computador, ative Acesso pela rede local no World do pet de mesa e reinicie; depois abra o endereço \"Ver no celular\" com este app.</string>
+    <string name="paired_with">Pareado com %1$s</string>
+</resources>

@@ -22,11 +22,13 @@
  *   origin) and denies it every connection; scripts and images come from this server only. Files
  *   under `/web/` and `/packs/` answer that opaque origin's CORS requests; nothing else does,
  *   and a write (`POST`, the socket) from it is refused.
- * - `/socket?role=pet|dress&host=window|tab`: one live pet connection plus any number of
+ * - `/socket?role=pet|dress&host=phone|window|tab`: one live pet connection plus any number of
  *   pages that only receive skin and preference updates. The window and overlay source authenticate
- *   with the key carried by `windowUrl`. A newer pet connection replaces the live one, except
- *   that a browser tab only watches while the pet window is connected. A
- *   watching tab still sends typed text, preference changes and run-control clicks.
+ *   with the key carried by `windowUrl`; a phone (the Android app's floating window) only comes over the
+ *   local network, with the LAN cookie. A newer pet connection replaces the live one unless the live one
+ *   ranks higher (phone, then window, then tab): then it only watches. When a live phone goes, the windows
+ *   watching are closed with 4001 and reconnect to take the pet back. A
+ *   watching page still sends typed text, preference changes and run-control clicks.
  *   Binary frames from the pet connection are 16 kHz mono PCM16 microphone audio.
  * - `/overlay` and `/socket?role=overlay`: the OBS overlay page and its feed, while `overlay()` is on
  *   (404 and a closed socket otherwise). `/socket?role=overlay-source` is the pet window process: it is told
@@ -69,6 +71,9 @@ const PACK_CSP = "sandbox allow-scripts; default-src 'none'";
 /** The pages' own CSP. */
 const PAGE_CSP = "default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://127.0.0.1:* ws://localhost:*; img-src 'self' data:; media-src 'self' blob:; worker-src 'self' blob:; frame-ancestors 'self' http://127.0.0.1:* http://localhost:*";
 /** What a watching pet page may still send: input that is the person's whichever page it came from. */
+/** Which pet connection wins: a newer one replaces the live one unless that one ranks higher. */
+const HOST_RANK: Record<string, number> = { tab: 0, window: 1, phone: 2 };
+const hostOf = (params: URLSearchParams) => (params.get('host') === 'phone' || params.get('host') === 'window' ? params.get('host')! : 'tab');
 const WATCHER_MESSAGES = new Set(['text', 'prefs', 'control']);
 
 export type PageMessage = Record<string, unknown> & { t: string };
@@ -109,7 +114,9 @@ export class PetServer {
   private http: Server | null = null;
   private wss: WebSocketServer | null = null;
   private pet: WebSocket | null = null;
-  private petIsWindow = false;
+  private petHost = 'tab';
+  /** The pet windows watching while a phone has the pet. */
+  private readonly waitingWindows = new Set<WebSocket>();
   /** Dressing pages and pet pages that only watch. */
   private readonly dressers = new Set<WebSocket>();
   /** The pet window process sending the overlay's frames, and the overlay pages watching. */
@@ -146,7 +153,12 @@ export class PetServer {
 
   /** The connected pet page is the pet window, not a browser tab. */
   get petInWindow(): boolean {
-    return this.petConnected && this.petIsWindow;
+    return this.petConnected && this.petHost === 'window';
+  }
+
+  /** The connected pet page is the phone app's floating window. */
+  get petOnPhone(): boolean {
+    return this.petConnected && this.petHost === 'phone';
   }
 
   /** Whether the pages are served to the local network. */
@@ -183,6 +195,10 @@ export class PetServer {
         if ((params.get('host') === 'window' || params.get('role') === 'overlay-source') && params.get('key') !== this.windowKey) {
           socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'); return;
         }
+        // a phone is paired over the local network; allowed() has checked its cookie
+        if (params.get('host') === 'phone' && LOOPBACK.test(req.headers.host ?? '')) {
+          socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'); return;
+        }
         this.wss!.handleUpgrade(req, socket, head, (ws) => this.accept(ws, req));
       });
       return this.boundPort;
@@ -194,6 +210,7 @@ export class PetServer {
     for (const ws of [this.pet, ...this.dressers, this.overlaySource, ...this.overlayViewers]) ws?.close();
     this.pet = null;
     this.dressers.clear();
+    this.waitingWindows.clear();
     this.overlaySource = null;
     this.overlayViewers.clear();
     this.wss?.close();
@@ -274,16 +291,16 @@ export class PetServer {
 
   private accept(ws: WebSocket, req: IncomingMessage): void {
     const params = new URL(req.url ?? '/', 'http://x').searchParams;
-    const fromWindow = params.get('host') === 'window';
+    const from = hostOf(params);
     if (params.get('role') === 'overlay-source') return this.acceptOverlaySource(ws);
     if (params.get('role') === 'overlay') return this.acceptOverlayViewer(ws);
     ws.send(JSON.stringify({ t: 'init', ...this.opts.snapshot() }));
-    // the pet window outranks a browser tab: a tab opened while the window is connected only watches
-    const watcher = params.get('role') !== 'pet' || (!fromWindow && this.petConnected && this.petIsWindow);
+    // the phone outranks the pet window, which outranks a browser tab: a lower one opened meanwhile only watches
+    const watcher = params.get('role') !== 'pet' || (this.petConnected && HOST_RANK[from]! < HOST_RANK[this.petHost]!);
     if (!watcher) {
       const old = this.pet;
       this.pet = ws;
-      this.petIsWindow = fromWindow;
+      this.petHost = from;
       if (old) old.close(4000, 'replaced');
       this.opts.onPetConnect();
       ws.on('message', (data, isBinary) => {
@@ -300,8 +317,14 @@ export class PetServer {
         if (this.pet !== ws) return;
         this.pet = null;
         this.opts.onPetDisconnect();
+        // the phone went: the pet goes back to the window
+        if (from === 'phone') for (const w of this.waitingWindows) w.close(4001, 'promoted');
       });
       return;
+    }
+    if (params.get('role') === 'pet' && from === 'window') {
+      this.waitingWindows.add(ws);
+      ws.on('close', () => this.waitingWindows.delete(ws));
     }
     if (params.get('role') === 'pet') {
       ws.send(JSON.stringify({ t: 'watching' }));

@@ -77,6 +77,8 @@ body.tab .stage-mode{position:fixed}
 .stage-mode:hover{color:var(--skin-eye); border-color:var(--skin-eye); transform:scale(1.06)}
 .stage-mode svg{width:17px; height:17px; display:block}
 body.desk{background:transparent}
+/* the pet is on the phone: the window keeps connected and out of sight */
+body.desk.away{visibility:hidden}
 body.desk .floor{display:none}
 .stage{position:fixed; inset:0; touch-action:none}
 /* the body's sandboxed frame: transparent (a colour scheme unlike the frame's would give it a backdrop) and never under the pointer */

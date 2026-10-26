@@ -2085,6 +2085,8 @@ export class DesktopPetWorld implements World {
       connected: this.server.petConnected,
       /** The connected pet page is the window's, not a browser page standing in for it. */
       inWindow: this.server.petInWindow,
+      /** The pet is in the Android app's floating window. */
+      onPhone: this.server.petOnPhone,
       /** The pet window is connected and shown (hidden from its menu or the tray, it stays connected). */
       onDesktop: this.server.petInWindow && !this.petHidden,
       url: this.server.port ? this.petUrl : null,

@@ -22,6 +22,8 @@ import { bindAppearance } from './appearance.js';
 const $ = (s) => document.querySelector(s);
 const host = window.petHost || null;
 const windowKey = host ? new URLSearchParams(location.hash.slice(1)).get('key') : null;
+/** Who draws the page: the pet window, a phone's floating window (`petHost.kind`, paired over the local network), or a browser tab. */
+const hostKind = host ? (host.kind === 'phone' ? 'phone' : 'window') : 'tab';
 document.body.classList.add(host ? 'desk' : 'tab');
 
 const stage = $('#stage');
@@ -99,11 +101,11 @@ addEventListener('resize', () => {
 let ws = null, backoff = 500, watching = false;
 function send(msg) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg)); }
 function connect() {
-  const params = new URLSearchParams({ role: 'pet', host: host ? 'window' : 'tab' });
+  const params = new URLSearchParams({ role: 'pet', host: hostKind });
   if (windowKey) params.set('key', windowKey);
   ws = new WebSocket(`ws://${location.host}/socket?${params}`);
   ws.binaryType = 'arraybuffer';
-  ws.onopen = () => { backoff = 500; watching = false; send({ t: 'hello', screen: { w: innerWidth, h: innerHeight }, host: host ? 'window' : 'tab' }); reportVisibility(); };
+  ws.onopen = () => { backoff = 500; watching = false; document.body.classList.remove('away'); send({ t: 'hello', screen: { w: innerWidth, h: innerHeight }, host: hostKind }); reportVisibility(); };
   ws.onmessage = (e) => { try { onOrder(JSON.parse(e.data)); } catch (err) { console.error(err); } };
   ws.onclose = (e) => {
     ws = null;
@@ -125,18 +127,31 @@ host?.onShown?.((shown) => { windowShown = shown; sfx.setShown(shown); reportVis
 /* ---------- OBS overlay: while the window streams, each frame drawn is reported with the part it sends, the pet and its bubbles ---------- */
 let overlayOn = false;
 /** The body's box with room for its halo and what floats above its head, joined with the bubbles shown; null with no body. */
-function overlayRect() {
+function overlayRect(more = []) {
   const b = at()?.box;
   if (!b) return null;
   // the halo reaches about 40% of the body's width out; emotes and z's float up to its height above
   const side = Math.max(24, .4 * b.w), top = Math.max(48, b.h);
   const parts = [{ x: b.x - side, y: b.y - top, width: b.w + 2 * side, height: b.h + top + side }];
-  for (const el of [bubble, ...lines.map((l) => l.el)]) if (!el.hidden) parts.push(rectOf(el));
+  for (const el of [bubble, ...lines.map((l) => l.el), ...more]) if (!el.hidden) parts.push(rectOf(el));
   const x = Math.max(0, Math.min(...parts.map((r) => r.x))), y = Math.max(0, Math.min(...parts.map((r) => r.y)));
   const right = Math.min(innerWidth, Math.max(...parts.map((r) => r.x + r.width))), bottom = Math.min(innerHeight, Math.max(...parts.map((r) => r.y + r.height)));
   return right > x && bottom > y ? { x, y, width: right - x, height: bottom - y } : null;
 }
 host?.onOverlay?.((on) => { overlayOn = on; });
+/**
+ * A host whose window cannot pass the touch through where the page is empty (a phone's floating window)
+ * keeps its window on the pet and what it shows: `petHost.place(rect)` is told that part, menu and hover
+ * buttons included, in page pixels or null, each time it changes.
+ */
+let placed = '';
+function reportPlace() {
+  const r = overlayRect([menu, tools]);
+  const key = r ? `${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)},${Math.round(r.height)}` : '';
+  if (key === placed) return;
+  placed = key;
+  host.place(r && { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height) });
+}
 // the text is in before anything is shown
 void useLanguage().then(() => { document.title = t('pet.title'); host?.setLanguage?.(language()); connect(); });
 
@@ -300,7 +315,8 @@ function onOrder(m) {
   switch (m.t) {
     case 'init': restorePosition(m.startX); applyPrefs(m); if (!host) announcePainted(); break;
     case 'prefs': applyPrefs(m); break;
-    case 'watching': watching = true; stopMic(); break;
+    // a window that watches stays out of sight: the pet is on the phone (see src/server.ts)
+    case 'watching': watching = true; stopMic(); if (host) { document.body.classList.add('away'); setInteractive(false, 'away'); } break;
     // the settings window's 「在桌面上隐藏」: the same as the menu's 「隐藏」
     case 'hide': host?.hide?.(); break;
     case 'type': openTyping(); break;
@@ -1042,6 +1058,19 @@ let mic = null;
 async function startMic() {
   if (mic) return;
   const opening = mic = { starting: true };
+  // a host that records itself (a phone, whose page is not a secure context) hands the 16 kHz PCM16 over
+  if (host?.openMic) {
+    try {
+      const label = await host.openMic((pcm) => { if (ws && ws.readyState === 1) ws.send(pcm); });
+      if (!prefs.mic || mic !== opening) { host.closeMic(); if (mic === opening) mic = null; return; }
+      mic = { host: true };
+      send({ t: 'mic', state: 'on', detail: label || null });
+    } catch (err) {
+      if (mic === opening) mic = null;
+      send({ t: 'mic', state: err && err.name === 'NotAllowedError' ? 'denied' : 'error', detail: String(err && err.message || err) });
+    }
+    return;
+  }
   // 拿到一半就失败时也要停麦关声卡,否则录音指示灯常亮到页面刷新
   let stream = null, ctx = null;
   try {
@@ -1078,8 +1107,11 @@ function stopMic() {
   const m = mic;
   mic = null;
   if (!m || m.starting) return;
-  m.stream.getTracks().forEach((t) => t.stop());
-  m.ctx.close();
+  if (m.host) host.closeMic();
+  else {
+    m.stream.getTracks().forEach((t) => t.stop());
+    m.ctx.close();
+  }
   send({ t: 'mic', state: 'off' });
 }
 
@@ -1365,6 +1397,7 @@ let interactive = null, renewedAt = -Infinity;
  */
 function setInteractive(on, by) {
   if (!host) return;
+  if (document.body.classList.contains('away')) on = false;
   const now = performance.now();
   const changed = interactive !== on;
   if (!changed && !(on && now - renewedAt >= MOUSE_RENEW_MS)) return;
@@ -1756,6 +1789,7 @@ function frame(now) {
     layout(dt);
     // the frame's own time, so the layer shows frames as far apart as they were drawn
     if (overlayOn) host.overlayFrame(overlayRect(), performance.timeOrigin + now);
+    if (host?.place) reportPlace();
   } catch (err) {
     // a throwing step must not take the loop with it: the next frame is only asked for below, and
     // without it the pet freezes for good (a broken figure throws again on every frame it draws)

@@ -195,6 +195,29 @@ describe('local network access', () => {
     expect((await lanGet(server, '/api/prefs', { origin: 'null' }, 'POST')).status).toBe(421);
   });
 
+  it('lets a paired phone take the pet from the window, and gives it back when the phone goes', async () => {
+    const server = await serve(undefined, { lan: () => KEY });
+    const cookie = `coo-lan=${KEY}`, origin = `http://192.168.1.5:${server.port}`;
+    expect(await refused(server, { role: 'pet', host: 'phone' }, server.origin)).toBe(403);
+    const win = await socket(server, 'pet', { host: 'window', key: windowKey(server) }, server.origin);
+    const phone = await phoneSocket(server, cookie, origin);
+    await expect.poll(win.closed).toBe(4000);
+    expect(server.petOnPhone).toBe(true);
+    expect(server.petInWindow).toBe(false);
+    // the window reconnects and only watches; so does a tab
+    const back = await socket(server, 'pet', { host: 'window', key: windowKey(server) }, server.origin);
+    await expect.poll(() => back.texts).toContainEqual({ t: 'watching' });
+    const tab = await socket(server, 'pet', { host: 'tab' }, server.origin);
+    await expect.poll(() => tab.texts).toContainEqual({ t: 'watching' });
+    server.sendPet({ t: 'act', actions: ['nod'] });
+    await expect.poll(() => phone.texts).toContainEqual({ t: 'act', actions: ['nod'] });
+    phone.ws.close();
+    await expect.poll(back.closed).toBe(4001);
+    expect(tab.closed()).toBeNull();
+    await socket(server, 'pet', { host: 'window', key: windowKey(server) }, server.origin);
+    expect(server.petInWindow).toBe(true);
+  });
+
   it('keeps loopback access as it is', async () => {
     const server = await serve(undefined, { lan: () => KEY });
     expect((await fetch(`${server.origin}/pet`)).status).toBe(200);
@@ -269,3 +292,12 @@ describe('installed pack files', () => {
     expect(script.headers.get('access-control-allow-origin')).toBe('null');
   });
 });
+
+/** A pet socket from the phone app: a LAN Host with the LAN cookie. */
+async function phoneSocket(server: PetServer, cookie: string, origin: string) {
+  const ws = new WebSocket(`ws://127.0.0.1:${server.port}/socket?role=pet&host=phone`, { origin, headers: { host: `192.168.1.5:${server.port}`, cookie } });
+  const texts: Array<Record<string, unknown>> = [];
+  ws.on('message', (data, isBinary) => { if (!isBinary) texts.push(JSON.parse(String(data))); });
+  await new Promise((done, fail) => { ws.once('open', done); ws.once('error', fail); });
+  return { ws, texts };
+}
